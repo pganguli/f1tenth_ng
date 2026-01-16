@@ -92,6 +92,23 @@ while not done:
     # --- Step ---
     obs, reward, done, info = env.step(np.array([[steer, speed]]))
 
+    # LiDAR data
+    lidar_scan = obs['scans']
+    num_beams = np.size(lidar_scan)
+    fov = 4.7  # radians
+    angles = np.linspace(-fov/2, fov/2, num_beams)  # -FOV/2 = leftmost, +FOV/2 = rightmost
+
+    # Convert polar coordinates to y (lateral) distances
+    y_coords = lidar_scan * np.sin(angles)
+
+    left_wall = np.max(y_coords)   # furthest left point
+    right_wall = np.min(y_coords)  # furthest right point (negative)
+    track_width = left_wall - right_wall  # total width
+
+    print(f"{left_wall=}")
+    print(f"{right_wall=}")
+    print(f"{track_width=}")
+
     env.render(mode='human')
 
 
