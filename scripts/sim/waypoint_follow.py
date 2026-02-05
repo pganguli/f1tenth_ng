@@ -4,11 +4,11 @@ import time
 from argparse import Namespace
 
 import numpy as np
-import yaml
 from f110_gym.envs.base_classes import Integrator
 
 import gymnasium as gym
 from f110_planning.tracking import PurePursuitPlanner
+from f110_planning.utils import load_waypoints
 
 
 def main():
@@ -21,15 +21,7 @@ def main():
         stheta=1.37079632679,
     )
 
-    try:
-        waypoints = np.loadtxt("data/maps/Example/Example_raceline.csv", delimiter=";", skiprows=3)
-        # Reorder columns: CSV is [s, x, y, th, kappa, v, a]
-        # Planner/Renderer expect [x, y, v, th]
-        # User indices: x=1, y=2, th=3, v=5
-        waypoints = waypoints[:, [1, 2, 5, 3]]
-    except Exception:
-        print("Could not load waypoints, using empty")
-        waypoints = np.array([])
+    waypoints = load_waypoints("data/maps/Example/Example_raceline.csv")
 
     planner = PurePursuitPlanner(waypoints=waypoints)
 

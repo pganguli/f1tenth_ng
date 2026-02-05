@@ -1,26 +1,52 @@
-# The F1TENTH Gym environment
+# The F1TENTH Gym Environment (Gymnasium)
 
-This is the repository of the F1TENTH Gym environment.
+This repository contains the F1TENTH Gym environment, now updated to support **Gymnasium** and **Pyglet 2.x**.
 
-This project is still under heavy developement.
-
-You can find the [documentation](https://f1tenth-gym.readthedocs.io/en/latest/) of the environment here.
+## Major Updates
+- **Gymnasium Migration**: The environment now follows the Gymnasium API (v0.26+).
+- **Pyglet 2.x Support**: Rendering has been updated to support modern Pyglet versions.
+- **Improved Integration**: Standardized observation and action spaces.
 
 ## Quickstart
-We recommend installing the simulation inside a virtualenv. You can install the environment by running:
+
+We recommend installing the environment inside a virtual environment.
+
+### 1. Installation
 
 ```bash
-virtualenv gym_env
-source gym_env/bin/activate
+# Clone the repository
 git clone https://github.com/f1tenth/f1tenth_gym.git
 cd f1tenth_gym
+
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install the environment in editable mode
 pip install -e .
 ```
 
-Then you can run a quick waypoint follow example by:
-```bash
-cd examples
-python3 waypoint_follow.py
+### 2. Usage Example
+
+The environment follows the standard Gymnasium `reset` and `step` loop:
+
+```python
+import gymnasium as gym
+import numpy as np
+
+# Create the environment
+env = gym.make('f110_gym:f110-v0', map='data/maps/Example/Example', render_mode='human', num_agents=1)
+
+# Reset the environment
+obs, info = env.reset(options={'poses': np.array([[0.0, 0.0, 0.0]])})
+
+done = False
+while not done:
+    # Sample random action: [[steer, speed]]
+    action = np.array([[0.0, 1.0]]) 
+    obs, reward, terminated, truncated, info = env.step(action)
+    done = terminated or truncated
+    env.render()
 ```
 
 ## Citing
