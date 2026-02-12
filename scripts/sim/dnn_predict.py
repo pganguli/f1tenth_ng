@@ -30,7 +30,7 @@ def getMultipleModelOutput(obs, a, b, c):
     val1 = model1.predict(lidarDistances, verbose=None)[0]
     val2 = model2.predict(lidarDistances, verbose=None)[0]
     val3 = model3.predict(lidarDistances, verbose=None)[0]
-    val = np.concatenate((val1, val2, val3), axis=0)
+    val = np.concatenate((val1+val2, val1, val3), axis=0)
     return val
 
 
@@ -96,7 +96,7 @@ def main():
 
     done = False
     while not done:
-        currentLidarModel = getMultipleModelOutput(obs['scans'][0], 2, 2, 2)
+        currentLidarModel = getMultipleModelOutput(obs['scans'][0], 1, 1, 1)
         action = planner.plan(obs['scans'][0], currentLidarModel)
         speed, steer = action.speed, action.steer
         obs, step_reward, terminated, truncated, info = env.step(

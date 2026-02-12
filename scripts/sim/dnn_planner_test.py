@@ -104,7 +104,7 @@ def main():
                 car_position,
                 obs["poses_theta"][0]
             )
-        currentLidarModel = [left_dist, right_dist,heading_error]
+        currentLidarModel = [left_dist+right_dist, left_dist, heading_error]
         action = planner.plan(obs['scans'][0], currentLidarModel)
         speed, steer = action.speed, action.steer
         obs, step_reward, terminated, truncated, info = env.step(
