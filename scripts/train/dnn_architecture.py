@@ -1,11 +1,40 @@
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
 from keras import models, layers, regularizers
-from keras.metrics import MeanSquaredError
-from keras.utils import register_keras_serializable
 import os
+import numpy as np
+import pandas as pd
 import json
+
+def load_lidar_dataset(train_csv_path, test_csv_path):
+    # Load CSVs
+    train_df = pd.read_csv(train_csv_path)
+    test_df = pd.read_csv(test_csv_path)
+
+    # -------- Inputs --------
+    xTrain = train_df.iloc[:, :1080].values.astype(np.float32)
+    xTest  = test_df.iloc[:, :1080].values.astype(np.float32)
+
+    # -------- Targets --------
+    yTrain1 = train_df["left_wall_dist"].values.astype(np.float32)
+    yTest1  = test_df["left_wall_dist"].values.astype(np.float32)
+
+    yTrain2 = train_df["right_wall_dist"].values.astype(np.float32)
+    yTest2  = test_df["right_wall_dist"].values.astype(np.float32)
+
+    yTrain3 = train_df["heading_error"].values.astype(np.float32)
+    yTest3  = test_df["heading_error"].values.astype(np.float32)
+
+    # -------- Normalize Inputs --------
+    max_val = np.max(xTrain)
+    if max_val > 0:
+        xTrain = xTrain / max_val
+        xTest = xTest / max_val
+
+    return (
+        xTrain, xTest,
+        yTrain1, yTest1,
+        yTrain2, yTest2,
+        yTrain3, yTest3
+    )
 
 # Create and save models
 def architecture(x):
@@ -154,51 +183,89 @@ def architecture(x):
 
 store_mse = {f'model{i}_{j}': 0 for i in range(1, 4) for j in range(1, 8)}
 
-for i in range(1,6):
-    for trial in range(3):
-        model1 = architecture(i)
-        model1.compile(optimizer='adam', loss='mean_squared_error',metrics=['mse'])
-        model1.build((32,1080))
-        model1.summary()
-        model1.fit(np.array(xTrain), np.array(yTrain1), epochs=13, verbose=1)
-        loss, mse = model1.evaluate(xTest, yTest1, verbose=1)
-        store_mse[f'model1_{i}'] += mse
-        print(f'model1_{i} MSE: {mse}')
-        model1.save(f"./models/lidar_model1_{i}.keras")
 
-        model2 = architecture(i)
-        model2.compile(optimizer='adam', loss='mean_squared_error',metrics=['mse'])
-        model2.build((32,1080))
-        model2.summary()
-        model2.fit(np.array(xTrain), np.array(yTrain2), epochs=13, verbose=1)
-        loss, mse = model2.evaluate(xTest, yTest2, verbose=1)
-        store_mse[f'model2_{i}'] += mse
-        print(f'model2_{i} MSE: {mse}')
-        model2.save(f"./models/lidar_model2_{i}.keras")
 
-        model3 = architecture(i)
-        model3.compile(optimizer='adam', loss='mean_squared_error',metrics=['mse'])
-        model3.build((32,1080))
-        model3.summary()
-        model3.fit(np.array(xTrain), np.array(yTrain3), epochs=13, verbose=1)
-        loss, mse = model3.evaluate(xTest, yTest3, verbose=1)
-        store_mse[f'model3_{i}'] += mse
-        print(f'model3_{i} MSE: {mse}')
-        model3.save(f"./models/lidar_model3_{i}.keras")
+def train_models(train_csv_path, test_csv_path, num_state, num_model, trials):
 
-average_mse = {}
-for x in store_mse:
-    average_mse[x] = store_mse[x] / 2  # Assuming each model is evaluated 5 times
-    print(f'Average MSE for {x}: {average_mse[x]}')
+    os.makedirs("./models", exist_ok=True)
 
-for i in range(1,4):
-    for j in range(1,8):
-        file_path = f'models/lidar_model{i}_{j}.keras'
-        file_size = os.path.getsize(file_path)
-        print(f"Model {i}_{j} file size :", file_size/1024, "k_bytes")
+    xTrain, xTest, yTrain1, yTest1, yTrain2, yTest2, yTrain3, yTest3 = \
+        load_lidar_dataset(train_csv_path, test_csv_path)
 
-with open('mse_data.json', 'w') as f:
-    json.dump(average_mse, f)
+    store_mse = {f"model{i}_{j}": 0.0 for i in range(1,num_state+1) for j in range(1,num_model+1)}
 
-print(average_mse)
+
+    for arch_id in range(1, num_model+1):          # architectures
+        for trial in range(trials):
+
+            # -------- Model 1 (left wall) --------
+            model1 = architecture(arch_id)
+            model1.compile(optimizer='adam',
+                           loss='mean_squared_error',
+                           metrics=['mse'])
+
+            model1.fit(xTrain, yTrain1,
+                       epochs=13,
+                       batch_size=32,
+                       verbose=1)
+
+            _, mse = model1.evaluate(xTest, yTest1, verbose=0)
+            store_mse[f"model1_{arch_id}"] += mse
+            model1.save(f"./models/lidar_model1_{arch_id}.keras")
+
+
+            # -------- Model 2 (right wall) --------
+            model2 = architecture(arch_id)
+            model2.compile(optimizer='adam',
+                           loss='mean_squared_error',
+                           metrics=['mse'])
+
+            model2.fit(xTrain, yTrain2,
+                       epochs=13,
+                       batch_size=32,
+                       verbose=1)
+
+            _, mse = model2.evaluate(xTest, yTest2, verbose=0)
+            store_mse[f"model2_{arch_id}"] += mse
+            model2.save(f"./models/lidar_model2_{arch_id}.keras")
+
+
+            # -------- Model 3 (heading error) --------
+            model3 = architecture(arch_id)
+            model3.compile(optimizer='adam',
+                           loss='mean_squared_error',
+                           metrics=['mse'])
+
+            model3.fit(xTrain, yTrain3,
+                       epochs=13,
+                       batch_size=32,
+                       verbose=1)
+
+            _, mse = model3.evaluate(xTest, yTest3, verbose=0)
+            store_mse[f"model3_{arch_id}"] += mse
+            model3.save(f"./models/lidar_model3_{arch_id}.keras")
+
+        print(f"Finished architecture {arch_id}")
+        
+    average_mse = {}
+
+    for key in store_mse:
+        average_mse[key] = store_mse[key] / trials
+        print(f"Average MSE for {key}: {average_mse[key]}")
+
+    # Print model sizes
+    for i in range(1,num_state+1):
+        for j in range(1,num_model+1):
+            file_path = f'./models/lidar_model{i}_{j}.keras'
+            if os.path.exists(file_path):
+                file_size = os.path.getsize(file_path)
+                print(f"Model {i}_{j} file size:",
+                      round(file_size / 1024, 2), "kB")
+    
+    with open('./dnn_data/mse_data.json', 'w') as f:
+        json.dump(average_mse, f)
+                
+    print("Training complete.")
+    return average_mse
+
 

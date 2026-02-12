@@ -3,12 +3,15 @@ DNN planner
 """
 
 import numpy as np
-
+from .. import Action
 
 class DNNPlanner():
-
+    LENGTH = 0.58
+    LOOKAHEAD_DIST = 3
+    MAX_SPEED = 5
+    MIN_SPEED = 0
     def __init__(self):
-        pass
+        self.TargetPoint = np.array([0., 0.])
 
 
     def plan(self, obs, lidarModel, _=1):
@@ -27,4 +30,4 @@ class DNNPlanner():
         speedInterpolation = 2*abs(steeringAngle)/np.pi
         speed = self.MAX_SPEED + speedInterpolation*(self.MIN_SPEED - self.MAX_SPEED)
 
-        return [steeringAngle, speed]
+        return Action(steer=steeringAngle, speed=speed)
