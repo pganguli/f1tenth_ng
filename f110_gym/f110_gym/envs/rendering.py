@@ -10,7 +10,10 @@ from typing import Any
 
 # other
 import numpy as np
+import os
 import pyglet
+if os.environ.get('DISPLAY') is None:
+    pyglet.options['headless'] = True
 import yaml
 from PIL import Image
 

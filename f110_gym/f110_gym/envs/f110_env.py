@@ -13,7 +13,10 @@ import numpy as np
 from numba import njit
 
 # gl
+import os
 import pyglet
+if os.environ.get('DISPLAY') is None:
+    pyglet.options['headless'] = True
 from gymnasium import spaces
 
 # base classes
