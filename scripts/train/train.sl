@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #SBATCH --job-name=f1tenth_dnn
 #SBATCH --partition=a100-gpu
 #SBATCH --qos=gpu_access
