@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=f1tenth_dnn
+#SBATCH --partition=a100-gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:a100:1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
