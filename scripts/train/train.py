@@ -50,7 +50,7 @@ class LidarDataset(Dataset):
             data_path: Path to the .npz dataset file.
             target_col: Name of the column(s) to use as regression targets.
         """
-        data = np.load(data_path)
+        data = np.load(data_path, allow_pickle=True)
         self.x = data["scans"].astype(np.float32)
 
         # Handle multi-target columns (e.g., "left_dist,right_dist")
