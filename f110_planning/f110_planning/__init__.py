@@ -20,15 +20,6 @@ from .reactive import (  # noqa: E402
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
-from .render_callbacks import (  # noqa: E402
-    create_camera_tracking,
-    create_dynamic_waypoint_renderer,
-    create_heading_error_renderer,
-    create_trace_renderer,
-    create_waypoint_renderer,
-    render_lidar,
-    render_side_distances,
-)
 from .tracking import (  # noqa: E402
     LQRPlanner,
     PurePursuitPlanner,
@@ -53,11 +44,4 @@ __all__ = [
     "DynamicWaypointPlanner",
     "GapFollowerPlanner",
     "LidarDNNPlanner",
-    "create_camera_tracking",
-    "create_dynamic_waypoint_renderer",
-    "create_heading_error_renderer",
-    "create_trace_renderer",
-    "create_waypoint_renderer",
-    "render_lidar",
-    "render_side_distances",
 ]

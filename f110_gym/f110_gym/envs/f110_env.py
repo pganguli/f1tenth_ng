@@ -2,27 +2,24 @@
 Author: Hongrui Zheng
 """
 
-# gym imports
+import os
 import time
 from typing import Any, Optional
 
 import gymnasium as gym
-
-# others
 import numpy as np
+import pyglet
 from numba import njit
 
-# gl
-import os
-import pyglet
-if os.environ.get('DISPLAY') is None:
-    pyglet.options['headless'] = True
+if os.environ.get("DISPLAY") is None:
+    pyglet.options["headless"] = True
+
+# pylint: disable=wrong-import-position
 from gymnasium import spaces
 
-# base classes
 from .base_classes import Integrator, Simulator
-from .rendering import EnvRenderer
 from .simulator_params import SimulatorParams
+# pylint: enable=wrong-import-position
 
 pyglet.options["debug_gl"] = False
 
@@ -88,7 +85,7 @@ class F110Env(gym.Env):
     F1TENTH Gym Environment.
 
     This environment simulates the dynamics of high-speed 1/10th scale racing cars.
-    It provides a Gymnasium-compatible interface for training and evaluating 
+    It provides a Gymnasium-compatible interface for training and evaluating
     navigation and control algorithms.
 
     State includes:
@@ -515,6 +512,9 @@ class F110Env(gym.Env):
 
         if F110Env.renderer is None:
             # first call, initialize everything
+            # pylint: disable=import-outside-toplevel
+            from .rendering import EnvRenderer
+
             F110Env.renderer = EnvRenderer(WINDOW_W, WINDOW_H)
             F110Env.renderer.update_map(self.map_name, self.map_ext)
 

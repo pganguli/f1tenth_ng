@@ -4,25 +4,59 @@ Author: Hongrui Zheng
 Updated for pyglet 2.x compatibility
 """
 
-# opengl stuff
+import os
 from dataclasses import dataclass
 from typing import Any
 
-# other
 import numpy as np
-import os
 import pyglet
-if os.environ.get('DISPLAY') is None:
-    pyglet.options['headless'] = True
+
+if os.environ.get("DISPLAY") is None:
+    pyglet.options["headless"] = True
+
+# pylint: disable=wrong-import-position
 import yaml
 from PIL import Image
 
 # In pyglet 2.x, legacy GL functions need to be imported from gl_compat or use ctypes
 # We use pyglet's built-in projection handling instead
-from pyglet.gl import Config
+try:
+    from pyglet.gl import Config
+
+    _HAS_GL = True
+except (ImportError, Exception):  # pylint: disable=broad-exception-caught
+    _HAS_GL = False
+
+    class Config:
+        """Stub for pyglet.gl.Config if OpenGL is unavailable."""
+
+        # pylint: disable=too-few-public-methods
+        def __init__(self, *args, **kwargs):
+            pass
+
+    # Mock submodules for type hints if they failed to load
+    if not hasattr(pyglet, "window"):
+        pyglet.window = type("Mock", (), {"Window": object, "FPSDisplay": object})
+    if not hasattr(pyglet, "text"):
+        pyglet.text = type("Mock", (), {"Label": object})
+    if not hasattr(pyglet, "graphics"):
+        pyglet.graphics = type("Mock", (), {"Batch": object})
+    if not hasattr(pyglet, "shapes"):
+        pyglet.shapes = type(
+            "Mock",
+            (),
+            {
+                "Triangle": object,
+                "Line": object,
+                "Circle": object,
+                "Rectangle": object,
+                "Sector": object,
+            },
+        )
 
 # helpers
 from .collision_models import get_vertices
+# pylint: enable=wrong-import-position
 
 # zooming constants
 ZOOM_IN_FACTOR = 1.2
@@ -161,7 +195,7 @@ class RendererUI:
     fps_display: pyglet.window.FPSDisplay
 
 
-class EnvRenderer(pyglet.window.Window):
+class EnvRenderer(pyglet.window.Window if _HAS_GL else object):
     """
     F1TENTH Environment Renderer.
 
@@ -185,6 +219,12 @@ class EnvRenderer(pyglet.window.Window):
             *args: Additional arguments passed to the pyglet Window.
             **kwargs: Additional keyword arguments passed to the pyglet Window.
         """
+        if not _HAS_GL:
+            raise ImportError(
+                "Rendering is unavailable. This usually happens in headless "
+                "environments where EGL/GL libraries are missing. Please check "
+                "if libEGL and libGL are installed."
+            )
         conf = Config(sample_buffers=1, samples=4, depth_size=16, double_buffer=True)
         super().__init__(
             width, height, config=conf, resizable=True, vsync=False, *args, **kwargs
@@ -503,14 +543,18 @@ class EnvRenderer(pyglet.window.Window):
             # Create translation matrices to rotate around camera center
             # However, the camera viewport is already defined around the center
             # so we just need to translate the world by -camera.x, -camera.y
-            trans_to_origin = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-cam.x, -cam.y, 0))
+            trans_to_origin = pyglet.math.Mat4.from_translation(
+                pyglet.math.Vec3(-cam.x, -cam.y, 0)
+            )
             rot_mat = pyglet.math.Mat4.from_rotation(cam.rotation, (0, 0, 1))
 
             # Combine: Translate -> Rotate -> Ortho projection
             self.projection = ortho @ rot_mat @ trans_to_origin
         else:
             # Still need to translate to center on camera x,y even if no rotation
-            trans_to_origin = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-cam.x, -cam.y, 0))
+            trans_to_origin = pyglet.math.Mat4.from_translation(
+                pyglet.math.Vec3(-cam.x, -cam.y, 0)
+            )
             self.projection = ortho @ trans_to_origin
 
         # Draw all batches
