@@ -2,13 +2,16 @@
 Unit tests for the training scripts.
 """
 
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import torch
 
 from scripts.train.train import LidarDataModule, LidarDataset, LidarLightningModule
 
 
-def test_lidar_dataset_normalization(tmp_path):
+def test_lidar_dataset_normalization(tmp_path: Path) -> None:
     """Tests that LidarDataset correctly normalizes LiDAR ranges and handles multi-targets."""
     data_path = tmp_path / "test_data.npz"
     # Create dummy data: 10 samples, 1080 beams
@@ -46,7 +49,7 @@ def test_lidar_dataset_normalization(tmp_path):
     assert torch.allclose(y_w, torch.tensor([1.0, 3.0]))
 
 
-def test_model_architectures():
+def test_model_architectures() -> None:
     """Tests that different architectures produce the expected output shapes."""
     # Heading task
     model_h = LidarLightningModule(
@@ -63,7 +66,7 @@ def test_model_architectures():
     assert out_w.shape == (2, 2)
 
 
-def test_training_step(mocker):
+def test_training_step(mocker: Any) -> None:
     """Tests the training_step logic with optimizer mocking."""
     model = LidarLightningModule(
         arch_id=1, task="heading", lr=1e-3, weight_decay=1e-5, lr_patience=5
@@ -87,7 +90,7 @@ def test_training_step(mocker):
     )
 
 
-def test_datamodule_setup(tmp_path):
+def test_datamodule_setup(tmp_path: Path) -> None:
     """Tests that LidarDataModule correctly splits the dataset."""
     data_path = tmp_path / "test_data.npz"
     np.savez(

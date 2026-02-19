@@ -2,6 +2,8 @@
 LiDAR visualization and analysis utilities for the F1TENTH simulation.
 """
 
+from collections.abc import Callable
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
@@ -104,7 +106,9 @@ def render_side_distances(env_renderer: EnvRenderer) -> None:
     e.side_dist_labels["right"].y = 50
 
 
-def create_heading_error_renderer(waypoints: np.ndarray, agent_idx: int = 0):
+def create_heading_error_renderer(
+    waypoints: np.ndarray, agent_idx: int = 0
+) -> Callable[[EnvRenderer], None]:
     """
     Factory to create a heading error rendering callback.
 

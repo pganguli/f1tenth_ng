@@ -40,7 +40,7 @@ class LidarDataset(Dataset):
         y (np.ndarray): Target values (e.g., heading, path distances).
     """
 
-    def __init__(self, data_path: str, target_col: str):
+    def __init__(self, data_path: str, target_col: str) -> None:
         """
         Initializes the dataset.
 
@@ -83,7 +83,7 @@ class LidarDataModule(L.LightningDataModule):
     Lightning DataModule managing dataset splitting and data loader creation.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict[str, Any]) -> None:
         """
         Initializes the data module.
 
@@ -160,8 +160,8 @@ class LidarLightningModule(L.LightningModule):
         self,
         arch_id: int,
         task: str = "heading",
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         Initializes the lightning module.
 
@@ -286,7 +286,7 @@ class LidarLightningModule(L.LightningModule):
                             f"weights/{name}", param, self.current_epoch
                         )
 
-    def configure_optimizers(self) -> dict:
+    def configure_optimizers(self) -> dict[str, Any]:
         """Configures the optimizer and LR scheduler."""
         optimizer = torch.optim.Adam(
             self.parameters(),
@@ -305,7 +305,7 @@ class LidarLightningModule(L.LightningModule):
         }
 
 
-def run_single_training(config: dict, arch_id: int):
+def run_single_training(config: dict[str, Any], arch_id: int) -> None:
     """Run a single training session for a specific architecture."""
     # Set matmul precision for better GPU utilization and to suppress warnings
     torch.set_float32_matmul_precision("high")
@@ -387,7 +387,7 @@ def run_single_training(config: dict, arch_id: int):
     torch.save(module.model.state_dict(), out_path / f"{model_name}.pth")
 
 
-def main():
+def main() -> None:
     """Main entry point for the training script."""
     parser = argparse.ArgumentParser()
     parser.add_argument(

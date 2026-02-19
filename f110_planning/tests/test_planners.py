@@ -4,6 +4,8 @@ Unit tests for waypoint tracking planners.
 
 # pylint: disable=redefined-outer-name
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -12,7 +14,7 @@ from f110_planning.tracking import LQRPlanner, PurePursuitPlanner, StanleyPlanne
 
 
 @pytest.fixture
-def dummy_waypoints():
+def dummy_waypoints() -> np.ndarray:
     """Provides a set of dummy waypoints forming a straight line."""
     # Straight line along x-axis
     return np.array(
@@ -25,14 +27,14 @@ def dummy_waypoints():
     )
 
 
-def test_pure_pursuit_init(dummy_waypoints):
+def test_pure_pursuit_init(dummy_waypoints: np.ndarray) -> None:
     """Test initialization of the Pure Pursuit planner."""
     planner = PurePursuitPlanner(waypoints=dummy_waypoints)
     assert planner.wheelbase == 0.33
     assert len(planner.waypoints) == 4
 
 
-def test_pure_pursuit_plan(dummy_waypoints, dummy_obs):
+def test_pure_pursuit_plan(dummy_waypoints: np.ndarray, dummy_obs: dict[str, Any]) -> None:
     """Test that Pure Pursuit generates correct steering commands."""
     planner = PurePursuitPlanner(waypoints=dummy_waypoints)
     action = planner.plan(dummy_obs)
@@ -47,7 +49,7 @@ def test_pure_pursuit_plan(dummy_waypoints, dummy_obs):
     assert action.steer < 0.0
 
 
-def test_lqr_convergence(dummy_waypoints, dummy_obs):
+def test_lqr_convergence(dummy_waypoints: np.ndarray, dummy_obs: dict[str, Any]) -> None:
     """Test that LQR correctly steers toward the path."""
     planner = LQRPlanner(waypoints=dummy_waypoints)
     # Start with lateral error
@@ -57,7 +59,7 @@ def test_lqr_convergence(dummy_waypoints, dummy_obs):
     assert action.steer < 0.0
 
 
-def test_stanley_convergence(dummy_waypoints, dummy_obs):
+def test_stanley_convergence(dummy_waypoints: np.ndarray, dummy_obs: dict[str, Any]) -> None:
     """Test that Stanley correctly steers toward the path."""
     planner = StanleyPlanner(waypoints=dummy_waypoints)
     # Start with lateral error

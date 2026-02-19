@@ -109,7 +109,7 @@ class DisparityExtenderPlanner(BasePlanner):  # pylint: disable=too-many-instanc
     Reactive planner that uses the disparity extension algorithm to avoid obstacles.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.car_width = F110_WIDTH + 0.1
         self.disparity_threshold = 0.5
         self.scan_fov = LIDAR_FOV

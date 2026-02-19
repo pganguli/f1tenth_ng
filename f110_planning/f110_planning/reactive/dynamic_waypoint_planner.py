@@ -52,7 +52,7 @@ class DynamicWaypointPlanner(BasePlanner):  # pylint: disable=too-few-public-met
         max_speed: float = 5.0,
         wheelbase: float = 0.33,
         lateral_gain: float = 1.0,
-    ):
+    ) -> None:
         self.waypoints = waypoints
         self.lookahead_distance = lookahead_distance
         self.max_speed = max_speed

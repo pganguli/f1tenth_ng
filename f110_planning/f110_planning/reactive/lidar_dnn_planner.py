@@ -32,7 +32,7 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         lookahead_distance: float = 1.0,
         max_speed: float = 5.0,
         lateral_gain: float = 1.0,
-    ):
+    ) -> None:
         """
         Initializes the DNN planner and loads the specified models.
 

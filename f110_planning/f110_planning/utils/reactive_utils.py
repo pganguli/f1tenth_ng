@@ -103,7 +103,7 @@ def get_reactive_actuation(  # pylint: disable=too-many-arguments, too-many-posi
     return target_point, steering_angle, final_speed
 
 
-def get_reactive_action(planner: Any, **kwargs: Any) -> Any:
+def get_reactive_action(planner: Any, **kwargs: Any) -> "Action":
     """
     Wraps reactive actuation into a standard Action object for use in planners.
 

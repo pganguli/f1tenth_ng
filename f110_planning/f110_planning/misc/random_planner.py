@@ -21,7 +21,7 @@ class RandomPlanner(BasePlanner):  # pylint: disable=too-few-public-methods
         s_max: float = 0.4189,
         v_min: float = 0.5,
         v_max: float = 5.0,
-    ):
+    ) -> None:
         """
         Initializes the random ranges for control.
 

@@ -9,7 +9,7 @@ import numpy as np
 from f110_planning.utils import get_vehicle_state, load_waypoints, nearest_point
 
 
-def test_load_waypoints():
+def test_load_waypoints() -> None:
     """Test loading waypoints from a TSV file."""
     # Test loading a real file if it exists
     path = "data/maps/F1/Oschersleben/Oschersleben_centerline.tsv"
@@ -19,7 +19,7 @@ def test_load_waypoints():
         assert waypoints.shape[1] >= 2
 
 
-def test_get_vehicle_state():
+def test_get_vehicle_state() -> None:
     """Test extracting vehicle state from observation dictionary."""
     obs = {
         "poses_x": np.array([1.0, 2.0]),
@@ -36,7 +36,7 @@ def test_get_vehicle_state():
     assert state[2] == 0.6
 
 
-def test_nearest_point():
+def test_nearest_point() -> None:
     """Test finding the nearest point on a path."""
     path = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
     point = np.array([0.5, 0.1])

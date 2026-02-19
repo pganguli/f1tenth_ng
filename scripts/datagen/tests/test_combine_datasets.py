@@ -2,14 +2,14 @@
 Unit tests for the dataset combination script.
 """
 
-import os
+from pathlib import Path
 
 import numpy as np
 
 from scripts.datagen.combine_datasets import combine_datasets
 
 
-def test_combine_datasets(tmp_path):
+def test_combine_datasets(tmp_path: Path) -> None:
     """Test that multiple datasets can be merged correctly."""
     # Create two dummy datasets
     data1 = {"scans": np.random.rand(10, 1080), "heading_error": np.random.rand(10)}
@@ -24,6 +24,6 @@ def test_combine_datasets(tmp_path):
 
     combine_datasets([str(p1), str(p2)], str(out), deduplicate=False)
 
-    assert os.path.exists(out)
+    assert out.exists()
     loaded = np.load(out)
     assert len(loaded["heading_error"]) == 15

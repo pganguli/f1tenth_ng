@@ -2,10 +2,16 @@
 Render callback for visualizing the dynamic waypoint
 """
 
+from collections.abc import Callable
+from typing import Any
+
 import pyglet
+from f110_gym.envs.rendering import EnvRenderer
 
 
-def create_dynamic_waypoint_renderer(planner, agent_idx=0):
+def create_dynamic_waypoint_renderer(
+    planner: Any, agent_idx: int = 0
+) -> Callable[[EnvRenderer], None]:
     """
     Factory to visualize the planner's internal target waypoint.
 
@@ -18,7 +24,7 @@ def create_dynamic_waypoint_renderer(planner, agent_idx=0):
     waypoint_circle = None
     connection_line = None
 
-    def render_callback(env_renderer):
+    def render_callback(env_renderer: EnvRenderer) -> None:
         nonlocal waypoint_circle, connection_line
 
         # Ensure we have a point to draw

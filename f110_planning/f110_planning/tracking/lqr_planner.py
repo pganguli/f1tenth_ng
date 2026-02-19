@@ -40,7 +40,7 @@ class LQRPlanner(BasePlanner):  # pylint: disable=too-many-instance-attributes
         matrix_r: float = 0.75,
         iterations: int = 50,
         eps: float = 0.001,
-    ):
+    ) -> None:
         """
         Initializes the LQR planner with control weights and system parameters.
 

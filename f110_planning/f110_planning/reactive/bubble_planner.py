@@ -43,7 +43,7 @@ class BubblePlanner(BasePlanner):  # pylint: disable=too-few-public-methods
     A reactive planner that creates a 'bubble' around the car and avoids obstacles.
     """
 
-    def __init__(self, safety_radius: float = 1.3, avoidance_speed: float = 2.0):
+    def __init__(self, safety_radius: float = 1.3, avoidance_speed: float = 2.0) -> None:
         self.safety_radius = safety_radius
         self.avoidance_speed = avoidance_speed
 

@@ -18,7 +18,7 @@ class FlippyPlanner(BasePlanner):  # pylint: disable=too-few-public-methods
         flip_every: int = 1,
         steer: float = 2,
         speed: float = 1,
-    ):
+    ) -> None:
         self.flip_every = flip_every
         self.steer = steer
         self.speed = speed

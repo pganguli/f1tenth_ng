@@ -14,7 +14,7 @@ from scripts.datagen.waypoint_datagen import (
 )
 
 
-def test_create_planner():
+def test_create_planner() -> None:
     """Test creation of tracking planners from strings."""
     waypoints = np.array([[0, 0], [1, 0]])
     planner = create_planner("pure_pursuit", waypoints)
@@ -22,7 +22,7 @@ def test_create_planner():
     assert np.all(planner.waypoints == waypoints)
 
 
-def test_gather_step_data():
+def test_gather_step_data() -> None:
     """Test extraction of training features (scans, distances, errors) from observations."""
     obs = {
         "scans": [np.ones(1080) * 5.0],
@@ -41,7 +41,7 @@ def test_gather_step_data():
     assert abs(h_err) < 1e-3
 
 
-def test_apply_steering_noise():
+def test_apply_steering_noise() -> None:
     """Test application of random steering noise for data augmentation."""
     # pylint: disable=redefined-outer-name
     args = MagicMock()

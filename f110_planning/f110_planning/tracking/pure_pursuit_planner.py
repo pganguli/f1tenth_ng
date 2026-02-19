@@ -29,7 +29,7 @@ class PurePursuitPlanner(BasePlanner):  # pylint: disable=too-few-public-methods
         lookahead_distance: float = 0.8,
         max_speed: float = 5.0,
         waypoints: Optional[np.ndarray] = None,
-    ):
+    ) -> None:
         """
         Initializes the Pure Pursuit planner with vehicle and path parameters.
 

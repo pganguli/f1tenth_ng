@@ -2,6 +2,8 @@
 Render callback for visualizing waypoints in the simulation.
 """
 
+from collections.abc import Callable
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
@@ -11,7 +13,7 @@ def create_waypoint_renderer(
     waypoints: np.ndarray,
     color: tuple[int, int, int] | tuple[int, int, int, int] = (183, 193, 222),
     name: str = "waypoint_shapes",
-):
+) -> Callable[[EnvRenderer], None]:
     """
     Factory to create a waypoint rendering callback.
 

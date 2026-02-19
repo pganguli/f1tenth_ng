@@ -35,7 +35,7 @@ DEFAULT_DRIFT_MAGNITUDE = 0.3
 DEFAULT_LOOKAHEAD_RANGE = [0.6, 1.2]
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Generate F1TENTH simulation data with lidar scans and wall distances."
@@ -192,7 +192,7 @@ def _gather_step_data(
 
 def _get_noisy_action(
     planner: PurePursuitPlanner,
-    obs: dict,
+    obs: dict[str, Any],
     drift_active: int,
     drift_val: float,
     args: argparse.Namespace,
@@ -213,7 +213,7 @@ def _run_simulation(
     planner: PurePursuitPlanner,
     waypoints: np.ndarray,
     args: argparse.Namespace,
-    history: dict[str, list],
+    history: dict[str, list[Any]],
 ) -> int:
     """Runs the simulation loop and populates the history dictionary."""
     obs, _ = env.reset(
@@ -309,7 +309,7 @@ def generate_output_filename(args: argparse.Namespace, num_samples: int) -> str:
     return str(Path(DEFAULT_OUTPUT_DIR) / filename)
 
 
-def main():
+def main() -> None:
     """Main execution function."""
     args = parse_args()
 

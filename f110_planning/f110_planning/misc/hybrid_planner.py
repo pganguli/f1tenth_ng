@@ -19,7 +19,7 @@ class HybridPlanner(BasePlanner):  # pylint: disable=too-few-public-methods
     operator. Otherwise, it defaults to the provided autonomous planner.
     """
 
-    def __init__(self, manual_planner: ManualPlanner, auto_planner: BasePlanner):
+    def __init__(self, manual_planner: ManualPlanner, auto_planner: BasePlanner) -> None:
         """
         Initializes the hybrid control system.
 

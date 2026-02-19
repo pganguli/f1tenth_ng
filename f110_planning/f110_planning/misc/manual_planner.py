@@ -45,7 +45,7 @@ class ManualPlanner(BasePlanner):  # pylint: disable=too-few-public-methods, too
         decel: float = 15.0,
         steer_rate: float = 1.5,
         dt: float = 0.01,
-    ):
+    ) -> None:
         """
         Sets the physical response limits for manual control.
 

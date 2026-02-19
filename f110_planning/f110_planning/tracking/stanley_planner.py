@@ -27,7 +27,7 @@ class StanleyPlanner(BasePlanner):
         waypoints: Optional[np.ndarray] = None,
         max_speed: float = 5.0,
         k_path: float = 5.0,
-    ):
+    ) -> None:
         """
         Initializes the Stanley planner.
 

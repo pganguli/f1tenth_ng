@@ -135,7 +135,7 @@ class GapFollowerPlanner(BasePlanner):  # pylint: disable=too-many-instance-attr
         preprocess_conv_size: int = 3,
         best_point_conv_size: int = 80,
         max_lidar_dist: float = MAX_LIDAR_DIST,
-    ):
+    ) -> None:
         """
         Initializes the Gap Follower with specific tuning parameters.
 

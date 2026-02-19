@@ -2,6 +2,8 @@
 Render callback for visualizing the trajectory trace of an agent.
 """
 
+from collections.abc import Callable
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
@@ -11,7 +13,7 @@ def create_trace_renderer(
     agent_idx: int = 0,
     max_points: int = 5000,
     color: tuple[int, int, int] = (255, 255, 0),
-):
+) -> Callable[[EnvRenderer], None]:
     """
     Factory to create a trajectory trace rendering callback.
 
