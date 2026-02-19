@@ -1,6 +1,7 @@
 """
 Miscellaneous planners for F1TENTH.
 """
+# pylint: disable=duplicate-code
 
 from .dummy_planner import DummyPlanner
 from .flippy_planner import FlippyPlanner

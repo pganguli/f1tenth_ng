@@ -12,6 +12,46 @@ import numpy as np
 from tqdm import tqdm
 
 
+def _find_unique_indices(
+    merged_data: Dict[str, np.ndarray], keys: List[str], epsilon: float
+) -> List[int]:
+    """Helper to find unique indices for deduplication."""
+    total_rows = merged_data[keys[0]].shape[0]
+    # Combine all columns into a single large matrix for distance calculation
+    feature_matrices: List[np.ndarray] = []
+    for k in keys:
+        # If the key is already 2D (like scans), it's (N, 1080)
+        # If it's 1D, we need to make it (N, 1)
+        arr = merged_data[k]
+        if arr.ndim == 1:
+            arr = arr[:, np.newaxis]
+        elif arr.ndim > 2:
+            arr = arr.reshape(arr.shape[0], -1)
+        feature_matrices.append(arr)
+
+    # Big matrix (N, total_features)
+    full_matrix = np.concatenate(feature_matrices, axis=1)
+
+    indices_to_keep: List[int] = []
+    seen_mask = np.zeros(total_rows, dtype=bool)
+
+    for i in tqdm(range(total_rows), desc="Deduplicating"):
+        if seen_mask[i]:
+            continue
+
+        indices_to_keep.append(i)
+
+        # Find all rows that are within epsilon of current row i
+        diff = np.abs(full_matrix[i + 1 :] - full_matrix[i])
+        # A row matches if ALL its columns are < epsilon
+        matches = np.all(diff < epsilon, axis=1)
+
+        # Mark matched rows as seen
+        if np.any(matches):
+            seen_mask[i + 1 :][matches] = True
+    return indices_to_keep
+
+
 def combine_datasets(
     input_files: List[str],
     output_file: str,
@@ -54,14 +94,15 @@ def combine_datasets(
                 # Check consistency
                 if sorted(list(loaded.keys())) != keys:
                     print(
-                        f"Error: File {file_path} has different keys. Expected {keys}, got {list(loaded.keys())}"
+                        f"Error: File {file_path} has different keys. "
+                        f"Expected {keys}, got {list(loaded.keys())}"
                     )
                     continue
 
             # Create a dictionary of arrays for this file
             file_data = {k: loaded[k] for k in keys}
             data_list.append(file_data)
-        except Exception as e:
+        except (OSError, ValueError) as e:
             print(f"Error loading {file_path}: {e}")
 
     if not data_list or keys is None:
@@ -79,44 +120,7 @@ def combine_datasets(
     # 2. Optional Deduplication logic
     if deduplicate:
         print("Starting deduplication (this may take a while for large datasets)...")
-
-        # Combine all columns into a single large matrix for distance calculation
-        feature_matrices: List[np.ndarray] = []
-        for k in keys:
-            # If the key is already 2D (like scans), it's (N, 1080)
-            # If it's 1D, we need to make it (N, 1)
-            arr = merged_data[k]
-            if arr.ndim == 1:
-                arr = arr[:, np.newaxis]
-            elif arr.ndim > 2:
-                arr = arr.reshape(arr.shape[0], -1)
-            feature_matrices.append(arr)
-
-        # Big matrix (N, total_features)
-        full_matrix = np.concatenate(feature_matrices, axis=1)
-
-        indices_to_keep: List[int] = []
-
-        # Greedy approach: keep first occurrence, skip subsequent almost-duplicates
-        seen_mask = np.zeros(total_rows, dtype=bool)
-
-        for i in tqdm(range(total_rows), desc="Deduplicating"):
-            if seen_mask[i]:
-                continue
-
-            indices_to_keep.append(i)
-
-            # Find all rows that are within epsilon of current row i
-            # np.all(abs(matrix - row) < eps, axis=1)
-            # We only check rows after i
-            diff = np.abs(full_matrix[i + 1 :] - full_matrix[i])
-            # A row matches if ALL its columns are < epsilon
-            matches = np.all(diff < epsilon, axis=1)
-
-            # Mark matched rows as seen
-            if np.any(matches):
-                seen_mask[i + 1 :][matches] = True
-
+        indices_to_keep = _find_unique_indices(merged_data, keys, epsilon)
         print(f"Kept {len(indices_to_keep)} unique rows out of {total_rows}.")
 
         # 3. Create final filtered dataset

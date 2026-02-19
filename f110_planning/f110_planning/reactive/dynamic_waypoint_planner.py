@@ -80,6 +80,7 @@ class DynamicWaypointPlanner(BasePlanner):  # pylint: disable=too-few-public-met
         left_dist, right_dist = get_side_distances(scan)
         heading_error = get_heading_error(self.waypoints, car_position, car_theta)
 
+        # pylint: disable=duplicate-code
         # Compute dynamic waypoint and actuation using shared logic helper
         return get_reactive_action(
             self,

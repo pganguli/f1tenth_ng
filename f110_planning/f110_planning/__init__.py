@@ -5,7 +5,7 @@ F1TENTH Planning library.
 from .base import Action, BasePlanner
 
 # Import submodules AFTER defining Action and BasePlanner to avoid circular imports
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position, duplicate-code
 from .misc import (
     DummyPlanner,
     FlippyPlanner,

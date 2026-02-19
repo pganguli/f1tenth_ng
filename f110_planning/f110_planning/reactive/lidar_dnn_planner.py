@@ -117,6 +117,7 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
 
         heading_error = self.predict(self.heading_model, scan) or 0.0
 
+        # pylint: disable=duplicate-code
         # Compute dynamic waypoint and actuation using shared logic helper
         return get_reactive_action(
             self,

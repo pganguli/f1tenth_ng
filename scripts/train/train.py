@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: disable=duplicate-code
 """
 Advanced training script for F1Tenth LiDAR DNN models using PyTorch Lightning.
 Supports YAML configuration, advanced dataloading, and automatic tuning.

@@ -1,6 +1,7 @@
 """
 Reactive planners for F1TENTH.
 """
+# pylint: disable=duplicate-code
 
 from .bubble_planner import BubblePlanner
 from .disparity_extender_planner import DisparityExtenderPlanner

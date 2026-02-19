@@ -5,6 +5,9 @@ Shared utilities and constants for F1TENTH simulation and data generation script
 import argparse
 from typing import Any, Optional
 
+import gymnasium as gym
+from f110_gym.envs.base_classes import Integrator
+
 # Default map and waypoint configuration
 DEFAULT_MAP = "data/maps/F1/Oschersleben/Oschersleben_map"
 DEFAULT_MAP_EXT = ".png"
@@ -104,11 +107,6 @@ def setup_env(args: argparse.Namespace, render_mode: Optional[str] = None) -> An
     Returns:
         The initialized F1TENTH Gym environment.
     """
-    import gymnasium as gym  # pylint: disable=import-outside-toplevel
-    from f110_gym.envs.base_classes import (
-        Integrator,  # pylint: disable=import-outside-toplevel
-    )
-
     num_agents = getattr(args, "num_agents", 1)
     if hasattr(args, "waypoints") and isinstance(args.waypoints, list):
         num_agents = len(args.waypoints)
