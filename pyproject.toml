@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = [
+    "f110_gym/tests",
+    "f110_planning/tests",
+    "scripts/datagen/tests",
+    "scripts/sim/tests",
+    "scripts/train/tests",
+]
+pythonpath = [
+    ".",
+    "f110_gym",
+    "f110_planning",
+]
+addopts = "-v --durations=5"

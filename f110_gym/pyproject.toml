@@ -23,5 +23,15 @@ dependencies = [
   "pyglet>=2.0.10",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-mock",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
 [project.urls]
 Homepage = "https://f1tenth.org"

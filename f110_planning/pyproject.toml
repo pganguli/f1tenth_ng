@@ -23,5 +23,15 @@ dependencies = [
   "f110_gym",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-mock",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
 [project.urls]
 Homepage = "https://f1tenth.org"
