@@ -9,23 +9,18 @@ from typing import Any, Optional
 import gymnasium as gym
 import numpy as np
 import pyglet
+from gymnasium import spaces
 from numba import njit
+
+from .base_classes import Integrator, Simulator
+from .simulator_params import SimulatorParams
 
 if os.environ.get("DISPLAY") is None:
     pyglet.options["headless"] = True
 
-# pylint: disable=wrong-import-position
-from gymnasium import spaces
-
-from .base_classes import Integrator, Simulator
-from .simulator_params import SimulatorParams
-# pylint: enable=wrong-import-position
-
 pyglet.options["debug_gl"] = False
 
 # rendering constants
-VIDEO_W = 600
-VIDEO_H = 400
 WINDOW_W = 1000
 WINDOW_H = 800
 
@@ -111,7 +106,6 @@ class F110Env(gym.Env):
 
     # rendering
     renderer: Optional["EnvRenderer"] = None
-    current_obs: Optional[dict[str, Any]] = None
     render_callbacks: list[Any] = []
 
     def __init__(self, **kwargs: Any) -> None:
@@ -354,8 +348,6 @@ class F110Env(gym.Env):
         obs = self.sim.step(action)
         obs["lap_times"] = self.lap_times
         obs["lap_counts"] = self.lap_counts
-
-        F110Env.current_obs = obs
 
         self.render_obs = {
             "ego_idx": obs["ego_idx"],

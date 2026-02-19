@@ -12,13 +12,13 @@ from typing import Any
 
 import numpy as np
 import pyglet
+import yaml
+from PIL import Image
+
+from .collision_models import get_vertices
 
 if os.environ.get("DISPLAY") is None:
     pyglet.options["headless"] = True
-
-# pylint: disable=wrong-import-position
-import yaml
-from PIL import Image
 
 # In pyglet 2.x, legacy GL functions need to be imported from gl_compat or use ctypes
 # We use pyglet's built-in projection handling instead
@@ -35,10 +35,6 @@ except (ImportError, Exception):  # pylint: disable=broad-exception-caught
         # pylint: disable=too-few-public-methods
         def __init__(self, *args, **kwargs):
             pass
-
-# helpers
-from .collision_models import get_vertices
-# pylint: enable=wrong-import-position
 
 # zooming constants
 ZOOM_IN_FACTOR = 1.2

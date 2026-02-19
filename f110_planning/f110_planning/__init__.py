@@ -5,28 +5,28 @@ F1TENTH Planning library.
 from .base import Action, BasePlanner
 
 # Import submodules AFTER defining Action and BasePlanner to avoid circular imports
-# pylint: disable=wrong-import-position, duplicate-code
+# pylint: disable=duplicate-code
 from .misc import (
     DummyPlanner,
     FlippyPlanner,
     HybridPlanner,
     ManualPlanner,
     RandomPlanner,
-)  # noqa: E402
-from .reactive import (  # noqa: E402
+)
+from .reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
     DynamicWaypointPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
-from .tracking import (  # noqa: E402
+from .tracking import (
     LQRPlanner,
     PurePursuitPlanner,
     StanleyPlanner,
 )
 
-# pylint: enable=wrong-import-position
+# pylint: enable=duplicate-code
 
 __all__ = [
     "Action",

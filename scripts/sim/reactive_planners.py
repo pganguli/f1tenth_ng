@@ -6,9 +6,9 @@ Supports: bubble, gap_follower, disparity, and dynamic.
 
 import argparse
 import time
+from typing import Any
 
 import numpy as np
-from cuda.bindings.utils import Any
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
