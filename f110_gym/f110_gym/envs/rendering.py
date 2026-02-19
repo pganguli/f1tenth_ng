@@ -4,6 +4,8 @@ Author: Hongrui Zheng
 Updated for pyglet 2.x compatibility
 """
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -33,26 +35,6 @@ except (ImportError, Exception):  # pylint: disable=broad-exception-caught
         # pylint: disable=too-few-public-methods
         def __init__(self, *args, **kwargs):
             pass
-
-    # Mock submodules for type hints if they failed to load
-    if not hasattr(pyglet, "window"):
-        pyglet.window = type("Mock", (), {"Window": object, "FPSDisplay": object})
-    if not hasattr(pyglet, "text"):
-        pyglet.text = type("Mock", (), {"Label": object})
-    if not hasattr(pyglet, "graphics"):
-        pyglet.graphics = type("Mock", (), {"Batch": object})
-    if not hasattr(pyglet, "shapes"):
-        pyglet.shapes = type(
-            "Mock",
-            (),
-            {
-                "Triangle": object,
-                "Line": object,
-                "Circle": object,
-                "Rectangle": object,
-                "Sector": object,
-            },
-        )
 
 # helpers
 from .collision_models import get_vertices
