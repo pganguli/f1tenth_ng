@@ -8,8 +8,8 @@ cloudpickle==3.1.2
 cuda-bindings==12.9.4
 cuda-pathfinder==1.3.4
 dill==0.4.1
--e git+https://github.com/pganguli/f1tenth_ng.git@15dd7e544c346de7d7cb427c17fb04dae9a8ab32#egg=f110_gym&subdirectory=f110_gym
--e git+https://github.com/pganguli/f1tenth_ng.git@15dd7e544c346de7d7cb427c17fb04dae9a8ab32#egg=f110_planning&subdirectory=f110_planning
+f110_gym @ https://github.com/pganguli/f1tenth_ng/archive/b2364b5fdcfb07f3f268c35d036b5d26fbfac055.tar.gz#subdirectory=f110_gym
+f110_planning @ https://github.com/pganguli/f1tenth_ng/archive/b2364b5fdcfb07f3f268c35d036b5d26fbfac055.tar.gz#subdirectory=f110_planning
 Farama-Notifications==0.0.4
 filelock==3.24.3
 frozenlist==1.8.0
