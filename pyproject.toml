@@ -1,3 +1,13 @@
+[project]
+name = "f1tenth_ng"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pylint",
+]
+
 [tool.pytest.ini_options]
 testpaths = [
     "f110_gym/tests",
