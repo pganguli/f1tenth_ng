@@ -60,7 +60,7 @@ pytorch-lightning==2.6.1
 PyYAML==6.0.3
 scikit-learn==1.8.0
 scipy==1.17.0
-setuptools==69.5.1
+setuptools==78.1.1
 simple-pid==2.0.1
 six==1.17.0
 sympy==1.14.0
