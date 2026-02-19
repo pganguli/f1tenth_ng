@@ -1,50 +1,48 @@
 # The F1TENTH Gym Environment (Gymnasium)
 
-This repository contains the F1TENTH Gym environment, now updated to support **Gymnasium** and **Pyglet 2.x**.
+This repository contains the F1TENTH Gym environment, updated to support **Gymnasium** and **Pyglet 2.x**.
 
-## Major Updates
+## Features
 
-- **Gymnasium Migration**: The environment now follows the Gymnasium API (v0.26+).
-- **Pyglet 2.x Support**: Rendering has been updated to support modern Pyglet versions.
-- **Improved Integration**: Standardized observation and action spaces.
+- **Gymnasium API**: Full compatibility with the modern `gymnasium` interface.
+- **Environment Specs**:
+  - **Action Space**: `Box(-1.0, 1.0, (num_agents, 2))` representing `[steering_angle, velocity]`.
+  - **Observation Space**: A dictionary containing:
+    - `scans`: LiDAR scans.
+    - `poses_x`, `poses_y`, `poses_theta`: Agent poses.
+    - `linear_vel_x`, `linear_vel_y`, `ang_vel_z`: Agent velocities.
+- **Rendering**: Enhanced visualization support with Pyglet 2.x, including camera tracking and custom callbacks.
 
-## Quickstart
+## Installation
 
-We recommend installing the environment inside a virtual environment.
-
-### 1. Installation
+We recommend installing the environment in editable mode inside a virtual environment.
 
 ```bash
-# Clone the repository
-git clone https://github.com/f1tenth/f1tenth_gym.git
-cd f1tenth_gym
-
-# Create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install the environment in editable mode
-pip install -e .
+# From the root of the repository
+pip install -e ./f110_gym
 ```
 
-### 2. Usage Example
+## Usage Example
 
-The environment follows the standard Gymnasium `reset` and `step` loop:
+The environment follows the standard Gymnasium loop:
 
 ```python
 import gymnasium as gym
 import numpy as np
 
 # Create the environment
-env = gym.make('f110_gym:f110-v0', map='data/maps/Example/Example', render_mode='human', num_agents=1)
+env = gym.make('f110_gym:f110-v0', 
+               map='data/maps/F1/Oschersleben/Oschersleben_map', 
+               render_mode='human', 
+               num_agents=1)
 
-# Reset the environment
-obs, info = env.reset(options={'poses': np.array([[0.0, 0.0, 0.0]])})
+# Reset with initial poses
+obs, info = env.reset(options={'poses': np.array([[0.0, 0.0, 2.85]])})
 
 done = False
 while not done:
-    # Sample random action: [[steer, speed]]
-    action = np.array([[0.0, 1.0]]) 
+    # Action: [[steer, speed]]
+    action = np.array([[0.0, 2.0]]) 
     obs, reward, terminated, truncated, info = env.step(action)
     done = terminated or truncated
     env.render()

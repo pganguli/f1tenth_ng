@@ -2,6 +2,34 @@
 
 This repository contains planning and tracking algorithms for the F1TENTH Gym environment. It has been updated to support **Gymnasium** and **Pyglet 2.x**.
 
+## Core API
+
+### Planners
+
+All planners inherit from `BasePlanner` and implement a `.plan(obs)` method.
+
+```python
+from f110_planning.tracking import PurePursuitPlanner
+
+planner = PurePursuitPlanner(waypoints=waypoints)
+action = planner.plan(obs) # returns f110_planning.base.Action
+```
+
+- **Tracking**: `PurePursuitPlanner`, `LQRPlanner`, `StanleyPlanner`. Requires waypoints.
+- **Reactive**: `GapFollowerPlanner`, `DisparityExtenderPlanner`, `BubblePlanner`, `DynamicWaypointPlanner`, `LidarDNNPlanner`. Map-agnostic obstacle avoidance.
+- **Misc**: `HybridPlanner` (Manual override), `ManualPlanner`, `RandomPlanner`.
+
+### Actuation
+
+Planners return an `Action` object:
+
+```python
+@dataclass
+class Action:
+    steer: float # Steering angle in radians
+    speed: float # Velocity in m/s
+```
+
 ## Features
 
 - **Tracking Algorithms**:
@@ -13,7 +41,11 @@ This repository contains planning and tracking algorithms for the F1TENTH Gym en
   - `DisparityExtenderPlanner`: Disparity extension with obstacle inflation.
   - `BubblePlanner`: Local repulsion from nearest obstacles.
   - `DynamicWaypointPlanner`: Adaptive reactive waypoint generation.
-- **Utilities**: Waypoint loading, coordinate transformations, and geometry utilities optimized with `numba`.
+  - `LidarDNNPlanner`: End-to-end steering prediction using trained models.
+- **Utilities**:
+  - `waypoint_utils`: Loading, interpolation, and nearest-point search.
+  - `geometry_utils`: Coordinate transforms and Numba-optimized distance checks.
+  - `sim_utils`: Standardized environment setup and CLI argument parsing.
 
 ## Installation
 
@@ -21,7 +53,7 @@ We recommend installing the package in editable mode inside your virtual environ
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/f1tenth/f1tenth_ng.git
+git clone https://github.com/pganguli/f1tenth_ng.git
 cd f1tenth_ng/f110_planning
 
 # Install the package
@@ -32,13 +64,13 @@ pip install -e .
 
 ### Loading Waypoints
 
-You can use the built-in utility to load waypoints from a CSV file (e.g., a raceline):
+You can use the built-in utility to load waypoints from a CSV or TSV file:
 
 ```python
 from f110_planning.utils import load_waypoints
 
-# Load waypoints (reordered to [x, y, v, th])
-waypoints = load_waypoints('data/maps/Example/Example_raceline.csv')
+# Load waypoints
+waypoints = load_waypoints('data/maps/F1/Oschersleben/Oschersleben_centerline.tsv')
 ```
 
 ### Using a Planner (Pure Pursuit)
@@ -56,23 +88,4 @@ planner = PurePursuitPlanner(waypoints=waypoints)
 action = planner.plan(obs)
 
 # action.speed and action.steer are the resulting actuation values
-```
-
-## Related Repositories
-
-- [f110_gym](https://github.com/f1tenth/f1tenth_gym): The F1TENTH Gymnasium environment.
-
-## Citing
-
-If you find this planning library useful, please consider citing:
-
-```bibtex
-@inproceedings{okelly2020f1tenth,
-  title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
-  author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},
-  booktitle={NeurIPS 2019 Competition and Demonstration Track},
-  pages={77--89},
-  year={2020},
-  organization={PMLR}
-}
 ```

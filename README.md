@@ -15,7 +15,7 @@ We recommend using a virtual environment and installing both packages in editabl
 
 ```bash
 # Clone the repository
-git clone https://github.com/f1tenth/f1tenth_ng.git
+git clone https://github.com/pganguli/f1tenth_ng.git
 cd f1tenth_ng
 
 # Create and activate a virtual environment
@@ -25,6 +25,50 @@ source .venv/bin/activate
 # Install the gym and planning packages
 pip install -e ./f110_gym
 pip install -e ./f110_planning
+```
+
+## Usage Workflow
+
+The repository supports a complete research workflow from data generation to model evaluation:
+
+### 1. Data Generation
+
+Generate datasets of LiDAR scans and ground truth labels (heading error, wall distances) using a waypoint follower with added noise.
+
+```bash
+python scripts/datagen/waypoint_datagen.py --map data/maps/F1/Oschersleben/Oschersleben_map --max-steps 10000
+```
+
+### 2. Combine Datasets
+
+Merge multiple `.npz` files into a single training dataset with optional deduplication.
+
+```bash
+python scripts/datagen/combine_datasets.py data/datasets/file1.npz data/datasets/file2.npz --output data/datasets/combined.npz --dedup
+```
+
+### 3. Training
+
+Train LiDAR-based neural networks (e.g., for heading error prediction or wall distance estimation) using PyTorch Lightning.
+
+```bash
+python scripts/train/train.py --config scripts/train/config_heading.yaml
+```
+
+### 4. Simulation & Evaluation
+
+Test your planners (classic or DNN-based) in the simulation environment.
+
+**Tracking Planners (Pure Pursuit, LQR, Stanley):**
+
+```bash
+python scripts/sim/tracking_planners.py --map data/maps/F1/Oschersleben/Oschersleben_map
+```
+
+**Reactive Planners (Gap Follower, Disparity Extender, LiDAR DNN):**
+
+```bash
+python scripts/sim/reactive_planners.py --planner dnn --map data/maps/F1/Oschersleben/Oschersleben_map
 ```
 
 ## Quickstart: Waypoint Following
@@ -39,18 +83,18 @@ from f110_planning.utils import load_waypoints
 
 # 1. Create the environment
 env = gym.make('f110_gym:f110-v0', 
-               map='data/maps/Example/Example', 
+               map='data/maps/F1/Oschersleben/Oschersleben_map', 
                render_mode='human', 
                num_agents=1)
 
 # 2. Load waypoints using the utility function
-waypoints = load_waypoints('data/maps/Example/Example_raceline.csv')
+waypoints = load_waypoints('data/maps/F1/Oschersleben/Oschersleben_centerline.tsv')
 
 # 3. Initialize the planner
 planner = PurePursuitPlanner(waypoints=waypoints)
 
 # 4. Reset and run the simulation loop
-obs, info = env.reset(options={'poses': np.array([[0.7, 0.0, 1.37]])})
+obs, info = env.reset(options={'poses': np.array([[0.0, 0.0, 2.85]])})
 done = False
 
 while not done:
@@ -68,18 +112,3 @@ while not done:
 
 - [f110_gym README](f110_gym/README.md)
 - [f110_planning README](f110_planning/README.md)
-
-## Citing
-
-If you find this repository useful, please consider citing:
-
-```bibtex
-@inproceedings{okelly2020f1tenth,
-  title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
-  author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},
-  booktitle={NeurIPS 2019 Competition and Demonstration Track},
-  pages={77--89},
-  year={2020},
-  organization={PMLR}
-}
-```
