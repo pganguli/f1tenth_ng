@@ -12,3 +12,4 @@ flycheck_*
 .venv/
 scripts/train/lightning_logs/
 data/models/checkpoints/
+scripts/train/slurm_logs/
