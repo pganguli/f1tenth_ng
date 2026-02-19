@@ -11,6 +11,8 @@
 #SBATCH --output=scripts/train/slurm_logs/%x_%A_%a.out
 #SBATCH --error=scripts/train/slurm_logs/%x_%A_%a.err
 #SBATCH --array=0-5
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=pganguli@unc.edu
 
 # ── Config array: matches SLURM_ARRAY_TASK_ID 0-5 ──
 CONFIGS=(
