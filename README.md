@@ -55,6 +55,12 @@ Train LiDAR-based neural networks (e.g., for heading error prediction or wall di
 python scripts/train/train.py --config scripts/train/config_heading.yaml
 ```
 
+You can monitor the training progress using TensorBoard:
+
+```bash
+tensorboard --logdir lightning_logs
+```
+
 ### 4. Simulation & Evaluation
 
 Test your planners (classic or DNN-based) in the simulation environment.
@@ -78,11 +84,12 @@ This example demonstrates how to use `f110_gym` with a planner from `f110_planni
 ```python
 import gymnasium as gym
 import numpy as np
+import f110_gym
 from f110_planning.tracking import PurePursuitPlanner
 from f110_planning.utils import load_waypoints
 
 # 1. Create the environment
-env = gym.make('f110_gym:f110-v0', 
+env = gym.make('f110-v0', 
                map='data/maps/F1/Oschersleben/Oschersleben_map', 
                render_mode='human', 
                num_agents=1)

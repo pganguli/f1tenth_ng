@@ -29,9 +29,10 @@ The environment follows the standard Gymnasium loop:
 ```python
 import gymnasium as gym
 import numpy as np
+import f110_gym
 
 # Create the environment
-env = gym.make('f110_gym:f110-v0', 
+env = gym.make('f110-v0', 
                map='data/maps/F1/Oschersleben/Oschersleben_map', 
                render_mode='human', 
                num_agents=1)
