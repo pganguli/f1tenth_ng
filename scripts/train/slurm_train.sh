@@ -29,7 +29,8 @@ module purge
 module load cuda  # adjust version to what's available: module avail cuda
 
 # Activate venv (edit path if cloned elsewhere)
-cd "$SLURM_SUBMIT_DIR"
+cd "$SLURM_SUBMIT_DIR" || exit 1
+# shellcheck source=/dev/null
 source .venv/bin/activate
 
 # ── Run training ──
