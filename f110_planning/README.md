@@ -3,9 +3,17 @@
 This repository contains planning and tracking algorithms for the F1TENTH Gym environment. It has been updated to support **Gymnasium** and **Pyglet 2.x**.
 
 ## Features
-- **Tracking Algorithms**: Pure Pursuit, LQR, etc.
-- **Reactive Algorithms**: Follow the Gap, etc.
-- **Utilities**: Waypoint loading, coordinate transformations, and geometry utilities.
+
+- **Tracking Algorithms**:
+  - `PurePursuitPlanner`: Classic geometric path tracking.
+  - `LQRPlanner`: Linear Quadratic Regulator based tracking.
+  - `StanleyPlanner`: Stanley controller for precise path following.
+- **Reactive Algorithms**:
+  - `GapFollowerPlanner`: Robust Follow the Gap algorithm (FGM).
+  - `DisparityExtenderPlanner`: Disparity extension with obstacle inflation.
+  - `BubblePlanner`: Local repulsion from nearest obstacles.
+  - `DynamicWaypointPlanner`: Adaptive reactive waypoint generation.
+- **Utilities**: Waypoint loading, coordinate transformations, and geometry utilities optimized with `numba`.
 
 ## Installation
 
@@ -23,6 +31,7 @@ pip install -e .
 ## Quickstart
 
 ### Loading Waypoints
+
 You can use the built-in utility to load waypoints from a CSV file (e.g., a raceline):
 
 ```python
@@ -33,6 +42,7 @@ waypoints = load_waypoints('data/maps/Example/Example_raceline.csv')
 ```
 
 ### Using a Planner (Pure Pursuit)
+
 Here is a minimal example of using the `PurePursuitPlanner`:
 
 ```python
@@ -49,12 +59,14 @@ action = planner.plan(obs)
 ```
 
 ## Related Repositories
+
 - [f110_gym](https://github.com/f1tenth/f1tenth_gym): The F1TENTH Gymnasium environment.
 
 ## Citing
+
 If you find this planning library useful, please consider citing:
 
-```
+```bibtex
 @inproceedings{okelly2020f1tenth,
   title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
   author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},

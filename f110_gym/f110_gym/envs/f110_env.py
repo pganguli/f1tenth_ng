@@ -3,14 +3,14 @@ Author: Hongrui Zheng
 """
 
 # gym imports
-import pathlib
 import time
-from typing import Any
+from typing import Any, Optional
 
 import gymnasium as gym
 
 # others
 import numpy as np
+from numba import njit
 
 # gl
 import pyglet
@@ -18,6 +18,8 @@ from gymnasium import spaces
 
 # base classes
 from .base_classes import Integrator, Simulator
+from .rendering import EnvRenderer
+from .simulator_params import SimulatorParams
 
 pyglet.options["debug_gl"] = False
 
@@ -28,74 +30,105 @@ WINDOW_W = 1000
 WINDOW_H = 800
 
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals
+@njit(cache=True)
+def update_lap_counts(
+    poses_x: np.ndarray,
+    poses_y: np.ndarray,
+    start_xs: np.ndarray,
+    start_ys: np.ndarray,
+    start_rot: np.ndarray,
+    num_agents: int,
+    current_time: float,
+    near_starts: np.ndarray,
+    toggle_list: np.ndarray,
+    lap_counts: np.ndarray,
+    lap_times: np.ndarray,
+) -> None:
+    """
+    Update lap counts and times based on vehicle positions relative to start line.
+    """
+    left_t = 2.0
+    right_t = 2.0
+
+    for i in range(num_agents):
+        dx = poses_x[i] - start_xs[i]
+        dy = poses_y[i] - start_ys[i]
+
+        tx = start_rot[0, 0] * dx + start_rot[0, 1] * dy
+        ty = start_rot[1, 0] * dx + start_rot[1, 1] * dy
+
+        if ty > left_t:
+            ty -= left_t
+        elif ty < -right_t:
+            ty = -right_t - ty
+        else:
+            ty = 0.0
+
+        dist2 = tx**2 + ty**2
+        closes = dist2 <= 0.1
+
+        if closes and not near_starts[i]:
+            near_starts[i] = True
+            toggle_list[i] += 1
+        elif not closes and near_starts[i]:
+            near_starts[i] = False
+            toggle_list[i] += 1
+
+        lap_counts[i] = toggle_list[i] // 2
+        if toggle_list[i] < 4:
+            lap_times[i] = current_time
+
+
 class F110Env(gym.Env):
     """
-    OpenAI/Gymnasium environment for F1TENTH
+    F1TENTH Gym Environment.
 
-    Env should be initialized by calling gym.make('f110_gym:f110-v0', **kwargs)
+    This environment simulates the dynamics of high-speed 1/10th scale racing cars.
+    It provides a Gymnasium-compatible interface for training and evaluating 
+    navigation and control algorithms.
 
-    Args:
-        kwargs:
-            seed (int, default=12345): seed for random state and reproducibility
+    State includes:
+    - LIDAR scans (2D point clouds)
+    - Ego poses (x, y, theta)
+    - Linear and angular velocities
+    - Steering angles (at current step)
+    - Lap counters and times
+    - Collision status
 
-            map (str, default='vegas'): name of the map used for the environment. Currently, available environments include: 'berlin', 'vegas', 'skirk'. You could use a string of the absolute path to the yaml file of your custom map.
-
-            map_ext (str, default='png'): image extension of the map image file. For example 'png', 'pgm'
-
-            params (dict, default={'mu': 1.0489, 'C_Sf':, 'C_Sr':, 'lf': 0.15875, 'lr': 0.17145, 'h': 0.074, 'm': 3.74, 'I': 0.04712, 's_min': -0.4189, 's_max': 0.4189, 'sv_min': -3.2, 'sv_max': 3.2, 'v_switch':7.319, 'a_max': 9.51, 'v_min':-5.0, 'v_max': 20.0, 'width': 0.31, 'length': 0.58}): dictionary of vehicle parameters.
-            mu: surface friction coefficient
-            C_Sf: Cornering stiffness coefficient, front
-            C_Sr: Cornering stiffness coefficient, rear
-            lf: Distance from center of gravity to front axle
-            lr: Distance from center of gravity to rear axle
-            h: Height of center of gravity
-            m: Total mass of the vehicle
-            I: Moment of inertial of the entire vehicle about the z axis
-            s_min: Minimum steering angle constraint
-            s_max: Maximum steering angle constraint
-            sv_min: Minimum steering velocity constraint
-            sv_max: Maximum steering velocity constraint
-            v_switch: Switching velocity (velocity at which the acceleration is no longer able to create wheel spin)
-            a_max: Maximum longitudinal acceleration
-            v_min: Minimum longitudinal velocity
-            v_max: Maximum longitudinal velocity
-            width: width of the vehicle in meters
-            length: length of the vehicle in meters
-
-            num_agents (int, default=2): number of agents in the environment
-
-            timestep (float, default=0.01): physics timestep
-
-            ego_idx (int, default=0): ego's index in list of agents
-
-            lidar_dist (float, default=0): vertical distance between LiDAR and backshaft
+    Initialization (kwargs):
+        seed (int): Random seed.
+        map (str): Path to map yaml.
+        params (dict): Vehicle physics parameters (mu, masses, etc.).
+        num_agents (int): Number of racing agents.
+        timestep (float): Simulation physics interval.
+        ego_idx (int): Global index of the ego agent.
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     metadata = {"render_modes": ["human", "human_fast"], "render_fps": 200}
 
     # rendering
-    renderer = None
-    current_obs = None
-    render_callbacks = []
+    renderer: Optional["EnvRenderer"] = None
+    current_obs: Optional[dict[str, Any]] = None
+    render_callbacks: list[Any] = []
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         # kwargs extraction
         self.seed = kwargs.get("seed", 12345)
         self.render_mode = kwargs.get("render_mode", "human")
-        self.render_fps = kwargs.get("render_fps", 200)
-        self.map_name = kwargs.get("map")
-        
-        if self.map_name is None:
-            raise ValueError("Map must be specified. Please provide 'map' parameter to gym.make().")
+        self.render_fps = kwargs.get("render_fps", 100)
+        self.last_render_time = None
 
-        # different default maps
-        current_dir = pathlib.Path(__file__).parent.absolute()
-        if self.map_name in ["berlin", "skirk", "levine", "vegas"]:
-            self.map_path = str(current_dir / "maps" / f"{self.map_name}.yaml")
-        else:
-            self.map_path = self.map_name + ".yaml"
-
-        self.map_ext = kwargs.get("map_ext", ".png")
+        map_name = kwargs.get("map")
+        if map_name is None:
+            raise ValueError(
+                "Map must be specified. Please provide 'map' parameter to gym.make()."
+            )
+        self.map_name = str(map_name)
+        self.map_path = self.map_name + ".yaml"
+        self.map_ext = str(kwargs.get("map_ext", ".png"))
 
         default_params = {
             "mu": 1.0489,
@@ -122,9 +155,11 @@ class F110Env(gym.Env):
         # simulation parameters
         self.num_agents = kwargs.get("num_agents", 2)
         self.timestep = kwargs.get("timestep", 0.01)
-        
+
         # lap completion parameters
-        self.max_laps = kwargs.get("max_laps", 2)  # None to disable lap-based termination
+        self.max_laps = kwargs.get(
+            "max_laps", 2
+        )  # None to disable lap-based termination
 
         # default ego index
         self.ego_idx = kwargs.get("ego_idx", 0)
@@ -143,8 +178,6 @@ class F110Env(gym.Env):
         self.poses_y = []
         self.poses_theta = []
         self.collisions = np.zeros((self.num_agents,), dtype=np.float64)
-        # TODO: collision_idx not used yet
-        # self.collision_idx = -1 * np.ones((self.num_agents, ))
 
         # loop completion
         self.near_start = True
@@ -166,14 +199,16 @@ class F110Env(gym.Env):
         self.start_rot = np.eye(2)
 
         # initiate stuff
-        self.sim = Simulator(
-            self.params,
-            self.num_agents,
-            self.seed,
+        sim_params = SimulatorParams(
+            vehicle_params=self.params,
+            num_agents=self.num_agents,
+            seed=self.seed,
             time_step=self.timestep,
+            ego_idx=self.ego_idx,
             integrator=self.integrator,
             lidar_dist=self.lidar_dist,
         )
+        self.sim = Simulator(sim_params)
         self.sim.set_map(self.map_path, self.map_ext)
 
         # stateful observations for rendering
@@ -201,7 +236,7 @@ class F110Env(gym.Env):
                 "ego_idx": spaces.Discrete(self.num_agents),
                 "scans": spaces.Box(
                     low=0.0,
-                    high=30.0,
+                    high=100.0,
                     shape=(self.num_agents, num_beams),
                     dtype=np.float64,
                 ),
@@ -212,10 +247,16 @@ class F110Env(gym.Env):
                     low=-np.inf, high=np.inf, shape=(self.num_agents,), dtype=np.float64
                 ),
                 "poses_theta": spaces.Box(
-                    low=-np.pi, high=np.pi, shape=(self.num_agents,), dtype=np.float64
+                    low=-np.inf, high=np.inf, shape=(self.num_agents,), dtype=np.float64
                 ),
                 "linear_vels_x": spaces.Box(
                     low=-np.inf, high=np.inf, shape=(self.num_agents,), dtype=np.float64
+                ),
+                "steering_angles": spaces.Box(
+                    low=-np.inf,
+                    high=np.inf,
+                    shape=(self.num_agents,),
+                    dtype=np.float64,
                 ),
                 "linear_vels_y": spaces.Box(
                     low=-np.inf, high=np.inf, shape=(self.num_agents,), dtype=np.float64
@@ -247,44 +288,32 @@ class F110Env(gym.Env):
             toggle_list (np.ndarray): boolean mask of agents that have finished the lap
         """
 
-        # this is assuming 2 agents
-        # TODO: switch to maybe s-based
-        left_t = 2
-        right_t = 2
+        # pylint: disable=too-many-locals
 
-        poses_x = np.array(self.poses_x) - self.start_xs
-        poses_y = np.array(self.poses_y) - self.start_ys
-        delta_pt = np.dot(self.start_rot, np.stack((poses_x, poses_y), axis=0))
-        temp_y = delta_pt[1, :]
-        idx1 = temp_y > left_t
-        idx2 = temp_y < -right_t
-        temp_y[idx1] -= left_t
-        temp_y[idx2] = -right_t - temp_y[idx2]
-        temp_y[np.invert(np.logical_or(idx1, idx2))] = 0
-
-        dist2 = delta_pt[0, :] ** 2 + temp_y**2
-        closes = dist2 <= 0.1
-        for i in range(self.num_agents):
-            if closes[i] and not self.near_starts[i]:
-                self.near_starts[i] = True
-                self.toggle_list[i] += 1
-            elif not closes[i] and self.near_starts[i]:
-                self.near_starts[i] = False
-                self.toggle_list[i] += 1
-            self.lap_counts[i] = self.toggle_list[i] // 2
-            if self.toggle_list[i] < 4:
-                self.lap_times[i] = self.current_time
+        update_lap_counts(
+            np.array(self.poses_x),
+            np.array(self.poses_y),
+            self.start_xs,
+            self.start_ys,
+            self.start_rot,
+            self.num_agents,
+            self.current_time,
+            self.near_starts,
+            self.toggle_list,
+            self.lap_counts,
+            self.lap_times,
+        )
 
         # Check for collision-based termination
         collision_done = bool(self.collisions[self.ego_idx])
-        
+
         # Check for lap-based termination only if max_laps is set
         if self.max_laps is None:
             lap_done = False
         else:
             required_toggles = self.max_laps * 2
             lap_done = bool(np.all(self.toggle_list >= required_toggles))
-        
+
         done = collision_done or lap_done
 
         return bool(done), lap_done
@@ -333,6 +362,7 @@ class F110Env(gym.Env):
             "poses_x": obs["poses_x"],
             "poses_y": obs["poses_y"],
             "poses_theta": obs["poses_theta"],
+            "steering_angles": obs["steering_angles"],
             "lap_times": obs["lap_times"],
             "lap_counts": obs["lap_counts"],
             "scans": obs["scans"],
@@ -419,6 +449,7 @@ class F110Env(gym.Env):
             "poses_x": obs["poses_x"],
             "poses_y": obs["poses_y"],
             "poses_theta": obs["poses_theta"],
+            "steering_angles": obs["steering_angles"],
             "lap_times": obs["lap_times"],
             "lap_counts": obs["lap_counts"],
             "scans": obs["scans"],
@@ -452,23 +483,27 @@ class F110Env(gym.Env):
         """
         self.sim.update_params(params, agent_idx=index)
 
-    def add_render_callback(self, callback_func):
+    def add_render_callback(self, callback_func: Any) -> None:
         """
         Add extra drawing function to call during rendering.
 
         Args:
-            callback_func (function (EnvRenderer) -> None): custom function to called during render()
+            callback_func (function (EnvRenderer) -> None): custom function
+                                                            to call during render()
         """
 
         F110Env.render_callbacks.append(callback_func)
 
     def render(self) -> None:
         """
-        Renders the environment with pyglet. Use mouse scroll in the window to zoom in/out, use mouse click drag to pan. Shows the agents, the map, current fps (bottom left corner), and the race information near as text.
+        Renders the environment with pyglet. Use mouse scroll in the window to zoom in/out,
+        use mouse click drag to pan. Shows the agents, the map, current fps (bottom left corner),
+        and the race information near as text.
 
         Args:
             mode (str, default='human'): rendering mode, currently supports:
-                'human': slowed down rendering such that the env is rendered in a way that sim time elapsed is close to real time elapsed
+                'human': slowed down rendering such that the env is rendered in a way that sim time
+                         elapsed is close to real time elapsed
                 'human_fast': render as fast as possible
 
         Returns:
@@ -477,10 +512,11 @@ class F110Env(gym.Env):
 
         if F110Env.renderer is None:
             # first call, initialize everything
-            from f110_gym.envs.rendering import EnvRenderer
-
             F110Env.renderer = EnvRenderer(WINDOW_W, WINDOW_H)
             F110Env.renderer.update_map(self.map_name, self.map_ext)
+
+        if self.render_obs is None:
+            raise RuntimeError("Please call reset() before render().")
 
         F110Env.renderer.update_obs(self.render_obs)
 
@@ -490,7 +526,15 @@ class F110Env(gym.Env):
         F110Env.renderer.dispatch_events()
         F110Env.renderer.on_draw()
         F110Env.renderer.flip()
+
         if self.render_mode == "human":
-            time.sleep(1.0 / self.render_fps)
+            current_time = time.time()
+            if self.last_render_time is not None:
+                # Calculate how much we need to sleep to maintain target FPS
+                elapsed = current_time - self.last_render_time
+                sleep_time = (1.0 / self.render_fps) - elapsed
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+            self.last_render_time = time.time()
         elif self.render_mode == "human_fast":
             pass

@@ -19,11 +19,13 @@ def get_dt(bitmap: np.ndarray, resolution: float) -> np.ndarray:
     Uses scipy.ndimage, cannot be JITted.
 
         Args:
-            bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment, where 0 is obstacles, and 255 (or anything > 0) is freespace
+            bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment,
+                where 0 is obstacles, and 255 (or anything > 0) is freespace
             resolution (float): resolution of the input bitmap (m/cell)
 
         Returns:
-            dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the corresponding distance (in meters) to the closest obstacle
+            dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the
+                                        corresponding distance (in meters) to the closest obstacle
     """
     dt = resolution * edt(bitmap)
     return dt
@@ -33,13 +35,7 @@ def get_dt(bitmap: np.ndarray, resolution: float) -> np.ndarray:
 def xy_2_rc(
     x: float,
     y: float,
-    orig_x: float,
-    orig_y: float,
-    orig_c: float,
-    orig_s: float,
-    height: int,
-    width: int,
-    resolution: float,
+    map_params: tuple,
 ) -> tuple[int, int]:
     """
     Translate (x, y) coordinate into (r, c) in the matrix
@@ -47,20 +43,17 @@ def xy_2_rc(
         Args:
             x (float): coordinate in x (m)
             y (float): coordinate in y (m)
-            orig_x (float): x coordinate of the map origin (m)
-            orig_y (float): y coordinate of the map origin (m)
+            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
 
         Returns:
             r (int): row number in the transform matrix of the given point
             c (int): column number in the transform matrix of the given point
     """
-    # translation
-    x_trans = x - orig_x
-    y_trans = y - orig_y
+    orig_x, orig_y, orig_c, orig_s, height, width, resolution = map_params[:7]
 
-    # rotation
-    x_rot = x_trans * orig_c + y_trans * orig_s
-    y_rot = -x_trans * orig_s + y_trans * orig_c
+    # rotation (inlined translation)
+    x_rot = (x - orig_x) * orig_c + (y - orig_y) * orig_s
+    y_rot = -(x - orig_x) * orig_s + (y - orig_y) * orig_c
 
     # clip the state to be a cell
     if (
@@ -82,14 +75,7 @@ def xy_2_rc(
 def distance_transform(
     x: float,
     y: float,
-    orig_x: float,
-    orig_y: float,
-    orig_c: float,
-    orig_s: float,
-    height: int,
-    width: int,
-    resolution: float,
-    dt: np.ndarray,
+    map_params: tuple,
 ) -> float:
     """
     Look up corresponding distance in the distance matrix
@@ -97,35 +83,25 @@ def distance_transform(
         Args:
             x (float): x coordinate of the lookup point
             y (float): y coordinate of the lookup point
-            orig_x (float): x coordinate of the map origin (m)
-            orig_y (float): y coordinate of the map origin (m)
+            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
 
         Returns:
             distance (float): corresponding shortest distance to obstacle in meters
     """
-    r, c = xy_2_rc(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution)
+    dt = map_params[7]
+    r, c = xy_2_rc(x, y, map_params)
     distance = dt[r, c]
-    return distance
+    return float(distance)
 
 
 @njit(cache=True)
 def trace_ray(
-    x,
-    y,
-    theta_index,
-    sines,
-    cosines,
-    eps,
-    orig_x,
-    orig_y,
-    orig_c,
-    orig_s,
-    height,
-    width,
-    resolution,
-    dt,
-    max_range,
-):
+    x: float,
+    y: float,
+    theta_index: float,
+    scan_params: tuple,
+    map_params: tuple,
+) -> float:
     """
     Find the length of a specific ray at a specific scan angle theta
     Purely math calculation and loops, should be JITted.
@@ -143,13 +119,16 @@ def trace_ray(
 
     # int casting, and index precal trigs
     theta_index_ = int(theta_index)
+    sines = scan_params[4]
+    cosines = scan_params[5]
+    eps = scan_params[6]
+    max_range = scan_params[7]
+
     s = sines[theta_index_]
     c = cosines[theta_index_]
 
     # distance to nearest initialization
-    dist_to_nearest = distance_transform(
-        x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt
-    )
+    dist_to_nearest = distance_transform(x, y, map_params)
     total_dist = dist_to_nearest
 
     # ray tracing iterations
@@ -160,50 +139,36 @@ def trace_ray(
 
         # update dist_to_nearest for current point on ray
         # also keeps track of total ray length
-        dist_to_nearest = distance_transform(
-            x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt
-        )
+        dist_to_nearest = distance_transform(x, y, map_params)
         total_dist += dist_to_nearest
 
-    if total_dist > max_range:
-        total_dist = max_range
+    total_dist = min(total_dist, max_range)
 
     return total_dist
 
 
 @njit(cache=True)
 def get_scan(
-    pose,
-    theta_dis,
-    fov,
-    num_beams,
-    theta_index_increment,
-    sines,
-    cosines,
-    eps,
-    orig_x,
-    orig_y,
-    orig_c,
-    orig_s,
-    height,
-    width,
-    resolution,
-    dt,
-    max_range,
-):
+    pose: np.ndarray,
+    scan_params: tuple,
+    map_params: tuple,
+) -> np.ndarray:
     """
-    Perform the scan for each discretized angle of each beam of the laser, loop heavy, should be JITted
+    Perform the scan for each discretized angle of each beam of the laser,
+    loop heavy, should be JITted
 
         Args:
             pose (numpy.ndarray(3, )): current pose of the scan frame in the map
-            theta_dis (int): number of steps to discretize the angles between 0 and 2pi for look up
-            fov (float): field of view of the laser scan
-            num_beams (int): number of beams in the scan
-            theta_index_increment (float): increment between angle indices after discretization
+            scan_params (tuple): (theta_dis, fov, num_beams, theta_index_increment,
+                                 sines, cosines, eps, max_range)
+            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width,
+                                resolution, dt)
 
         Returns:
             scan (numpy.ndarray(n, )): resulting laser scan at the pose, n=num_beams
     """
+    theta_dis, fov, num_beams, theta_index_increment, _, _, _, _ = scan_params
+
     # empty scan array init
     scan = np.empty((num_beams,))
 
@@ -222,18 +187,8 @@ def get_scan(
             pose[0],
             pose[1],
             theta_index,
-            sines,
-            cosines,
-            eps,
-            orig_x,
-            orig_y,
-            orig_c,
-            orig_s,
-            height,
-            width,
-            resolution,
-            dt,
-            max_range,
+            scan_params,
+            map_params,
         )
 
         # increment the beam index
@@ -250,7 +205,6 @@ def get_scan(
 def check_ttc_jit(
     scan: np.ndarray,
     vel: float,
-    scan_angles: np.ndarray,
     cosines: np.ndarray,
     side_distances: np.ndarray,
     ttc_thresh: float,
@@ -261,9 +215,9 @@ def check_ttc_jit(
     Args:
         scan (np.ndarray(num_beams, )): current scan to check
         vel (float): current velocity
-        scan_angles (np.ndarray(num_beams, )): precomped angles of each beam
         cosines (np.ndarray(num_beams, )): precomped cosines of the scan angles
-        side_distances (np.ndarray(num_beams, )): precomped distances at each beam from the laser to the sides of the car
+        side_distances (np.ndarray(num_beams, )): precomped distances at each beam
+            from the laser to the sides of the car
         ttc_thresh (float): threshold for iTTC for collision
 
     Returns:
@@ -275,7 +229,7 @@ def check_ttc_jit(
         for i in range(num_beams):
             proj_vel = vel * cosines[i]
             ttc = (scan[i] - side_distances[i]) / proj_vel
-            if (ttc < ttc_thresh) and (ttc >= 0.0):
+            if 0.0 <= ttc < ttc_thresh:
                 in_collision = True
                 break
     else:
@@ -295,7 +249,7 @@ def cross(v1: np.ndarray, v2: np.ndarray) -> float:
     Returns:
         crossproduct (float): cross product
     """
-    return v1[0] * v2[1] - v1[1] * v2[0]
+    return float(v1[0] * v2[1] - v1[1] * v2[0])
 
 
 @njit(cache=True)
@@ -318,8 +272,8 @@ def are_collinear(pt_a: np.ndarray, pt_b: np.ndarray, pt_c: np.ndarray) -> bool:
 
 @njit(cache=True)
 def get_range(
-    pose: np.ndarray, beam_theta: float, va: np.ndarray, vb: np.ndarray
-) -> float:
+    pose, beam_theta: float, va, vb
+) :
     """
     Get the distance at a beam angle to the vector formed by two of the four vertices of a vehicle
 
@@ -332,29 +286,31 @@ def get_range(
         distance (float): smallest distance at beam theta from scanning pose to edge
     """
     o = pose[0:2]
-    v1 = o - va
-    v2 = vb - va
-    v3 = np.array([np.cos(beam_theta + np.pi / 2.0), np.sin(beam_theta + np.pi / 2.0)])
+    vec_oa = o - va
+    vec_ab = vb - va
+    vec_normal = np.array(
+        [np.cos(beam_theta + np.pi / 2.0), np.sin(beam_theta + np.pi / 2.0)]
+    )
 
-    denom = v2.dot(v3)
+    denom = vec_ab.dot(vec_normal)
     distance = np.inf
 
     if np.fabs(denom) > 0.0:
-        d1 = cross(v2, v1) / denom
-        d2 = v1.dot(v3) / denom
-        if d1 >= 0.0 and d2 >= 0.0 and d2 <= 1.0:
+        d1 = cross(vec_ab, vec_oa) / denom
+        d2 = vec_oa.dot(vec_normal) / denom
+        if d1 >= 0.0 and 0.0 <= d2 <= 1.0:
             distance = d1
     elif are_collinear(o, va, vb):
         da = np.linalg.norm(va - o)
         db = np.linalg.norm(vb - o)
         distance = min(da, db)
 
-    return distance
+    return float(distance)
 
 
 @njit(cache=True)
 def get_blocked_view_indices(
-    pose: np.ndarray, vertices: np.ndarray, scan_angles: np.ndarray
+    pose, vertices, scan_angles
 ) -> tuple[int, int]:
     """
     Get the indices of the start and end of blocked fov in scans by another vehicle
@@ -370,29 +326,26 @@ def get_blocked_view_indices(
     """
     # find four vectors formed by pose and 4 vertices:
     vecs = vertices - pose[:2]
-    vec_sq = np.square(vecs)
-    norms = np.sqrt(vec_sq[:, 0] + vec_sq[:, 1])
-    unit_vecs = vecs / norms.reshape(norms.shape[0], 1)
+    # norms = np.sqrt(np.sum(np.square(vecs), axis=1))
+    norms = np.empty((4,))
+    for i in range(4):
+        norms[i] = np.sqrt(vecs[i, 0] ** 2 + vecs[i, 1] ** 2)
+    unit_vecs = np.empty((4, 2))
+    for i in range(4):
+        unit_vecs[i, :] = vecs[i, :] / norms[i]
 
     # find angles between all four and pose vector
-    ego_x_vec = np.array([[np.cos(pose[2])], [np.sin(pose[2])]])
-
+    pose_theta = pose[2]
     angles_with_x = np.empty((4,))
     for i in range(4):
-        angle = np.arctan2(ego_x_vec[1], ego_x_vec[0]) - np.arctan2(
-            unit_vecs[i, 1], unit_vecs[i, 0]
-        )
+        angle = pose_theta - np.arctan2(unit_vecs[i, 1], unit_vecs[i, 0])
         if angle > np.pi:
-            angle = angle - 2 * np.pi
+            angle -= 2 * np.pi
         elif angle < -np.pi:
-            angle = angle + 2 * np.pi
-        angles_with_x[i] = -angle[0]
+            angle += 2 * np.pi
+        angles_with_x[i] = -angle
 
-    ind1 = int(np.argmin(np.abs(scan_angles - angles_with_x[0])))
-    ind2 = int(np.argmin(np.abs(scan_angles - angles_with_x[1])))
-    ind3 = int(np.argmin(np.abs(scan_angles - angles_with_x[2])))
-    ind4 = int(np.argmin(np.abs(scan_angles - angles_with_x[3])))
-    inds = [ind1, ind2, ind3, ind4]
+    inds = [int(np.argmin(np.abs(scan_angles - angles_with_x[i]))) for i in range(4)]
     return min(inds), max(inds)
 
 
@@ -434,7 +387,33 @@ def ray_cast(
     return scan
 
 
-class ScanSimulator2D(object):
+@njit(cache=True)
+def ray_cast_multiple(
+    pose: np.ndarray,
+    scan: np.ndarray,
+    scan_angles: np.ndarray,
+    opp_vertices: np.ndarray,
+) -> np.ndarray:
+    """
+    Modify a scan by ray casting onto multiple other agents
+
+    Args:
+        pose (np.ndarray(3, )): pose of the vehicle performing scan
+        scan (np.ndarray(num_beams, )): original scan to modify
+        scan_angles (np.ndarray(num_beams, )): corresponding beam angles
+        opp_vertices (np.ndarray(num_opps, 4, 2)): vertices of all other agents
+
+    Returns:
+        new_scan (np.ndarray(num_beams, )): modified scan
+    """
+    new_scan = scan
+    for i in range(opp_vertices.shape[0]):
+        new_scan = ray_cast(pose, new_scan, scan_angles, opp_vertices[i, :, :])
+    return new_scan
+
+
+# pylint: disable=too-many-instance-attributes
+class ScanSimulator2D:
     """
     2D LIDAR scan simulator class
 
@@ -442,7 +421,8 @@ class ScanSimulator2D(object):
         num_beams (int): number of beams in the scan
         fov (float): field of view of the laser scan
         eps (float, default=0.0001): ray tracing iteration termination condition
-        theta_dis (int, default=2000): number of steps to discretize the angles between 0 and 2pi for look up
+        theta_dis (int, default=2000): number of steps to discretize the angles
+            between 0 and 2pi for look up
         max_range (float, default=30.0): maximum range of the laser
     """
 
@@ -450,18 +430,18 @@ class ScanSimulator2D(object):
         self,
         num_beams: int,
         fov: float,
-        eps: float = 0.0001,
-        theta_dis: int = 2000,
-        max_range: float = 30.0,
+        **kwargs,
     ):
         # initialization
         self.num_beams = num_beams
         self.fov = fov
-        self.eps = eps
-        self.theta_dis = theta_dis
-        self.max_range = max_range
+        self.eps = kwargs.get("eps", 0.0001)
+        self.theta_dis = kwargs.get("theta_dis", 2000)
+        self.max_range = kwargs.get("max_range", 30.0)
         self.angle_increment = self.fov / (self.num_beams - 1)
-        self.theta_index_increment = theta_dis * self.angle_increment / (2.0 * np.pi)
+        self.theta_index_increment = (
+            self.theta_dis * self.angle_increment / (2.0 * np.pi)
+        )
         self.orig_c = None
         self.orig_s = None
         self.orig_x = None
@@ -469,14 +449,17 @@ class ScanSimulator2D(object):
         self.map_height = None
         self.map_width = None
         self.map_resolution = None
+        self.origin = None
+        self.map_img = None
         self.dt = None
 
         # precomputing corresponding cosines and sines of the angle array
-        theta_arr = np.linspace(0.0, 2 * np.pi, num=theta_dis)
+        theta_arr = np.linspace(0.0, 2 * np.pi, num=self.theta_dis)
         self.sines = np.sin(theta_arr)
         self.cosines = np.cos(theta_arr)
 
-    def set_map(self, map_path: str, map_ext: str) -> bool:
+    # pylint: disable=too-many-return-statements
+    def set_map(self, map_path: str, map_ext: str) -> None:
         """
         Set the bitmap of the scan simulator by path
 
@@ -487,14 +470,29 @@ class ScanSimulator2D(object):
             Returns:
                 flag (bool): if image reading and loading is successful
         """
-        # TODO: do we open the option to flip the images, and turn rgb into grayscale? or specify the exact requirements in documentation.
-        # TODO: throw error if image specification isn't met
+        # check if map yaml exists
+        if not os.path.exists(map_path):
+            print(f"Map yaml file not found at {map_path}")
+            return False
 
         # load map image
         map_img_path = os.path.splitext(map_path)[0] + map_ext
-        self.map_img = np.array(
-            Image.open(map_img_path).transpose(Image.FLIP_TOP_BOTTOM)
-        )
+        if not os.path.exists(map_img_path):
+            print(f"Map image file not found at {map_img_path}")
+            return False
+
+        try:
+            img_obj = Image.open(map_img_path).transpose(
+                Image.Transpose.FLIP_TOP_BOTTOM
+            )
+            # convert to grayscale if needed
+            if img_obj.mode != "L":
+                img_obj = img_obj.convert("L")
+            self.map_img = np.array(img_obj)
+        except (OSError, Image.UnidentifiedImageError) as ex:
+            print(f"Error opening/processing map image: {ex}")
+            return False
+
         self.map_img = self.map_img.astype(np.float64)
 
         # grayscale -> binary
@@ -505,13 +503,18 @@ class ScanSimulator2D(object):
         self.map_width = self.map_img.shape[1]
 
         # load map yaml
-        with open(map_path, "r") as yaml_stream:
+        with open(map_path, "r", encoding="utf-8") as yaml_stream:
             try:
                 map_metadata = yaml.safe_load(yaml_stream)
-                self.map_resolution = map_metadata["resolution"]
-                self.origin = map_metadata["origin"]
+                self.map_resolution = map_metadata.get("resolution")
+                self.origin = map_metadata.get("origin")
             except yaml.YAMLError as ex:
-                print(ex)
+                print(f"Error loading map yaml: {ex}")
+                return False
+
+        if self.map_resolution is None or self.origin is None:
+            print(f"Map metadata at {map_path} is missing 'resolution' or 'origin'.")
+            return False
 
         # calculate map parameters
         self.orig_x = self.origin[0]
@@ -520,23 +523,28 @@ class ScanSimulator2D(object):
         self.orig_c = np.cos(self.origin[2])
 
         # get the distance transform
+        if self.map_resolution is None:
+            return False
+
         self.dt = get_dt(self.map_img, self.map_resolution)
 
         return True
 
     def scan(
         self,
-        pose: np.ndarray,
+        pose,
         rng: Optional[np.random.Generator],
         std_dev: float = 0.01,
-    ) -> np.ndarray:
+    ) :
         """
         Perform simulated 2D scan by pose on the given map
 
             Args:
                 pose (numpy.ndarray (3, )): pose of the scan frame (x, y, theta)
-                rng (numpy.random.Generator): random number generator to use for whitenoise in scan, or None
-                std_dev (float, default=0.01): standard deviation of the generated whitenoise in the scan
+                rng (numpy.random.Generator): random number generator to use for
+                    whitenoise in scan, or None
+                std_dev (float, default=0.01): standard deviation of the generated
+                    whitenoise in the scan
 
             Returns:
                 scan (numpy.ndarray (n, )): data array of the laserscan, n=num_beams
@@ -548,15 +556,7 @@ class ScanSimulator2D(object):
         if self.map_height is None:
             raise ValueError("Map is not set for scan simulator.")
 
-        scan = get_scan(
-            pose,
-            self.theta_dis,
-            self.fov,
-            self.num_beams,
-            self.theta_index_increment,
-            self.sines,
-            self.cosines,
-            self.eps,
+        map_params = (
             self.orig_x,
             self.orig_y,
             self.orig_c,
@@ -565,7 +565,22 @@ class ScanSimulator2D(object):
             self.map_width,
             self.map_resolution,
             self.dt,
+        )
+        scan_params = (
+            self.theta_dis,
+            self.fov,
+            self.num_beams,
+            self.theta_index_increment,
+            self.sines,
+            self.cosines,
+            self.eps,
             self.max_range,
+        )
+
+        scan = get_scan(
+            pose,
+            scan_params,
+            map_params,
         )
 
         if rng is not None:

@@ -1,0 +1,24 @@
+# Config for Dual-Head Wall Distance Prediction
+data:
+  train_path: "data/datasets/lidar_tracking_combined_pure_pursuit_n17607.npz"
+  target_col: "left_wall_dist,right_wall_dist"
+  batch_size: 128
+  num_workers: 8
+  val_split: 0.1
+  pin_memory: true
+  prefetch_factor: 2
+  use_cache: true # Load into memory
+
+training:
+  max_epochs: 300
+  lr: 1e-3
+  weight_decay: 1e-5
+  early_stopping_patience: 20
+  lr_patience: 10
+  auto_lr_find: true
+  resume: true
+  precision: "16-mixed"
+  profiler: "simple" # Choices: null, "simple", "advanced", "pytorch"
+
+model:
+  arch_id: 5  # Using dual-head backbone family 2

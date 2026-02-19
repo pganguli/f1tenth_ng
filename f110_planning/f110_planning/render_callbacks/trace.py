@@ -1,3 +1,7 @@
+"""
+Render callback for visualizing the trajectory trace of an agent.
+"""
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
@@ -26,7 +30,7 @@ def create_trace_renderer(
 
         if not hasattr(e, shapes_attr):
             setattr(e, shapes_attr, [])
-        
+
         trace_shapes = getattr(e, shapes_attr)
 
         # Get current position for the specified agent

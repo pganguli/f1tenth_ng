@@ -1,11 +1,3 @@
-# Copyright 2020 Technical University of Munich, Professorship of Cyber-Physical Systems, Matthew O'Kelly, Aman Sinha, Hongrui Zheng
-# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 """
 Prototype of vehicle dynamics functions and classes for simulating 2D Single
 Track dynamic model
@@ -17,13 +9,17 @@ Author: Hongrui Zheng
 import numpy as np
 from numba import njit
 
+from .vehicle_params import VehicleParams
+
 # Constants
 GRAVITY = 9.81
 
 
 @njit(cache=True)
 def accl_constraints(
-    vel: float, accl: float, v_switch: float, a_max: float, v_min: float, v_max: float
+    vel: float,
+    accl: float,
+    params: VehicleParams,
 ) -> float:
     """
     Acceleration constraints, adjusts the acceleration based on constraints
@@ -31,26 +27,23 @@ def accl_constraints(
         Args:
             vel (float): current velocity of the vehicle
             accl (float): unconstraint desired acceleration
-            v_switch (float): switching velocity (velocity at which the acceleration is no longer able to create wheel spin)
-            a_max (float): maximum allowed acceleration
-            v_min (float): minimum allowed velocity
-            v_max (float): maximum allowed velocity
+            params (VehicleParams): vehicle parameters
 
         Returns:
             accl (float): adjusted acceleration
     """
 
     # positive accl limit
-    if vel > v_switch:
-        pos_limit = a_max * v_switch / vel
+    if vel > params.v_switch:
+        pos_limit = params.a_max * params.v_switch / vel
     else:
-        pos_limit = a_max
+        pos_limit = params.a_max
 
     # accl limit reached?
-    if (vel <= v_min and accl <= 0) or (vel >= v_max and accl >= 0):
+    if (vel <= params.v_min and accl <= 0) or (vel >= params.v_max and accl >= 0):
         accl = 0.0
-    elif accl <= -a_max:
-        accl = -a_max
+    elif accl <= -params.a_max:
+        accl = -params.a_max
     elif accl >= pos_limit:
         accl = pos_limit
 
@@ -61,10 +54,7 @@ def accl_constraints(
 def steering_constraint(
     steering_angle: float,
     steering_velocity: float,
-    s_min: float,
-    s_max: float,
-    sv_min: float,
-    sv_max: float,
+    params: VehicleParams,
 ) -> float:
     """
     Steering constraints, adjusts the steering velocity based on constraints
@@ -72,49 +62,31 @@ def steering_constraint(
         Args:
             steering_angle (float): current steering_angle of the vehicle
             steering_velocity (float): unconstraint desired steering_velocity
-            s_min (float): minimum steering angle
-            s_max (float): maximum steering angle
-            sv_min (float): minimum steering velocity
-            sv_max (float): maximum steering velocity
+            params (VehicleParams): vehicle parameters
 
         Returns:
             steering_velocity (float): adjusted steering velocity
     """
 
     # constraint steering velocity
-    if (steering_angle <= s_min and steering_velocity <= 0) or (
-        steering_angle >= s_max and steering_velocity >= 0
+    if (steering_angle <= params.s_min and steering_velocity <= 0) or (
+        steering_angle >= params.s_max and steering_velocity >= 0
     ):
         steering_velocity = 0.0
-    elif steering_velocity <= sv_min:
-        steering_velocity = sv_min
-    elif steering_velocity >= sv_max:
-        steering_velocity = sv_max
+    elif steering_velocity <= params.sv_min:
+        steering_velocity = params.sv_min
+    elif steering_velocity >= params.sv_max:
+        steering_velocity = params.sv_max
 
     return steering_velocity
 
 
 @njit(cache=True)
 def vehicle_dynamics_ks(
-    x,
-    u_init,
-    mu,
-    C_Sf,
-    C_Sr,
-    lf,
-    lr,
-    h,
-    m,
-    I,
-    s_min,
-    s_max,
-    sv_min,
-    sv_max,
-    v_switch,
-    a_max,
-    v_min,
-    v_max,
-):
+    x: np.ndarray,
+    u_init: np.ndarray,
+    params: VehicleParams,
+) -> np.ndarray:
     """
     Single Track Kinematic Vehicle Dynamics.
 
@@ -133,13 +105,13 @@ def vehicle_dynamics_ks(
             f (numpy.ndarray): right hand side of differential equations
     """
     # wheelbase
-    lwb = lf + lr
+    lwb = params.lf + params.lr
 
     # constraints
     u = np.array(
         [
-            steering_constraint(x[2], u_init[0], s_min, s_max, sv_min, sv_max),
-            accl_constraints(x[3], u_init[1], v_switch, a_max, v_min, v_max),
+            steering_constraint(x[2], u_init[0], params),
+            accl_constraints(x[3], u_init[1], params),
         ]
     )
 
@@ -158,25 +130,10 @@ def vehicle_dynamics_ks(
 
 @njit(cache=True)
 def vehicle_dynamics_st(
-    x,
-    u_init,
-    mu,
-    C_Sf,
-    C_Sr,
-    lf,
-    lr,
-    h,
-    m,
-    I,
-    s_min,
-    s_max,
-    sv_min,
-    sv_max,
-    v_switch,
-    a_max,
-    v_min,
-    v_max,
-):
+    x: np.ndarray,
+    u_init: np.ndarray,
+    params: VehicleParams,
+) -> np.ndarray:
     """
     Single Track Dynamic Vehicle Dynamics.
 
@@ -203,37 +160,22 @@ def vehicle_dynamics_st(
     # constraints
     u = np.array(
         [
-            steering_constraint(x[2], u_init[0], s_min, s_max, sv_min, sv_max),
-            accl_constraints(x[3], u_init[1], v_switch, a_max, v_min, v_max),
+            steering_constraint(x[2], u_init[0], params),
+            accl_constraints(x[3], u_init[1], params),
         ]
     )
 
     # switch to kinematic model for small velocities
     if abs(x[3]) < 0.5:
         # wheelbase
-        lwb = lf + lr
+        lwb = params.lf + params.lr
 
         # system dynamics
         x_ks = x[0:5]
         f_ks = vehicle_dynamics_ks(
             x_ks,
             u,
-            mu,
-            C_Sf,
-            C_Sr,
-            lf,
-            lr,
-            h,
-            m,
-            I,
-            s_min,
-            s_max,
-            sv_min,
-            sv_max,
-            v_switch,
-            a_max,
-            v_min,
-            v_max,
+            params,
         )
         f = np.hstack(
             (
@@ -257,35 +199,50 @@ def vehicle_dynamics_st(
                 u[0],
                 u[1],
                 x[5],
-                -mu
-                * m
-                / (x[3] * I * (lr + lf))
+                -params.mu
+                * params.m
+                / (x[3] * params.MoI * (params.lr + params.lf))
                 * (
-                    lf**2 * C_Sf * (g * lr - u[1] * h)
-                    + lr**2 * C_Sr * (g * lf + u[1] * h)
+                    params.lf**2 * params.C_Sf * (g * params.lr - u[1] * params.h)
+                    + params.lr**2 * params.C_Sr * (g * params.lf + u[1] * params.h)
                 )
                 * x[5]
-                + mu
-                * m
-                / (I * (lr + lf))
-                * (lr * C_Sr * (g * lf + u[1] * h) - lf * C_Sf * (g * lr - u[1] * h))
+                + params.mu
+                * params.m
+                / (params.MoI * (params.lr + params.lf))
+                * (
+                    params.lr * params.C_Sr * (g * params.lf + u[1] * params.h)
+                    - params.lf * params.C_Sf * (g * params.lr - u[1] * params.h)
+                )
                 * x[6]
-                + mu * m / (I * (lr + lf)) * lf * C_Sf * (g * lr - u[1] * h) * x[2],
+                + params.mu
+                * params.m
+                / (params.MoI * (params.lr + params.lf))
+                * params.lf
+                * params.C_Sf
+                * (g * params.lr - u[1] * params.h)
+                * x[2],
                 (
-                    mu
-                    / (x[3] ** 2 * (lr + lf))
+                    params.mu
+                    / (x[3] ** 2 * (params.lr + params.lf))
                     * (
-                        C_Sr * (g * lf + u[1] * h) * lr
-                        - C_Sf * (g * lr - u[1] * h) * lf
+                        params.C_Sr * (g * params.lf + u[1] * params.h) * params.lr
+                        - params.C_Sf * (g * params.lr - u[1] * params.h) * params.lf
                     )
                     - 1
                 )
                 * x[5]
-                - mu
-                / (x[3] * (lr + lf))
-                * (C_Sr * (g * lf + u[1] * h) + C_Sf * (g * lr - u[1] * h))
+                - params.mu
+                / (x[3] * (params.lr + params.lf))
+                * (
+                    params.C_Sr * (g * params.lf + u[1] * params.h)
+                    + params.C_Sf * (g * params.lr - u[1] * params.h)
+                )
                 * x[6]
-                + mu / (x[3] * (lr + lf)) * (C_Sf * (g * lr - u[1] * h)) * x[2],
+                + params.mu
+                / (x[3] * (params.lr + params.lf))
+                * (params.C_Sf * (g * params.lr - u[1] * params.h))
+                * x[2],
             ]
         )
 
@@ -298,10 +255,7 @@ def pid(
     steer: float,
     current_speed: float,
     current_steer: float,
-    max_sv: float,
-    max_a: float,
-    max_v: float,
-    min_v: float,
+    params: VehicleParams,
 ) -> tuple[float, float]:
     """
     Basic controller for speed/steer -> accl./steer vel.
@@ -317,7 +271,7 @@ def pid(
     # steering
     steer_diff = steer - current_steer
     if np.fabs(steer_diff) > 1e-4:
-        sv = (steer_diff / np.fabs(steer_diff)) * max_sv
+        sv = (steer_diff / np.fabs(steer_diff)) * params.sv_max
     else:
         sv = 0.0
 
@@ -327,21 +281,21 @@ def pid(
     if current_speed > 0.0:
         if vel_diff > 0:
             # accelerate
-            kp = 10.0 * max_a / max_v
+            kp = 10.0 * params.a_max / params.v_max
             accl = kp * vel_diff
         else:
             # braking
-            kp = 10.0 * max_a / (-min_v)
+            kp = 10.0 * params.a_max / (-params.v_min)
             accl = kp * vel_diff
     # currently backwards
     else:
         if vel_diff > 0:
             # braking
-            kp = 2.0 * max_a / max_v
+            kp = 2.0 * params.a_max / params.v_max
             accl = kp * vel_diff
         else:
             # accelerating
-            kp = 2.0 * max_a / (-min_v)
+            kp = 2.0 * params.a_max / (-params.v_min)
             accl = kp * vel_diff
 
     return accl, sv

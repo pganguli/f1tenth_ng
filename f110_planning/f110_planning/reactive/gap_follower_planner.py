@@ -1,30 +1,153 @@
-import numpy as np
+"""
+Gap Follower Planner (FGM) for F1TENTH.
+
+Logic: Contiguous Free Space.
+Mechanism:
+1. Finds the closest obstacle and sets a 'bubble' of nearby LiDAR beams to zero.
+2. Identifies the largest contiguous sequence (the 'gap') of non-zero LiDAR beams.
+3. Finds the 'best point' (usually the midpoint or furthest point) within that
+   specific gap and steers towards it.
+"""
+
 from typing import Any
 
-from .. import Action, BasePlanner
+import numpy as np
+from numba import njit
+
+from ..base import Action, BasePlanner
+from ..utils import (
+    F110_MAX_STEER,
+    LIDAR_FOV,
+    LIDAR_MIN_ANGLE,
+    index_to_angle,
+)
 
 # Constants
-LIDAR_IGNORE_INDICES = 135
-MAX_LIDAR_DIST = 3000000.0
+LIDAR_MIN_CONSIDERED_ANGLE = -np.pi / 2
+LIDAR_MAX_CONSIDERED_ANGLE = np.pi / 2
+MAX_LIDAR_DIST = 10.0  # meters
 
 
-class GapFollowerPlanner(BasePlanner):
+@njit(cache=True)
+def find_max_gap_jit(free_space_ranges: np.ndarray) -> tuple[int, int]:
     """
-    Gap Follower Planner for F1TENTH
+    Identifies the largest contiguous sequence of non-zero values in a scan.
+
+    Args:
+        free_space_ranges: Array of LiDAR ranges where obstacles have been masked.
+
+    Returns:
+        A tuple of (start_index, end_index) for the largest gap.
+    """
+    max_start = 0
+    max_end = 0
+    max_len = 0
+
+    current_start = -1
+    for i, val in enumerate(free_space_ranges):
+        if val != 0:
+            if current_start == -1:
+                current_start = i
+        else:
+            if current_start != -1:
+                current_len = i - current_start
+                if current_len > max_len:
+                    max_len = current_len
+                    max_start = current_start
+                    max_end = i
+                current_start = -1
+
+    if current_start != -1:
+        current_len = len(free_space_ranges) - current_start
+        if current_len > max_len:
+            max_start = current_start
+            max_end = len(free_space_ranges)
+
+    return max_start, max_end
+
+
+@njit(cache=True)
+def find_best_point_jit(
+    start_i: int, end_i: int, ranges: np.ndarray, best_point_conv_size: int
+) -> int:
+    """
+    Finds the deepest point within a gap using a sliding window average.
+
+    Args:
+        start_i: Start index of the gap.
+        end_i: End index of the gap.
+        ranges: Original LiDAR ranges.
+        best_point_conv_size: Size of the smoothing window.
+
+    Returns:
+        The index of the chosen target point.
+    """
+    sub_ranges = ranges[start_i:end_i]
+    if len(sub_ranges) == 0:
+        return start_i
+
+    n = len(sub_ranges)
+    k = best_point_conv_size
+
+    if n < k:
+        max_val = -1.0
+        max_idx = 0
+        for i in range(n):
+            if sub_ranges[i] > max_val:
+                max_val = sub_ranges[i]
+                max_idx = i
+        return max_idx + start_i
+
+    current_sum = 0.0
+    for i in range(k):
+        current_sum += sub_ranges[i]
+
+    max_sum = current_sum
+    max_idx = k // 2
+
+    for i in range(1, n - k + 1):
+        current_sum = current_sum - sub_ranges[i - 1] + sub_ranges[i + k - 1]
+        if current_sum > max_sum:
+            max_sum = current_sum
+            max_idx = i + k // 2
+
+    return max_idx + start_i
+
+
+class GapFollowerPlanner(BasePlanner):  # pylint: disable=too-many-instance-attributes
+    """
+    Reactive planner that steers toward the largest contiguous gap in LiDAR scans.
+
+    The "Follow the Gap" (FGM) algorithm works by:
+    1. Preprocessing the scan to ignore the area behind the vehicle.
+    2. Placing a "virtual bubble" around the closest obstacle to avoid collisions.
+    3. Identifying the largest sequence of obstacle-free beams (the gap).
+    4. Navigating toward the deepest point within that gap.
     """
 
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
     def __init__(
         self,
-        bubble_radius: float = 160,
-        corners_speed: float = 5.0,
-        straights_speed: float = 8.0,
-        straights_steering_angle: float = np.pi / 18,  # 10 degrees
+        bubble_radius: int = 160,
+        corners_speed: float = 4.0,
+        straights_speed: float = 6.0,
+        straights_steering_angle: float = np.pi / 18,
         preprocess_conv_size: int = 3,
         best_point_conv_size: int = 80,
         max_lidar_dist: float = MAX_LIDAR_DIST,
     ):
-        # used when calculating the angles of the LiDAR data
-        self.radians_per_elem = None
+        """
+        Initializes the Gap Follower with specific tuning parameters.
+
+        Args:
+            bubble_radius: Number of beams to zero-out around the closest obstacle.
+            corners_speed: Velocity used when steering is significant.
+            straights_speed: Velocity used when the path is relatively straight.
+            straights_steering_angle: Threshold for switching between corner and straight speed.
+            preprocess_conv_size: Window size for initial LiDAR scan smoothing.
+            best_point_conv_size: Window size for finding the deepest part of a gap.
+            max_lidar_dist: Clipping distance for LiDAR sensor data.
+        """
         self.bubble_radius = bubble_radius
         self.corners_speed = corners_speed
         self.straights_speed = straights_speed
@@ -33,87 +156,55 @@ class GapFollowerPlanner(BasePlanner):
         self.best_point_conv_size = best_point_conv_size
         self.max_lidar_dist = max_lidar_dist
 
-    def preprocess_lidar(self, ranges: np.ndarray) -> np.ndarray:
-        """Preprocess the LiDAR scan array. Expert implementation includes:
-        1.Setting each value to the mean over some window
-        2.Rejecting high values (eg. > 3m)
+    def preprocess_lidar(self, ranges: np.ndarray) -> tuple[np.ndarray, int, int]:
         """
-        self.radians_per_elem = (2 * np.pi) / len(ranges)
-        # we won't use the LiDAR data from directly behind us
-        proc_ranges = np.array(ranges[LIDAR_IGNORE_INDICES:-LIDAR_IGNORE_INDICES])
-        # sets each value to the mean over a given window
+        Slices the LiDAR scan to the front hemisphere and applies smoothing.
+        """
+        num_beams = len(ranges)
+        idx_start = int(
+            ((LIDAR_MIN_CONSIDERED_ANGLE - LIDAR_MIN_ANGLE) / LIDAR_FOV)
+            * (num_beams - 1)
+        )
+        idx_end = int(
+            ((LIDAR_MAX_CONSIDERED_ANGLE - LIDAR_MIN_ANGLE) / LIDAR_FOV)
+            * (num_beams - 1)
+        )
+
+        proc_ranges = np.array(ranges[idx_start:idx_end])
         proc_ranges = (
             np.convolve(proc_ranges, np.ones(self.preprocess_conv_size), "same")
             / self.preprocess_conv_size
         )
         proc_ranges = np.clip(proc_ranges, 0, self.max_lidar_dist)
-        return proc_ranges
+        return proc_ranges, idx_start, num_beams
 
-    def find_max_gap(self, free_space_ranges: np.ndarray) -> tuple[int, int]:
-        """Return the start index & end index of the max gap in free_space_ranges
-        free_space_ranges: list of LiDAR data which contains a 'bubble' of zeros
+    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Action:  # pylint: disable=too-many-locals
         """
-        # mask the bubble
-        masked = np.ma.masked_where(free_space_ranges == 0, free_space_ranges)
-        # get a slice for each contigous sequence of non-bubble data
-        slices = np.ma.notmasked_contiguous(masked)
-        max_len = slices[0].stop - slices[0].start
-        chosen_slice = slices[0]
-        # I think we will only ever have a maximum of 2 slices but will handle an
-        # indefinitely sized list for portablility
-        for sl in slices[1:]:
-            sl_len = sl.stop - sl.start
-            if sl_len > max_len:
-                max_len = sl_len
-                chosen_slice = sl
-        return chosen_slice.start, chosen_slice.stop
-
-    def find_best_point(self, start_i: int, end_i: int, ranges: np.ndarray) -> int:
-        """Start_i & end_i are start and end indices of max-gap range, respectively
-        Return index of best point in ranges
-        Naive: Choose the furthest point within ranges and go there
+        Computes the next steering and speed action based on the 'Follow the Gap' logic.
         """
-        # do a sliding window average over the data in the max gap, this will
-        # help the car to avoid hitting corners
-        averaged_max_gap = (
-            np.convolve(
-                ranges[start_i:end_i], np.ones(self.best_point_conv_size), "same"
-            )
-            / self.best_point_conv_size
-        )
-        return averaged_max_gap.argmax() + start_i
+        ranges = obs["scans"][ego_idx]
+        proc_ranges, idx_offset, num_beams = self.preprocess_lidar(ranges)
 
-    def get_angle(self, range_index: int, range_len: int) -> float:
-        """Get the angle of a particular element in the LiDAR data and transform it into an appropriate steering angle"""
-        lidar_angle = (range_index - (range_len / 2)) * self.radians_per_elem
-        steering_angle = lidar_angle / 2
-        return steering_angle
-
-    def plan(self, obs: dict[str, Any], ego_idx: int) -> Action:
-        """Process each LiDAR scan as per the Follow Gap algorithm & publish an AckermannDriveStamped Message"""
-        proc_ranges = self.preprocess_lidar(obs["scans"][ego_idx])
-        # Find closest point to LiDAR
         closest = proc_ranges.argmin()
 
-        # Eliminate all points inside 'bubble' (set them to zero)
-        min_index = closest - self.bubble_radius
-        max_index = closest + self.bubble_radius
-        if min_index < 0:
-            min_index = 0
-        if max_index >= len(proc_ranges):
-            max_index = len(proc_ranges) - 1
+        min_index = max(closest - self.bubble_radius, 0)
+        max_index = min(closest + self.bubble_radius, len(proc_ranges) - 1)
         proc_ranges[min_index:max_index] = 0
 
-        # Find max length gap
-        gap_start, gap_end = self.find_max_gap(proc_ranges)
+        gap_start, gap_end = find_max_gap_jit(proc_ranges)
 
-        # Find the best point in the gap
-        best = self.find_best_point(gap_start, gap_end, proc_ranges)
+        best = find_best_point_jit(
+            gap_start, gap_end, proc_ranges, self.best_point_conv_size
+        )
 
-        # Publish Drive message
-        steering_angle = self.get_angle(best, len(proc_ranges))
-        if abs(steering_angle) > self.straights_steering_angle:
-            speed = self.corners_speed
-        else:
-            speed = self.straights_speed
-        return Action(steer=steering_angle, speed=speed)
+        final_idx = best + idx_offset
+        steering_angle = index_to_angle(final_idx, num_beams)
+        steering_angle = np.clip(steering_angle, -F110_MAX_STEER, F110_MAX_STEER)
+
+        mode_speed = (
+            self.straights_speed
+            if abs(steering_angle) < self.straights_steering_angle
+            else self.corners_speed
+        )
+
+        return Action(steer=steering_angle, speed=mode_speed)

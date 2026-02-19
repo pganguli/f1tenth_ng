@@ -1,3 +1,7 @@
+"""
+LiDAR visualization and analysis utilities for the F1TENTH simulation.
+"""
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
@@ -7,66 +11,55 @@ from f110_planning.utils import get_heading_error, get_side_distances
 
 def render_lidar(env_renderer: EnvRenderer) -> None:
     """
-    Draw LiDAR rays in Pyglet 2.x using pyglet.shapes.Line.
+    Render LIDAR point cloud rays.
+
+    Draws lines from the car center to detected obstacles. Closer hits are
+    rendered in red, while farther ones fade to blue.
+
+    Note: The world-to-pixel scale is 50.0.
     """
-    fov = 4.7
-    e = env_renderer
-
     # Get latest scans from EnvRenderer
-    if e.scans is None or e.poses is None:
+    if env_renderer.scans is None or env_renderer.poses is None:
         return
-
-    scan = e.scans[0]  # Ego scan
-
-    num_rays = len(scan)
-    angles = np.linspace(-fov / 2, fov / 2, num_rays)
-    yaw = e.poses[0][2]
 
     # Car center (approx) from vertices
-    if not e.cars:
+    if not env_renderer.cars:
         return
 
-    v = e.cars[0].vertices
-    x_car = np.mean(v[::2])
-    y_car = np.mean(v[1::2])
-
-    # Draw every step-th ray for performance
-    step = 30
-    scan_sub = scan[::step]
-    angles_sub = angles[::step]
+    x_car = np.mean(env_renderer.cars[0].vertices[::2])
+    y_car = np.mean(env_renderer.cars[0].vertices[1::2])
+    yaw = env_renderer.poses[0][2]
 
     # Clear previous lines
-    if not hasattr(e, "lidar_lines"):
-        e.lidar_lines = []
+    if not hasattr(env_renderer, "lidar_lines"):
+        env_renderer.lidar_lines = []
     else:
-        for line in e.lidar_lines:
+        for line in env_renderer.lidar_lines:
             line.delete()
-        e.lidar_lines = []
+        env_renderer.lidar_lines = []
 
-    # Scale for visualization
-    scale = 50.0
+    # Draw every 30th ray for performance
+    # Scale for visualization is 50.0
+    scan = env_renderer.scans[0]
+    angles = np.linspace(-4.7 / 2, 4.7 / 2, len(scan))
 
-    for r, theta in zip(scan_sub, angles_sub):
+    for r, theta in zip(scan[::30], angles[::30]):
         if r <= 0.0:
             continue
 
-        dx = r * np.cos(theta + yaw) * scale
-        dy = r * np.sin(theta + yaw) * scale
-
         # Simple color coding: closer = red, farther = blue
         c = int(min(r / 10.0, 1.0) * 255)
-        color = (255, 255 - c, 255 - c)
-
-        line = pyglet.shapes.Line(
-            x_car,
-            y_car,
-            x_car + dx,
-            y_car + dy,
-            thickness=1,
-            color=color,
-            batch=e.batch,
+        env_renderer.lidar_lines.append(
+            pyglet.shapes.Line(
+                x_car,
+                y_car,
+                x_car + r * np.cos(theta + yaw) * 50.0,
+                y_car + r * np.sin(theta + yaw) * 50.0,
+                thickness=1,
+                color=(255, 255 - c, 255 - c),
+                batch=env_renderer.batch,
+            )
         )
-        e.lidar_lines.append(line)
 
 
 def render_side_distances(env_renderer: EnvRenderer) -> None:
@@ -150,8 +143,9 @@ def create_heading_error_renderer(waypoints: np.ndarray, agent_idx: int = 0):
             )
 
         # Update label text and position
+        deg = np.degrees(heading_error)
         e.heading_error_label.text = (
-            f"Heading Error: {heading_error: .3f} rad ({np.degrees(heading_error): .1f}°)"
+            f"Heading Error: {heading_error: .3f} rad ({deg: .1f}°)"
         )
         e.heading_error_label.x = e.width - 20
         e.heading_error_label.y = 80

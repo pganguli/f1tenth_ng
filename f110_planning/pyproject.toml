@@ -4,22 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "f110_planning"
-version = "0.0.1"
+version = "0.1.1"
 authors = [
-  {name = "Hongrui Zheng", email = "billyzheng.bz@gmail.com"}
+  {name = "Hongrui Zheng", email = "billyzheng.bz@gmail.com"},
+  {name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com"},
+  {name = "Tingan Zhu", email = "tingan@cs.unc.edu"},
+  {name = "Anoush Mudaliar", email = "amudaliar@unc.edu"}
 ]
 description = "Planning algorithms for F1TENTH gym environment"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = [
-  "numpy",
-  "numba",
-  "pyglet",
-  "scikit-learn",
-  "simple-pid",
+  "numpy>=1.23.5",
+  "pandas>=1.5.3",
+  "numba>=0.57.0",
+  "pyglet>=2.0.10",
+  "simple-pid>=2.0.0",
+  "torch>=2.0.0",
   "f110_gym",
 ]
 
 [project.urls]
 Homepage = "https://f1tenth.org"
-
-

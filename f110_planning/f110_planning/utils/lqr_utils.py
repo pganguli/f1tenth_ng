@@ -6,21 +6,32 @@ import numpy as np
 from numba import njit
 
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments, invalid-name
 @njit(cache=True)
-def solve_lqr(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray, tolerance: float, max_num_iteration: int) -> np.ndarray:
+def solve_lqr(
+    A: np.ndarray,
+    B: np.ndarray,
+    Q: np.ndarray,
+    R: np.ndarray,
+    tolerance: float,
+    max_num_iteration: int,
+) -> np.ndarray:
     """
-    Iteratively calculating feedback matrix K
+    Solves the Discrete-time Algebraic Riccati Equation (DARE) iteratively.
+
+    This finds the steady-state feedback matrix K that minimizes the quadratic
+    cost function of the system.
 
     Args:
-        A: matrix_a
-        B: matrix_b
-        Q: matrix_q
-        R: matrix_r_
-        tolerance: lqr_eps
-        max_num_iteration: max_iteration
+        A: Discrete-time state transition matrix.
+        B: Discrete-time input matrix.
+        Q: State cost matrix.
+        R: Input cost matrix.
+        tolerance: Convergence threshold for the P matrix update.
+        max_num_iteration: Maximum number of iterations to perform.
 
     Returns:
-        K: feedback matrix
+        The optimal feedback gain matrix K.
     """
 
     M = np.zeros((Q.shape[0], R.shape[1]))
@@ -41,7 +52,6 @@ def solve_lqr(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray, tolera
             + Q
         )
 
-        # check the difference between P and P_next
         diff = np.abs(np.max(P_next - P))
         P = P_next
 
@@ -51,35 +61,31 @@ def solve_lqr(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray, tolera
 
 
 @njit(cache=True)
-def update_matrix(vehicle_state: np.ndarray, state_size: int, timestep: float, wheelbase: float) -> tuple[np.ndarray, np.ndarray]:
+def update_matrix(
+    vehicle_state: np.ndarray, state_size: int, timestep: float, wheelbase: float
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    calc A and b matrices of linearized, discrete system.
+    Linearizes a kinematic bicycle model into discrete state-space form.
 
     Args:
-        vehicle_state:
-        state_size:
-        timestep:
-        wheelbase:
+        vehicle_state: Current state [x, y, heading, velocity].
+        state_size: Dimensions of the state vector.
+        timestep: Sampling time in seconds.
+        wheelbase: Physical distance between axles.
 
     Returns:
-        A:
-        b:
+        A tuple of (Ad, Bd) matrices.
     """
-
-    # Current vehicle velocity
     v = vehicle_state[3]
 
-    # Initialization of the time discrete A matrix
     matrix_ad_ = np.zeros((state_size, state_size))
-
     matrix_ad_[0][0] = 1.0
     matrix_ad_[0][1] = timestep
     matrix_ad_[1][2] = v
     matrix_ad_[2][2] = 1.0
     matrix_ad_[2][3] = timestep
 
-    # b = [0.0, 0.0, 0.0, v / L].T
-    matrix_bd_ = np.zeros((state_size, 1))  # time discrete b matrix
+    matrix_bd_ = np.zeros((state_size, 1))
     matrix_bd_[3][0] = v / wheelbase
 
     return matrix_ad_, matrix_bd_

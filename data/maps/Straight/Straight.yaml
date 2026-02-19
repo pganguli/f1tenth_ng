@@ -1,8 +1,0 @@
-image: Straight.png
-resolution: 0.062500
-origin: [-15.625, -10., 0.]
-negate: 0
-occupied_thresh: 0.45
-free_thresh: 0.196
-starting_angle: 1.5707963267948966 # 90 degrees in radians
-default_resolution: 0.062500

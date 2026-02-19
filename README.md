@@ -65,13 +65,15 @@ while not done:
 ```
 
 ## Documentation
+
 - [f110_gym README](f110_gym/README.md)
 - [f110_planning README](f110_planning/README.md)
 
 ## Citing
+
 If you find this repository useful, please consider citing:
 
-```
+```bibtex
 @inproceedings{okelly2020f1tenth,
   title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
   author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},

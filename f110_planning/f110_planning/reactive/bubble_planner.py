@@ -1,57 +1,66 @@
-import numpy as np
+"""
+Bubble planner for obstacle avoidance.
+
+Logic: Local Repulsion.
+Mechanism: This planner identifies the single closest obstacle within a defined
+'safety_radius' from the LiDAR scan. It then calculates a steering angle
+that points directly away from that obstacle (opposite direction).
+"""
+
 from typing import Any
 
-from .. import Action, BasePlanner
-from ..utils import index2Angle
+import numpy as np
+from numba import njit
+
+from ..base import Action, BasePlanner
+from ..utils import F110_MAX_STEER, index_to_angle
 
 
-class BubblePlanner(BasePlanner):
-    def __init__(self, safety_radius: float = 1.3, avoidance_speed: float = 0.5):
+@njit(cache=True)
+def detect_obstacles_jit(lidar_data: np.ndarray, radius: float) -> np.ndarray:
+    """
+    JIT-optimized obstacle detection.
+    """
+    num_beams = len(lidar_data)
+    # Count obstacles first to pre-allocate
+    count = 0
+    for d in lidar_data:
+        if d <= radius:
+            count += 1
+
+    obstacles = np.empty((count, 2))
+    idx = 0
+    for i, distance in enumerate(lidar_data):
+        if distance <= radius:
+            obstacles[idx, 0] = index_to_angle(i, num_beams)
+            obstacles[idx, 1] = distance
+            idx += 1
+    return obstacles
+
+
+class BubblePlanner(BasePlanner):  # pylint: disable=too-few-public-methods
+    """
+    A reactive planner that creates a 'bubble' around the car and avoids obstacles.
+    """
+
+    def __init__(self, safety_radius: float = 1.3, avoidance_speed: float = 2.0):
         self.safety_radius = safety_radius
         self.avoidance_speed = avoidance_speed
 
-    # Detect obstacles within the safety radius
-    @staticmethod
-    def detect_obstacles(radius: float, obs: dict[str, Any], ego_idx: int) -> list[tuple[float, float]]:
-        lidar_data = obs["scans"][ego_idx]
-        obstacles = []
-        for i, distance in enumerate(lidar_data):
-            angle = index2Angle(i)
-            if distance <= radius:
-                obstacles.append((angle, distance))
-        return obstacles
+    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Action:
+        """
+        Plans by moving away from the closest obstacle within the safety radius.
+        """
+        obstacles = detect_obstacles_jit(obs["scans"][ego_idx], self.safety_radius)
+        if len(obstacles) == 0:
+            return Action(steer=0.0, speed=self.avoidance_speed * 2)
 
-    # Find the closest obstacle from a list of obstacles
-    @staticmethod
-    def find_closest_obstacle(obstacles: list[tuple[float, float]]) -> tuple[float, float]:
-        return min(obstacles, key=lambda v: v[1])
+        # Find the closest obstacle
+        idx = np.argmin(obstacles[:, 1])
+        closest_angle = obstacles[idx, 0]
 
-    # Calculate the direction of an obstacle relative to the car
-    @staticmethod
-    def calculate_obstacle_direction(obstacle_location: tuple[float, float]) -> float:
-        obstacle_angle = obstacle_location[0]
-        if obstacle_angle > np.pi:
-            obstacle_angle -= 2 * np.pi  # convert angle to range [-pi, pi]
-        obstacle_direction = -obstacle_angle  # calculate opposite direction
-        return obstacle_direction
+        # Point away from obstacle (inverse direction)
+        steer = -closest_angle
+        steer = np.clip(steer, -F110_MAX_STEER, F110_MAX_STEER)
 
-    # Function to calculate the avoidance direction based on the obstacle direction
-    @staticmethod
-    def calculate_avoidance_direction(obstacle_direction: float) -> float:
-        avoidance_direction = obstacle_direction + np.pi  # add pi radians (180 degrees)
-        if avoidance_direction > np.pi:
-            avoidance_direction -= 2 * np.pi  # convert direction to range [-pi, pi]
-        return avoidance_direction
-
-    def plan(self, obs: dict[str, Any], ego_idx: int) -> Action:
-        obstacles = BubblePlanner.detect_obstacles(self.safety_radius, obs, ego_idx)
-        # If no obstacles, keep moving forward
-        if not obstacles:
-            Action(steer=0.0, speed=1.0)
-        # Calculate the avoidance direction and set steering command
-        avoidance_direction = BubblePlanner.calculate_avoidance_direction(
-            BubblePlanner.calculate_obstacle_direction(
-                BubblePlanner.find_closest_obstacle(obstacles)
-            )
-        )
-        return Action(steer=avoidance_direction, speed=self.avoidance_speed)
+        return Action(steer=steer, speed=self.avoidance_speed)

@@ -60,7 +60,7 @@ that includes both resolution and origin of the maps. These maps can be used in 
 - centerline: [x_m, y_m, w_tr_right_m, w_tr_left_m] These files contain the center line (x, y) and the track widths to the
 right (w_tr_right) and left (w_tr_left). The center lines were smoothed. Therefore, they do not lie perfectly in the
 middle of the track anymore.
-- raceline: [s_m; x_m; y_m; psi_rad; kappa_radpm; vx_mps; ax_mps2] The provided race lines were calculated minimizing the summed curvature. They lie within the track boundaries. The raceline files contain the s-value along the raceline, the racline positions (x,y,psi) the optimal curvature (kappa), the optimal longitudinal veloctiy (vx) and longitudinal acceleration (ax) for the specific raceline position.
+- raceline: [s_m; x_m; y_m; psi_rad; kappa_radpm; vx_mps; ax_mps2] The provided race lines were calculated minimizing the summed curvature. They lie within the track boundaries. The raceline files contain the s-value along the raceline, the raceline positions (x,y,psi) the optimal curvature (kappa), the optimal longitudinal veloctiy (vx) and longitudinal acceleration (ax) for the specific raceline position.
 - waypoints_DonkeySim: This file contains the optimal raceline provided for the usage in the [Donkey Simulator](https://docs.donkeycar.com/guide/simulator/).
 
 

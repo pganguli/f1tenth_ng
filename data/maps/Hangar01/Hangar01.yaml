@@ -1,6 +1,0 @@
-image: Hangar01.png
-resolution: 0.05
-origin: [-5.669613, -8.261693, 0]
-negate: 0
-occupied_thresh: 0.65
-free_thresh: 0.196

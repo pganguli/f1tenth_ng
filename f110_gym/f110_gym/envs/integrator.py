@@ -1,3 +1,7 @@
+"""
+Integrator types for vehicle dynamics simulation.
+"""
+
 from enum import Enum
 
 
@@ -7,4 +11,4 @@ class Integrator(Enum):
     """
 
     RK4 = 1
-    Euler = 2
+    EULER = 2

@@ -3,92 +3,98 @@ Pure Pursuit waypoint tracker
 """
 
 import warnings
-
-import numpy as np
 from typing import Any, Optional
 
-from .. import Action, BasePlanner
-from ..utils import get_actuation, intersect_point, nearest_point
+import numpy as np
+
+from ..base import Action, BasePlanner
+from ..utils import get_actuation, get_vehicle_state, intersect_point, nearest_point
 
 
-class PurePursuitPlanner(BasePlanner):
+class PurePursuitPlanner(BasePlanner):  # pylint: disable=too-few-public-methods
     """
-    Pure pursuit tracking controller
-    Reference: Coulter 1992, https://www.ri.cmu.edu/pub_files/pub3/coulter_r_craig_1992_1/coulter_r_craig_1992_1.pdf
+    Geometrically-inspired waypoint tracking controller.
 
-    All vehicle pose used by the planner should be in the map frame.
+    Pure Pursuit calculates the curvature required to move the vehicle from its
+    current position to a point on the reference path that is one 'lookahead'
+    distance away.
 
-    Args:
-        waypoints (numpy.ndarray [N x 4], optional): static waypoints to track
-
-    Attributes:
-        max_reacquire (float): maximum radius (meters) for reacquiring current waypoints
-        waypoints (numpy.ndarray [N x 4]): static list of waypoints, columns are [x, y, velocity, heading]
+    Reference: Coulter, R. Craig. "Implementation of the Pure Pursuit Path Tracking Algorithm."
+    Carnegie Mellon University, 1992.
     """
 
     def __init__(
         self,
         wheelbase: float = 0.33,
         lookahead_distance: float = 0.8,
-        waypoints: np.ndarray = np.array([]),
+        max_speed: float = 5.0,
+        waypoints: Optional[np.ndarray] = None,
     ):
+        """
+        Initializes the Pure Pursuit planner with vehicle and path parameters.
+
+        Args:
+            wheelbase: Distance between front and rear axles in meters.
+            lookahead_distance: The constant radius of the search circle.
+            max_speed: The target longitudinal velocity for the tracking.
+            waypoints: Loaded path coordinates, ideally [N, 2] or [N, 3+].
+        """
         self.max_reacquire = 20.0
         self.wheelbase = wheelbase
         self.lookahead_distance = lookahead_distance
-        self.waypoints = waypoints
+        self.max_speed = max_speed
+        self.waypoints = waypoints if waypoints is not None else np.array([])
 
-    def _get_current_waypoint(self, lookahead_distance: float, position: np.ndarray) -> Optional[np.ndarray]:
+    def _get_current_waypoint(
+        self, lookahead_distance: float, position: np.ndarray
+    ) -> Optional[np.ndarray]:
         """
-        Finds the current waypoint on the look ahead circle intersection
+        Calculates the intersection of the lookahead circle and the path.
 
         Args:
-            lookahead_distance (float): lookahead distance to find next point to track
-            position (numpy.ndarray (2, )): current position of the vehicle (x, y)
+            lookahead_distance: Radius of the search circle.
+            position: Current [x, y] coordinates of the vehicle.
 
         Returns:
-            current_waypoint (numpy.ndarray (3, )): selected waypoint (x, y, velocity), None if no point is found
+            A [3,] array [x, y, v] for the target waypoint, or None if unreachable.
         """
-        if self.waypoints is None:
-            raise ValueError(
-                "Please set waypoints to track during planner instantiation."
-            )
+        if self.waypoints is None or len(self.waypoints) == 0:
+            raise ValueError("Waypoints must be provided to the planner.")
 
-        nearest_p, nearest_dist, t, i = nearest_point(position, self.waypoints[:, 0:2])
+        _, nearest_dist, t, i = nearest_point(position, self.waypoints[:, 0:2])
         if nearest_dist < lookahead_distance:
-            lookahead_point, i2, t2 = intersect_point(
+            # Search forward from the current track progress
+            _, i2, _ = intersect_point(
                 position, lookahead_distance, self.waypoints[:, 0:2], i + t, wrap=True
             )
             if i2 is None:
                 return None
-            current_waypoint = np.array(
-                [self.waypoints[i2, 0], self.waypoints[i2, 1], self.waypoints[i, 2]]
+            return np.array(
+                [self.waypoints[i2, 0], self.waypoints[i2, 1], self.max_speed]
             )
-            return current_waypoint
-        elif nearest_dist < self.max_reacquire:
-            return self.waypoints[i, :]
-        else:
-            return None
 
-    def plan(self, obs: dict[str, Any], ego_idx: int) -> Action:
+        # If too far to intersect, fallback to the nearest point if within reacquire range
+        if nearest_dist < self.max_reacquire:
+            return np.array(
+                [self.waypoints[i, 0], self.waypoints[i, 1], self.max_speed]
+            )
+
+        return None
+
+    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Action:
         """
-        Planner plan function overload for Pure Pursuit, returns acutation based on current state
-
-        Args:
-            obs (dict): dictionary of observations
-            ego_idx (int): index of the ego vehicle
-
-        Returns:
-            Action: commanded velocity and steering angle
+        Determines the steering and speed required to follow the path.
         """
-        position = np.array([obs["poses_x"][ego_idx], obs["poses_y"][ego_idx]])
+        vehicle_state = get_vehicle_state(obs, ego_idx)
+        position = vehicle_state[:2]
         lookahead_point = self._get_current_waypoint(self.lookahead_distance, position)
 
         if lookahead_point is None:
-            warnings.warn("Cannot find lookahead point, stopping...")
+            warnings.warn("Lookahead point not found; stop signal sent.")
             return Action(steer=0.0, speed=0.0)
 
         speed, steering_angle = get_actuation(
-            obs["poses_theta"][ego_idx],
+            vehicle_state[2],
             lookahead_point,
             position,
             self.lookahead_distance,

@@ -3,6 +3,7 @@
 This repository contains the F1TENTH Gym environment, now updated to support **Gymnasium** and **Pyglet 2.x**.
 
 ## Major Updates
+
 - **Gymnasium Migration**: The environment now follows the Gymnasium API (v0.26+).
 - **Pyglet 2.x Support**: Rendering has been updated to support modern Pyglet versions.
 - **Improved Integration**: Standardized observation and action spaces.
@@ -50,9 +51,10 @@ while not done:
 ```
 
 ## Citing
+
 If you find this Gym environment useful, please consider citing:
 
-```
+```bibtex
 @inproceedings{okelly2020f1tenth,
   title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
   author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},

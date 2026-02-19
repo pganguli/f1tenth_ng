@@ -1,3 +1,7 @@
+"""
+Render callback for visualizing waypoints in the simulation.
+"""
+
 import numpy as np
 import pyglet
 from f110_gym.envs.rendering import EnvRenderer
