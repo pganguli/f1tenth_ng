@@ -28,6 +28,12 @@ test = [
     "pytest",
     "pytest-mock",
 ]
+train = [
+    "lightning>=2.0.0",
+    "tensorboard>=2.14.0",
+    "torchao>=0.5.0",
+    "pyyaml>=6.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
