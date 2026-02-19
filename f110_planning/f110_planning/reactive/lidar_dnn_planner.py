@@ -65,10 +65,18 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         )
 
     def _load_model(
-        self, path: Optional[str], arch_id: int, task: str = "heading"
+        self,
+        path: Optional[str],
+        arch_id: int,
+        task: str = "heading",
+        quantized: bool = False,
     ) -> Optional[torch.nn.Module]:
         """
         Internal helper to instantiate and load weights for a single model.
+
+        Supports standard state_dict files and torchao-quantized state_dict files.
+        For quantized models, set quantized=True so the architecture is prepared
+        with INT8 quantization before loading the state_dict.
         """
         if not path:
             return None
@@ -77,7 +85,15 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         )
 
         model = get_architecture(arch_id, task=task)
-        state_dict = torch.load(path, map_location=self.device, weights_only=True)
+        if quantized:
+            model.eval()
+            from torchao.quantization import (  # pylint: disable=import-outside-toplevel
+                Int8DynamicActivationInt8WeightConfig,
+                quantize_,
+            )
+
+            quantize_(model, Int8DynamicActivationInt8WeightConfig())
+        state_dict = torch.load(path, map_location=self.device, weights_only=False)
         model.load_state_dict(state_dict)
         model.to(self.device)
         model.eval()

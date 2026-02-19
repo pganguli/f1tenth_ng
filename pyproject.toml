@@ -12,3 +12,6 @@ pythonpath = [
     "f110_planning",
 ]
 addopts = "-v --durations=5"
+filterwarnings = [
+    "ignore::DeprecationWarning:torchao",
+]

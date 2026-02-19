@@ -1,13 +1,13 @@
-# Config for Heading Error Angle Prediction
+# Config for Dual-Head Wall Distance Prediction — MEDIUM model (~138K params)
 data:
   train_path: "data/datasets/lidar_tracking_combined_pure_pursuit_n17607.npz"
-  target_col: "heading_error"
+  target_col: "left_wall_dist,right_wall_dist"
   batch_size: 128
   num_workers: 8
   val_split: 0.1
   pin_memory: true
   prefetch_factor: 2
-  use_cache: true # Load into memory
+  use_cache: true
 
 training:
   max_epochs: 300
@@ -15,11 +15,17 @@ training:
   weight_decay: 1e-5
   early_stopping_patience: 20
   lr_patience: 10
+  lr_scheduler_factor: 0.5
+  optimizer: adamw
+  scheduler: cosine
   auto_lr_find: true
   resume: true
   precision: "16-mixed"
   gradient_clip_val: 1.0
-  profiler: "simple" # Choices: null, "simple", "advanced", "pytorch"
+  profiler: null
 
 model:
-  arch_id: 7  # Using the deepest 1D-CNN for precise angle prediction
+  arch_id: 9  # Medium backbone + medium dual heads, ~138K params
+
+quantization:
+  enabled: false

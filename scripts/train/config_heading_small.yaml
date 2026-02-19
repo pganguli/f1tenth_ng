@@ -1,4 +1,4 @@
-# Config for Heading Error Angle Prediction
+# Config for Heading Error Angle Prediction — SMALL model (~8.6K params + INT8 quantization)
 data:
   train_path: "data/datasets/lidar_tracking_combined_pure_pursuit_n17607.npz"
   target_col: "heading_error"
@@ -7,11 +7,11 @@ data:
   val_split: 0.1
   pin_memory: true
   prefetch_factor: 2
-  use_cache: true # Load into memory
+  use_cache: true
 
 training:
-  max_epochs: 300
-  lr: 5e-4
+  max_epochs: 200
+  lr: 1e-3
   weight_decay: 1e-5
   early_stopping_patience: 20
   lr_patience: 10
@@ -19,7 +19,10 @@ training:
   resume: true
   precision: "16-mixed"
   gradient_clip_val: 1.0
-  profiler: "simple" # Choices: null, "simple", "advanced", "pytorch"
+  profiler: null
 
 model:
-  arch_id: 7  # Using the deepest 1D-CNN for precise angle prediction
+  arch_id: 8  # Tiny 2-layer CNN, ~8.6K params
+
+quantization:
+  enabled: true  # INT8 dynamic quantization on Linear layers

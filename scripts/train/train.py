@@ -23,12 +23,14 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.tuner.tuning import Tuner
 from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
+from torchao.quantization import Int8DynamicActivationInt8WeightConfig, quantize_
 
 from f110_planning.utils.nn_models import get_architecture
 
 # Suppress library-level deprecation warnings for cleaner output
 warnings.filterwarnings("ignore", message=".*treespec.*")
 warnings.filterwarnings("ignore", category=FutureWarning, module="lightning")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="torchao")
 
 
 class LidarDataset(Dataset):
@@ -266,9 +268,7 @@ class LidarLightningModule(L.LightningModule):
 
         return loss
 
-    def on_train_batch_end(
-        self, *args: Any, **kwargs: Any
-    ) -> None:
+    def on_train_batch_end(self, *args: Any, **kwargs: Any) -> None:
         """Logs system metrics such as GPU memory usage."""
         _ = args, kwargs
         if torch.cuda.is_available():
@@ -288,13 +288,38 @@ class LidarLightningModule(L.LightningModule):
 
     def configure_optimizers(self) -> dict[str, Any]:
         """Configures the optimizer and LR scheduler."""
-        optimizer = torch.optim.Adam(
-            self.parameters(),
-            lr=self.hparams.lr,
-            weight_decay=self.hparams.weight_decay,
-        )
+        opt_name = getattr(self.hparams, "optimizer", "adam")
+        if opt_name == "adamw":
+            optimizer = torch.optim.AdamW(
+                self.parameters(),
+                lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay,
+            )
+        else:
+            optimizer = torch.optim.Adam(
+                self.parameters(),
+                lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay,
+            )
+
+        sched_name = getattr(self.hparams, "scheduler", "reduce_on_plateau")
+        if sched_name == "cosine":
+            max_epochs = getattr(self.hparams, "max_epochs", 300)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=max_epochs, eta_min=1e-7
+            )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "interval": "epoch",
+                },
+            }
+
+        # Default: ReduceLROnPlateau (backward compatible)
+        factor = getattr(self.hparams, "lr_scheduler_factor", 0.1)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode="min", factor=0.1, patience=self.hparams.lr_patience
+            optimizer, mode="min", factor=factor, patience=self.hparams.lr_patience
         )
         return {
             "optimizer": optimizer,
@@ -303,6 +328,48 @@ class LidarLightningModule(L.LightningModule):
                 "monitor": "val/loss",
             },
         }
+
+
+def _init_weights(model: nn.Module) -> None:
+    """Apply Kaiming (conv) and Xavier (linear) initialization."""
+    for m in model.modules():
+        if isinstance(m, nn.Conv1d):
+            nn.init.kaiming_normal_(m.weight, nonlinearity="linear")
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.Linear):
+            nn.init.xavier_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.BatchNorm1d):
+            nn.init.ones_(m.weight)
+            nn.init.zeros_(m.bias)
+
+
+def _save_model(model: nn.Module, config: dict[str, Any], model_name: str) -> None:
+    """Save final model weights, optionally with INT8 quantization."""
+    out_path = Path("data/models")
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    if config.get("quantization", {}).get("enabled", False):
+        print(f"Applying INT8 dynamic quantization to {model_name}...")
+        model.cpu().eval()
+        quantize_(model, Int8DynamicActivationInt8WeightConfig())
+        torch.save(model.state_dict(), out_path / f"{model_name}.pth")
+        print(f"Saved quantized model to data/models/{model_name}.pth")
+    else:
+        torch.save(model.state_dict(), out_path / f"{model_name}.pth")
+        print(f"Saved model to data/models/{model_name}.pth")
+
+
+def _resolve_checkpoint(config: dict[str, Any], model_name: str) -> str | None:
+    """Check for an existing checkpoint to resume from."""
+    if config["training"].get("resume", True):
+        last_ckpt = Path(f"data/models/checkpoints/{model_name}/last.ckpt")
+        if last_ckpt.exists():
+            print(f"Resuming from {last_ckpt}")
+            return str(last_ckpt)
+    return None
 
 
 def run_single_training(config: dict[str, Any], arch_id: int) -> None:
@@ -320,17 +387,24 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
         lr=float(config["training"]["lr"]),
         weight_decay=float(config["training"]["weight_decay"]),
         lr_patience=config["training"]["lr_patience"],
+        lr_scheduler_factor=float(config["training"].get("lr_scheduler_factor", 0.1)),
+        optimizer=config["training"].get("optimizer", "adam"),
+        scheduler=config["training"].get("scheduler", "reduce_on_plateau"),
+        max_epochs=config["training"]["max_epochs"],
     )
+
+    # Apply weight initialization for fresh models
+    _init_weights(module.model)
 
     # Logger
     model_name = f"{config['data']['target_col']}_arch{arch_id}"
-    logger = TensorBoardLogger("lightning_logs", name=model_name)
+    logger = TensorBoardLogger("scripts/train/lightning_logs", name=model_name)
 
     # Callbacks
     callbacks = [
         ModelCheckpoint(
             dirpath=f"data/models/checkpoints/{model_name}",
-            filename="best-{epoch:02d}-{val/loss:.4f}",
+            filename="best-{epoch:02d}",
             monitor="val/loss",
             mode="min",
             save_top_k=1,
@@ -352,16 +426,19 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
         precision=config["training"].get("precision", "32")
         if torch.cuda.is_available()
         else "32",
+        gradient_clip_val=config["training"].get("gradient_clip_val", None),
         logger=logger,
         callbacks=callbacks,
         profiler=config["training"].get("profiler", None),
     )
 
-    # Data
     dm = LidarDataModule(config)
 
-    # 1. Automatic LR Finding
-    if config["training"].get("auto_lr_find", False):
+    # 1. Resume Support — check BEFORE auto LR find
+    ckpt_path = _resolve_checkpoint(config, model_name)
+
+    # 2. Automatic LR Finding (skip when resuming — LR is in checkpoint)
+    if config["training"].get("auto_lr_find", False) and ckpt_path is None:
         tuner = Tuner(trainer)
         lr_finder = tuner.lr_find(module, datamodule=dm)
         if lr_finder:
@@ -370,21 +447,11 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
                 print(f"Best LR found: {suggested_lr}")
                 module.hparams.lr = suggested_lr
 
-    # 2. Resume Support
-    ckpt_path = None
-    if config["training"].get("resume", True):
-        last_ckpt = Path(f"data/models/checkpoints/{model_name}/last.ckpt")
-        if last_ckpt.exists():
-            print(f"Resuming from {last_ckpt}")
-            ckpt_path = str(last_ckpt)
-
     # 3. Training
     trainer.fit(module, datamodule=dm, ckpt_path=ckpt_path)
 
-    # Save final weights
-    out_path = Path("data/models")
-    out_path.mkdir(parents=True, exist_ok=True)
-    torch.save(module.model.state_dict(), out_path / f"{model_name}.pth")
+    # 4. Save final model
+    _save_model(module.model, config, model_name)
 
 
 def main() -> None:
