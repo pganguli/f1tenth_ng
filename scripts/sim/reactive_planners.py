@@ -16,6 +16,7 @@ from f110_planning.reactive import (
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
+from f110_planning.metric_callbacks import MetricAggregator
 from f110_planning.render_callbacks import (
     create_camera_tracking,
     create_dynamic_waypoint_renderer,
@@ -31,7 +32,7 @@ from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
 DEFAULT_PLANNER = "dnn"
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
     Registers command-line arguments for reactive simulation experiments.
     """
@@ -197,6 +198,35 @@ def _setup_rendering(
         )
 
 
+def _run_reactive_sim(
+    env: Any, obs: dict[str, Any], planner: Any, r_mode: str | None, waypoints: np.ndarray
+) -> tuple[float, dict[str, float]]:
+    """Executes the reactive simulation loop with metric collection."""
+    wpts = waypoints if waypoints.size > 0 else None
+    metrics = MetricAggregator.create_default(waypoints=wpts)
+    metrics.on_reset(obs, waypoints=wpts)
+
+    laptime, done = 0.0, False
+
+    try:
+        while not done:
+            action = planner.plan(obs, ego_idx=0)
+            obs, reward, terminated, truncated, _ = env.step(
+                np.array([[action.steer, action.speed]])
+            )
+            done, laptime = (terminated or truncated), laptime + float(reward)
+            metrics.on_step(obs, action, float(reward), ego_idx=0)
+
+            if r_mode:
+                env.render()
+    except KeyboardInterrupt:
+        print("\nSimulation aborted by user.")
+    except RuntimeError as exc:
+        print(f"\nSimulation stopped: {exc}")
+
+    return laptime, metrics.report()
+
+
 def main() -> None:
     """
     Entry point for running reactive planning simulations.
@@ -219,25 +249,12 @@ def main() -> None:
         env.render()
 
     print(f"Executing {args.planner} simulation loop...")
-    laptime, start_time, done = 0.0, time.time(), False
-
-    try:
-        while not done:
-            action = planner.plan(obs, ego_idx=0)
-            obs, reward, terminated, truncated, _ = env.step(
-                np.array([[action.steer, action.speed]])
-            )
-            done, laptime = (terminated or truncated), laptime + float(reward)
-
-            if r_mode:
-                env.render()
-    except KeyboardInterrupt:
-        print("\nSimulation aborted by user.")
+    start_time = time.time()
+    laptime, _ = _run_reactive_sim(env, obs, planner, r_mode, waypoints)
 
     total_real_time = time.time() - start_time
     print("\n--- Simulation Summary ---")
     print(f"Planner:           {args.planner}")
-    print(f"Simulated Runtime: {laptime:.3f}s")
     print(f"Real Wall Time:    {total_real_time:.3f}s")
     if total_real_time > 0:
         print(f"RT-Factor:         {laptime / total_real_time:.2f}x")

@@ -9,6 +9,7 @@ import time
 from typing import Any
 
 import numpy as np
+from f110_planning.metric_callbacks import MetricAggregator
 from f110_planning.misc import HybridPlanner, ManualPlanner
 from f110_planning.render_callbacks import (
     create_camera_tracking,
@@ -35,7 +36,7 @@ COLOR_PALETTE = {
 TRACE_COLORS = ["yellow", "cyan", "magenta", "red", "green", "blue"]
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
     Registers command-line arguments for path-tracking simulation experiments.
     """
@@ -101,19 +102,35 @@ def _setup_rendering(
         )
 
 
-def _run_tracking_sim(
-    env: Any, obs: dict, planners: list, num_agents: int, r_mode: str | None
-) -> np.ndarray:
-    """Executes the multi-agent tracking loop."""
+def _run_tracking_sim(  # pylint: disable=too-many-locals,too-many-arguments
+    env: Any,
+    obs: dict[str, Any],
+    planners: list[Any],
+    num_agents: int,
+    *,
+    r_mode: str | None,
+    agent_waypoints: list[np.ndarray],
+) -> tuple[np.ndarray, list[dict[str, float]]]:
+    """Executes the multi-agent tracking loop with metric collection."""
     laptimes = np.zeros(num_agents)
     done = False
+
+    # Set up per-agent metric aggregators
+    aggregators = []
+    for i in range(num_agents):
+        wpts = agent_waypoints[i] if agent_waypoints[i].size > 0 else None
+        agg = MetricAggregator.create_default(waypoints=wpts)
+        agg.on_reset(obs, waypoints=wpts)
+        aggregators.append(agg)
 
     try:
         while not done:
             actions = []
+            agent_actions = []
             for i in range(num_agents):
                 action = planners[i].plan(obs, ego_idx=i)
                 actions.append([action.steer, action.speed])
+                agent_actions.append(action)
 
             obs, rewards, term, trunc, _ = env.step(np.array(actions))
 
@@ -124,12 +141,20 @@ def _run_tracking_sim(
                 done = term or trunc
                 laptimes[0] += rewards
 
+            # Feed metrics for each agent
+            for i in range(num_agents):
+                r = float(rewards[i]) if isinstance(rewards, np.ndarray) else float(rewards)
+                aggregators[i].on_step(obs, agent_actions[i], r, ego_idx=i)
+
             if r_mode:
                 env.render()
     except KeyboardInterrupt:
         print("\nSimulation halted.")
+    except RuntimeError as exc:
+        print(f"\nSimulation stopped: {exc}")
 
-    return laptimes
+    metric_results = [agg.report() for agg in aggregators]
+    return laptimes, metric_results
 
 
 def _print_results(num_agents: int, laptimes: np.ndarray, total_time: float) -> None:
@@ -170,7 +195,10 @@ def main() -> None:
 
     print(f"Starting {num_agents}-agent tracking simulation...")
     t_start = time.time()
-    laptimes = _run_tracking_sim(env, obs, planners, num_agents, r_mode)
+    laptimes, _ = _run_tracking_sim(
+        env, obs, planners, num_agents,
+        r_mode=r_mode, agent_waypoints=agent_waypoints,
+    )
 
     _print_results(num_agents, laptimes, time.time() - t_start)
     env.close()

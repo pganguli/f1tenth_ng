@@ -1,13 +1,32 @@
-"""
-Unit tests for reactive simulation scripts.
-"""
+"""Unit tests for reactive simulation scripts."""
 
 from argparse import Namespace
+
+from typing import Any
+
 import numpy as np
+
 from scripts.sim.reactive_planners import _create_planner, main
 
 
-def test_reactive_planner_creation():
+def _sim_obs() -> dict[str, Any]:
+    """Full observation dict needed by the simulation loop."""
+    return {
+        "scans": np.zeros((1, 1080)),
+        "poses_x": np.zeros(1),
+        "poses_y": np.zeros(1),
+        "poses_theta": np.zeros(1),
+        "linear_vels_x": np.ones(1),
+        "linear_vels_y": np.zeros(1),
+        "ang_vels_z": np.zeros(1),
+        "steering_angles": np.zeros(1),
+        "collisions": np.zeros(1),
+        "lap_times": np.zeros(1),
+        "lap_counts": np.zeros(1),
+    }
+
+
+def test_reactive_planner_creation() -> None:
     """Tests the factory function for reactive planners."""
     waypoints = np.zeros((10, 2))
 
@@ -27,7 +46,7 @@ def test_reactive_planner_creation():
     assert planner_dyn.__class__.__name__ == "DynamicWaypointPlanner"
 
 
-def test_simulation_step_logic(mocker):
+def test_simulation_step_logic(mocker: Any) -> None:
     """Smoke test for the simulation loop logic using mocks."""
     # Mock parse_args to return specific values
     mocker.patch("scripts.sim.reactive_planners.parse_args", return_value=Namespace(
@@ -39,10 +58,10 @@ def test_simulation_step_logic(mocker):
     # Mock dependencies
     mocker.patch("scripts.sim.reactive_planners.load_waypoints", return_value=np.zeros((0, 2)))
     mock_env = mocker.Mock()
-    # Scans should be [num_agents, 1080]
-    reset_val = ({"scans": np.zeros((1, 1080))}, {})
+    base_obs = _sim_obs()
+    reset_val = (base_obs, {})
     mock_env.reset.return_value = reset_val
-    step_val = ({"scans": np.zeros((1, 1080))}, 0.1, True, False, {})
+    step_val = (base_obs, 0.1, True, False, {})
     mock_env.step.return_value = step_val  # Immediately terminate
     mocker.patch("scripts.sim.reactive_planners.setup_env", return_value=mock_env)
 

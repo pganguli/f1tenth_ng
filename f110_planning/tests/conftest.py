@@ -2,11 +2,14 @@
 Shared pytest fixtures for f110_planning tests.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
 
+
 @pytest.fixture
-def dummy_obs():
+def dummy_obs() -> dict[str, Any]:
     """Provides a dummy observation dictionary."""
     return {
         "poses_x": np.array([0.0]),
