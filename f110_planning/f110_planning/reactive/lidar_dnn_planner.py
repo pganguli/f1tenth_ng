@@ -69,14 +69,13 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         path: Optional[str],
         arch_id: int,
         task: str = "heading",
-        quantized: bool = False,
     ) -> Optional[torch.nn.Module]:
         """
         Internal helper to instantiate and load weights for a single model.
 
         Supports standard state_dict files and torchao-quantized state_dict files.
-        For quantized models, set quantized=True so the architecture is prepared
-        with INT8 quantization before loading the state_dict.
+        Automatically detects whether the checkpoint was saved with INT8
+        quantization and prepares the architecture accordingly.
         """
         if not path:
             return None
@@ -85,7 +84,15 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         )
 
         model = get_architecture(arch_id, task=task)
-        if quantized:
+        state_dict = torch.load(path, map_location=self.device, weights_only=False)
+
+        # Auto-detect torchao INT8-quantized checkpoints
+        is_quantized = any(
+            "AffineQuantizedTensor" in type(v).__name__
+            or "LinearActivationQuantizedTensor" in type(v).__name__
+            for v in state_dict.values()
+        )
+        if is_quantized:
             model.eval()
             from torchao.quantization import (  # pylint: disable=import-outside-toplevel
                 Int8DynamicActivationInt8WeightConfig,
@@ -93,7 +100,7 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
             )
 
             quantize_(model, Int8DynamicActivationInt8WeightConfig())
-        state_dict = torch.load(path, map_location=self.device, weights_only=False)
+
         model.load_state_dict(state_dict)
         model.to(self.device)
         model.eval()
