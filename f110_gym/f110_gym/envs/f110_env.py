@@ -3,6 +3,7 @@ Author: Hongrui Zheng
 """
 
 import os
+import sys
 import time
 from typing import Any, Optional
 
@@ -15,7 +16,9 @@ from numba import njit
 from .base_classes import Integrator, Simulator
 from .simulator_params import SimulatorParams
 
-if os.environ.get("DISPLAY") is None:
+# Only check DISPLAY on Linux (X11/Wayland). macOS uses Cocoa and Windows uses
+# its own windowing system, so DISPLAY is irrelevant on those platforms.
+if sys.platform == "linux" and os.environ.get("DISPLAY") is None:
     pyglet.options["headless"] = True
 
 pyglet.options["debug_gl"] = False

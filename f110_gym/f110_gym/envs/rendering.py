@@ -7,6 +7,7 @@ Updated for pyglet 2.x compatibility
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from typing import Any
 
@@ -17,7 +18,9 @@ from PIL import Image
 
 from .collision_models import get_vertices
 
-if os.environ.get("DISPLAY") is None:
+# Only check DISPLAY on Linux (X11/Wayland). macOS uses Cocoa and Windows uses
+# its own windowing system, so DISPLAY is irrelevant on those platforms.
+if sys.platform == "linux" and os.environ.get("DISPLAY") is None:
     pyglet.options["headless"] = True
 
 # In pyglet 2.x, legacy GL functions need to be imported from gl_compat or use ctypes
@@ -203,10 +206,20 @@ class EnvRenderer(pyglet.window.Window if _HAS_GL else object):
                 "environments where EGL/GL libraries are missing. Please check "
                 "if libEGL and libGL are installed."
             )
-        conf = Config(sample_buffers=1, samples=4, depth_size=16, double_buffer=True)
-        super().__init__(
-            width, height, config=conf, resizable=True, vsync=False, *args, **kwargs
-        )
+        # Try multisampled config first; fall back to a simpler config if the
+        # platform (e.g. macOS) does not support it.
+        try:
+            conf = Config(
+                sample_buffers=1, samples=4, depth_size=16, double_buffer=True
+            )
+            super().__init__(
+                width, height, config=conf, resizable=True, vsync=False, *args, **kwargs
+            )
+        except pyglet.window.NoSuchConfigException:
+            conf = Config(double_buffer=True, depth_size=16)
+            super().__init__(
+                width, height, config=conf, resizable=True, vsync=False, *args, **kwargs
+            )
 
         # Set background color
         pyglet.gl.glClearColor(9 / 255, 32 / 255, 87 / 255, 1.0)
