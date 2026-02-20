@@ -20,7 +20,7 @@ training:
   scheduler: cosine
   auto_lr_find: true
   resume: true
-  precision: "bf16-mixed"
+  precision: "32"
   gradient_clip_val: 1.0
   profiler: null
 
