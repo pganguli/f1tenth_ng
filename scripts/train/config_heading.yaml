@@ -17,7 +17,7 @@ training:
   lr_patience: 10
   auto_lr_find: true
   resume: true
-  precision: "16-mixed"
+  precision: "bf16-mixed"
   gradient_clip_val: 1.0
   profiler: "simple" # Choices: null, "simple", "advanced", "pytorch"
 

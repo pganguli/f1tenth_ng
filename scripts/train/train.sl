@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=f1tenth_dnn
-#SBATCH --partition=gpu,volta-gpu,a100-gpu,l40-gpu
+#SBATCH --partition=gpu,a100-gpu,l40-gpu
 #SBATCH --qos=gpu_access
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
