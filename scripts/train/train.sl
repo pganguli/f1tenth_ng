@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH --job-name=f1tenth_dnn
-#SBATCH -p gpu,volta-gpu,a100-gpu,l40-gpu
+#SBATCH --partition=gpu,volta-gpu,a100-gpu,l40-gpu
 #SBATCH --qos=gpu_access
 #SBATCH --gres=gpu:1
-#SBATCH -n 1
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=8g
-#SBATCH -t 2:00:00
+#SBATCH --time=2:00:00
 #SBATCH --output=scripts/train/slurm_logs/%x_%A_%a.out
 #SBATCH --error=scripts/train/slurm_logs/%x_%A_%a.err
 #SBATCH --array=0-5
