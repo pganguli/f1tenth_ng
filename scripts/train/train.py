@@ -398,7 +398,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
 
     # Logger
     model_name = f"{config['data']['target_col']}_arch{arch_id}"
-    logger = TensorBoardLogger("scripts/train/lightning_logs", name=model_name)
+    logger = TensorBoardLogger("data/datasets/lightning_logs", name=model_name)
 
     # Callbacks
     callbacks = [

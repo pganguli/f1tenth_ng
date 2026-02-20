@@ -58,7 +58,7 @@ python scripts/train/train.py --config scripts/train/config_heading.yaml
 You can monitor the training progress using TensorBoard:
 
 ```bash
-tensorboard --logdir scripts/train/lightning_logs
+tensorboard --logdir data/datasets/lightning_logs
 ```
 
 ### 4. Simulation & Evaluation
