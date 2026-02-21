@@ -11,6 +11,8 @@ This repository is a modernized version of the F1TENTH Gym environment and plann
 
 ## Installation
 
+**Important Note for Cloning:** This repository uses Git LFS for large files. You **must** install Git LFS to clone the repository seamlessly. Please see the [official installation instructions](https://github.com/git-lfs/git-lfs?tab=readme-ov-file#installing) (e.g. `brew install git-lfs` on macOS, or via your package manager such as `apt` on Linux). Once installed, run `git lfs install` to set it up before cloning.
+
 We recommend using a virtual environment and installing both packages in editable mode.
 
 ```bash
@@ -24,7 +26,7 @@ source .venv/bin/activate
 
 # Install the gym and planning packages
 pip install -e ./f110_gym
-pip install -e ./f110_planning
+pip install -e "./f110_planning[test,train]"
 ```
 
 ## Usage Workflow
