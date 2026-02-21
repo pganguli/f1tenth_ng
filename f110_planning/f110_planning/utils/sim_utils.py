@@ -88,6 +88,16 @@ def add_common_sim_args(
         default=DEFAULT_RENDER_MODE,
         help="Visualization mode. 'human_fast' omits some overlays for performance.",
     )
+
+    parser.add_argument(
+        "--max-laps",
+        type=int,
+        default=None,
+        help=(
+            "Maximum number of laps before the environment terminates. "
+            "Pass 0 or omit for no lap limit (default)."
+        ),
+    )
     parser.add_argument(
         "--render-fps",
         type=int,
@@ -125,6 +135,6 @@ def setup_env(args: argparse.Namespace, render_mode: Optional[str] = None) -> An
         integrator=Integrator.RK4,
         render_mode=actual_render_mode,
         render_fps=render_fps,
-        max_laps=None,
+        max_laps=getattr(args, "max_laps", None),
     )
     return env

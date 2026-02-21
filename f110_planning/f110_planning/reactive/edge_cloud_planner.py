@@ -46,7 +46,7 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
     def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
         self,
         # ---- edge-cloud knobs ----
-        cloud_latency: int = 30,
+        cloud_latency: int = 10,
         alpha_steer: float = 0.7,
         alpha_speed: float = 0.7,
         scheduler: Optional[CloudScheduler] = None,
