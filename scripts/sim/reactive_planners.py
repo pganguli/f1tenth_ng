@@ -17,6 +17,7 @@ from f110_planning.reactive import (
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
+from f110_planning.schedulers import FixedIntervalScheduler
 from f110_planning.metric_callbacks import MetricAggregator
 from f110_planning.render_callbacks import (
     create_camera_tracking,
@@ -28,9 +29,6 @@ from f110_planning.render_callbacks import (
     render_side_distances,
 )
 from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
-
-# Default configuration
-DEFAULT_PLANNER = "edge_cloud"
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,7 +45,7 @@ def parse_args() -> argparse.Namespace:
         "--planner",
         type=str,
         choices=["bubble", "gap", "disparity", "dynamic", "dnn", "edge_cloud"],
-        default=DEFAULT_PLANNER,
+        default="edge_cloud",
         help="Algorithm for obstacle avoidance and navigation.",
     )
 
@@ -131,36 +129,52 @@ def parse_args() -> argparse.Namespace:
     # ---- edge-cloud specific ----
     ec = parser.add_argument_group("edge-cloud", "Edge-Cloud DNN settings")
     ec.add_argument(
-        "--cloud-latency", type=int, default=30,
+        "--cloud-latency",
+        type=int,
+        default=30,
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
-        "--alpha-steer", type=float, default=0.7,
+        "--alpha-steer",
+        type=float,
+        default=0.7,
         help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
-        "--alpha-speed", type=float, default=0.7,
+        "--alpha-speed",
+        type=float,
+        default=0.7,
         help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
-        "--edge-wall-model", type=str,
+        "--cloud-interval",
+        type=int,
+        default=1,
+        help="Steps between cloud requests (1 = every step).",
+    )
+    ec.add_argument(
+        "--edge-wall-model",
+        type=str,
         default="data/models/left_wall_dist,right_wall_dist_arch8.pth",
         help="Path to edge wall-distance model.",
     )
     ec.add_argument(
-        "--edge-heading-model", type=str,
+        "--edge-heading-model",
+        type=str,
         default="data/models/heading_error_arch8.pth",
         help="Path to edge heading-error model.",
     )
     ec.add_argument("--edge-arch", type=int, default=8)
     ec.add_argument("--edge-heading-arch", type=int, default=8)
     ec.add_argument(
-        "--cloud-wall-model", type=str,
+        "--cloud-wall-model",
+        type=str,
         default="data/models/left_wall_dist,right_wall_dist_arch10.pth",
         help="Path to cloud wall-distance model.",
     )
     ec.add_argument(
-        "--cloud-heading-model", type=str,
+        "--cloud-heading-model",
+        type=str,
         default="data/models/heading_error_arch10.pth",
         help="Path to cloud heading-error model.",
     )
@@ -219,6 +233,7 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
     if args.planner == "edge_cloud":
         kwargs = {
             "cloud_latency": args.cloud_latency,
+            "scheduler": FixedIntervalScheduler(interval=args.cloud_interval),
             "alpha_steer": args.alpha_steer,
             "alpha_speed": args.alpha_speed,
             "lookahead_distance": args.lookahead,
@@ -259,7 +274,11 @@ def _setup_rendering(
 
 
 def _run_reactive_sim(
-    env: Any, obs: dict[str, Any], planner: Any, r_mode: str | None, waypoints: np.ndarray
+    env: Any,
+    obs: dict[str, Any],
+    planner: Any,
+    r_mode: str | None,
+    waypoints: np.ndarray,
 ) -> tuple[float, dict[str, float]]:
     """Executes the reactive simulation loop with metric collection."""
     wpts = waypoints if waypoints.size > 0 else None

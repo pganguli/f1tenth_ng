@@ -13,7 +13,7 @@ from typing import Any, Optional
 import numpy as np
 
 from ..base import Action, BasePlanner, CloudScheduler
-from ..schedulers import AlwaysCallScheduler
+from ..schedulers import FixedIntervalScheduler
 from .lidar_dnn_planner import LidarDNNPlanner
 
 
@@ -28,8 +28,8 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         A cloud request issued at step *t* yields a result that becomes
         available at step *t + cloud_latency*.
     scheduler : Optional[CloudScheduler]
-        Scheduler object that decides whether to issue a cloud request
-        at each step. Defaults to ``AlwaysCallScheduler`` (calls cloud
+        scheduler object that decides whether to issue a cloud request
+        at each step. Defaults to ``FixedIntervalScheduler(interval=1)`` (calls cloud
         every step).
     alpha_steer : float
         Blending weight for steering (0 = edge only, 1 = cloud only).
@@ -65,12 +65,14 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         cloud_arch_id: int = 10,
         cloud_heading_arch_id: Optional[int] = None,
     ) -> None:
-        # CloudScheduler / AlwaysCallScheduler imported at module level
+        # CloudScheduler / FixedIntervalScheduler imported at module level
 
         self.cloud_latency = cloud_latency
         self.alpha_steer = alpha_steer
         self.alpha_speed = alpha_speed
-        self.scheduler = scheduler if scheduler is not None else AlwaysCallScheduler()
+        self.scheduler = (
+            scheduler if scheduler is not None else FixedIntervalScheduler(interval=1)
+        )
 
         self.edge_planner = LidarDNNPlanner(
             wall_model_path=edge_wall_model_path,
