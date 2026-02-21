@@ -2,7 +2,7 @@
 F1TENTH Planning library.
 """
 
-from .base import Action, BasePlanner
+from .base import Action, BasePlanner, CloudScheduler, FixedIntervalScheduler, AlwaysCallScheduler
 
 # Import submodules AFTER defining Action and BasePlanner to avoid circular imports
 # pylint: disable=duplicate-code
@@ -17,6 +17,7 @@ from .reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
     DynamicWaypointPlanner,
+    EdgeCloudPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
@@ -31,6 +32,9 @@ from .tracking import (
 __all__ = [
     "Action",
     "BasePlanner",
+    "CloudScheduler",
+    "FixedIntervalScheduler",
+    "AlwaysCallScheduler",
     "DummyPlanner",
     "FlippyPlanner",
     "HybridPlanner",
@@ -42,6 +46,7 @@ __all__ = [
     "BubblePlanner",
     "DisparityExtenderPlanner",
     "DynamicWaypointPlanner",
+    "EdgeCloudPlanner",
     "GapFollowerPlanner",
     "LidarDNNPlanner",
 ]
