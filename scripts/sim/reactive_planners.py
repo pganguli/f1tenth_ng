@@ -13,6 +13,7 @@ from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
     DynamicWaypointPlanner,
+    EdgeCloudPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
@@ -29,7 +30,7 @@ from f110_planning.render_callbacks import (
 from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
 
 # Default configuration
-DEFAULT_PLANNER = "dnn"
+DEFAULT_PLANNER = "edge_cloud"
 
 
 def parse_args() -> argparse.Namespace:
@@ -45,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--planner",
         type=str,
-        choices=["bubble", "gap", "disparity", "dynamic", "dnn"],
+        choices=["bubble", "gap", "disparity", "dynamic", "dnn", "edge_cloud"],
         default=DEFAULT_PLANNER,
         help="Algorithm for obstacle avoidance and navigation.",
     )
@@ -127,6 +128,45 @@ def parse_args() -> argparse.Namespace:
         help="Architecture index (1-7) used during heading-error training.",
     )
 
+    # ---- edge-cloud specific ----
+    ec = parser.add_argument_group("edge-cloud", "Edge-Cloud DNN settings")
+    ec.add_argument(
+        "--cloud-latency", type=int, default=30,
+        help="Round-trip latency in simulation steps for cloud inference.",
+    )
+    ec.add_argument(
+        "--alpha-steer", type=float, default=0.7,
+        help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
+    )
+    ec.add_argument(
+        "--alpha-speed", type=float, default=0.7,
+        help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
+    )
+    ec.add_argument(
+        "--edge-wall-model", type=str,
+        default="data/models/left_wall_dist,right_wall_dist_arch8.pth",
+        help="Path to edge wall-distance model.",
+    )
+    ec.add_argument(
+        "--edge-heading-model", type=str,
+        default="data/models/heading_error_arch8.pth",
+        help="Path to edge heading-error model.",
+    )
+    ec.add_argument("--edge-arch", type=int, default=8)
+    ec.add_argument("--edge-heading-arch", type=int, default=8)
+    ec.add_argument(
+        "--cloud-wall-model", type=str,
+        default="data/models/left_wall_dist,right_wall_dist_arch10.pth",
+        help="Path to cloud wall-distance model.",
+    )
+    ec.add_argument(
+        "--cloud-heading-model", type=str,
+        default="data/models/heading_error_arch10.pth",
+        help="Path to cloud heading-error model.",
+    )
+    ec.add_argument("--cloud-arch", type=int, default=10)
+    ec.add_argument("--cloud-heading-arch", type=int, default=10)
+
     return parser.parse_args()
 
 
@@ -176,6 +216,26 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
             kwargs["max_speed"] = args.speed
         return LidarDNNPlanner(**kwargs)
 
+    if args.planner == "edge_cloud":
+        kwargs = {
+            "cloud_latency": args.cloud_latency,
+            "alpha_steer": args.alpha_steer,
+            "alpha_speed": args.alpha_speed,
+            "lookahead_distance": args.lookahead,
+            "lateral_gain": args.lateral_gain,
+            "edge_wall_model_path": args.edge_wall_model,
+            "edge_heading_model_path": args.edge_heading_model,
+            "edge_arch_id": args.edge_arch,
+            "edge_heading_arch_id": args.edge_heading_arch,
+            "cloud_wall_model_path": args.cloud_wall_model,
+            "cloud_heading_model_path": args.cloud_heading_model,
+            "cloud_arch_id": args.cloud_arch,
+            "cloud_heading_arch_id": args.cloud_heading_arch,
+        }
+        if args.speed is not None:
+            kwargs["max_speed"] = args.speed
+        return EdgeCloudPlanner(**kwargs)
+
     raise ValueError(f"Unsupported planner logic: {args.planner}")
 
 
@@ -192,7 +252,7 @@ def _setup_rendering(
         env.unwrapped.add_render_callback(create_waypoint_renderer(waypoints))
         env.unwrapped.add_render_callback(create_heading_error_renderer(waypoints, 0))
 
-    if args.planner in ["dynamic", "dnn"]:
+    if args.planner in ["dynamic", "dnn", "edge_cloud"]:
         env.unwrapped.add_render_callback(
             create_dynamic_waypoint_renderer(planner, agent_idx=0)
         )
