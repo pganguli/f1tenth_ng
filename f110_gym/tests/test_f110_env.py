@@ -74,6 +74,52 @@ def test_step():
     env.close()
 
 
+def test_default_max_laps_is_none() -> None:
+    """New default should not terminate after two laps."""
+    env = gym.make(
+        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=1
+    )
+    # ensure the internal field was set to None by default
+    assert env.unwrapped.max_laps is None
+    env.close()
+
+
+def test_lap_times_update_beyond_two_laps() -> None:
+    """Calling the internal utility should update lap_times regardless of
+    toggle count (regression for issue where label froze at 2 laps)."""
+    from f110_gym.envs.f110_env import update_lap_counts
+
+    # create minimal arrays for a single agent
+    poses_x = np.array([0.0])
+    poses_y = np.array([0.0])
+    start_xs = np.array([0.0])
+    start_ys = np.array([0.0])
+    start_rot = np.eye(2)
+    num_agents = 1
+    near_starts = np.array([False])
+    toggle_list = np.array([4.0])  # already completed two laps
+    lap_counts = np.array([2.0])
+    lap_times = np.array([0.0])
+
+    # pick an arbitrary current time
+    current_time = 12.34
+    update_lap_counts(
+        poses_x,
+        poses_y,
+        start_xs,
+        start_ys,
+        start_rot,
+        num_agents,
+        current_time,
+        near_starts,
+        toggle_list,
+        lap_counts,
+        lap_times,
+    )
+    # even though toggle_list >= 4 we expect lap_times to be updated
+    assert lap_times[0] == current_time
+
+
 def test_collision_detection():
     """Test that moving into a wall triggers collision."""
     env = gym.make(

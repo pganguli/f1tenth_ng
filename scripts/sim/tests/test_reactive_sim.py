@@ -49,9 +49,17 @@ def test_reactive_planner_creation() -> None:
 def test_simulation_step_logic(mocker: Any) -> None:
     """Smoke test for the simulation loop logic using mocks."""
     # Mock parse_args to return specific values
+    # include new fields added by add_common_sim_args
     mocker.patch("scripts.sim.reactive_planners.parse_args", return_value=Namespace(
-        planner="gap", speed=2.0, bubble_radius=160, waypoints=None,
-        render_mode="None", start_x=0.0, start_y=0.0, start_theta=0.0,
+        planner="gap",
+        speed=2.0,
+        bubble_radius=160,
+        waypoints=None,
+        render_mode="None",
+        max_laps=None,
+        start_x=0.0,
+        start_y=0.0,
+        start_theta=0.0,
         map="Budapest"
     ))
 
@@ -63,7 +71,9 @@ def test_simulation_step_logic(mocker: Any) -> None:
     mock_env.reset.return_value = reset_val
     step_val = (base_obs, 0.1, True, False, {})
     mock_env.step.return_value = step_val  # Immediately terminate
-    mocker.patch("scripts.sim.reactive_planners.setup_env", return_value=mock_env)
+    mock_setup = mocker.patch(
+        "scripts.sim.reactive_planners.setup_env", return_value=mock_env
+    )
 
     # Run main - should execute reset and one step before terminating
     main()
@@ -71,3 +81,10 @@ def test_simulation_step_logic(mocker: Any) -> None:
     mock_env.reset.assert_called_once()
     mock_env.step.assert_called_once()
     mock_env.close.assert_called_once()
+
+    # ensure setup_env was invoked with our patched namespace and calculated
+    # render override (None in this case)
+    called_args, called_kwargs = mock_setup.call_args
+    assert hasattr(called_args[0], "max_laps")
+    assert called_args[0].max_laps is None
+    assert called_kwargs == {}

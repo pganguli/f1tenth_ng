@@ -33,7 +33,7 @@ def create_camera_tracking(rotate: bool = True) -> Callable[[EnvRenderer], None]
         # Update camera boundaries with padding
         # The world in this renderer is scaled by 50.0
         scale = 50.0
-        padding = 15.0 * scale  # 10 meters visible in each direction
+        padding = 15.0 * scale  # 15 meters visible in each direction
         env_renderer.left = -padding
         env_renderer.right = padding
         env_renderer.top = padding

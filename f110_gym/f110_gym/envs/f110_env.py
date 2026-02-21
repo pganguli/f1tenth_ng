@@ -73,9 +73,14 @@ def update_lap_counts(
             near_starts[i] = False
             toggle_list[i] += 1
 
+        # lap_counts is simply the number of completed 2‑way toggles
         lap_counts[i] = toggle_list[i] // 2
-        if toggle_list[i] < 4:
-            lap_times[i] = current_time
+        # always record the current clock for the UI; earlier code froze the
+        # value once `toggle_list >= 4` (two laps) which made both the lap
+        # time and the ego lap count appear to stop updating after two laps.
+        # Using the absolute time also avoids needing to track start times
+        # separately for each lap.
+        lap_times[i] = current_time
 
 
 class F110Env(gym.Env):
@@ -154,9 +159,12 @@ class F110Env(gym.Env):
         self.timestep = kwargs.get("timestep", 0.01)
 
         # lap completion parameters
-        self.max_laps = kwargs.get(
-            "max_laps", 2
-        )  # None to disable lap-based termination
+        # By default we do *not* terminate on laps; earlier versions
+        # assumed 2 laps which meant the onscreen time/ego‐count would
+        # freeze as soon as the second lap finished.  That's confusing for
+        # users, so the default is now None (unlimited) and scripts can
+        # override via the ``max_laps`` keyword argument.
+        self.max_laps = kwargs.get("max_laps", None)  # None disables lap termination
 
         # default ego index
         self.ego_idx = kwargs.get("ego_idx", 0)

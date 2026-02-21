@@ -131,19 +131,19 @@ def parse_args() -> argparse.Namespace:
     ec.add_argument(
         "--cloud-latency",
         type=int,
-        default=30,
+        default=20,
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
         "--alpha-steer",
         type=float,
-        default=0.7,
+        default=0.83,
         help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
         "--alpha-speed",
         type=float,
-        default=0.7,
+        default=0.83,
         help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
