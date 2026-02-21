@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from ..base import Action, BasePlanner
+from ..base import Action, AlwaysCallScheduler, BasePlanner, CloudScheduler
 from .lidar_dnn_planner import LidarDNNPlanner
 
 
@@ -23,9 +23,13 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
     Parameters
     ----------
     cloud_latency : int
-        Round-trip latency in simulation steps for cloud inference. A cloud request issued at step *t* yields a result that becomes available at step *t + cloud_latency*.
+        Round-trip latency in simulation steps for cloud inference.
+        A cloud request issued at step *t* yields a result that becomes
+        available at step *t + cloud_latency*.
     scheduler : Optional[CloudScheduler]
-        Scheduler object that decides whether to issue a cloud request at each step. Defaults to AlwaysCallScheduler (calls cloud every step).
+        Scheduler object that decides whether to issue a cloud request
+        at each step. Defaults to ``AlwaysCallScheduler`` (calls cloud
+        every step).
     alpha_steer : float
         Blending weight for steering (0 = edge only, 1 = cloud only).
     alpha_speed : float
@@ -38,13 +42,13 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
     ``lateral_gain`` are shared by both unless overridden per-planner.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
         self,
         # ---- edge-cloud knobs ----
         cloud_latency: int = 30,
         alpha_steer: float = 0.7,
         alpha_speed: float = 0.7,
-        scheduler: Optional["CloudScheduler"] = None,
+        scheduler: Optional[CloudScheduler] = None,
         # ---- shared defaults ----
         lookahead_distance: float = 1.0,
         max_speed: float = 5.0,
@@ -60,7 +64,7 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         cloud_arch_id: int = 10,
         cloud_heading_arch_id: Optional[int] = None,
     ) -> None:
-        from ..base import AlwaysCallScheduler, CloudScheduler
+        # CloudScheduler / AlwaysCallScheduler imported at module level
 
         self.cloud_latency = cloud_latency
         self.alpha_steer = alpha_steer

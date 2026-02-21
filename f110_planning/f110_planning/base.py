@@ -38,7 +38,7 @@ class BasePlanner(ABC):  # pylint: disable=too-few-public-methods
         """
 
 
-class CloudScheduler(ABC):
+class CloudScheduler(ABC):  # pylint: disable=too-few-public-methods
     """
     Decides **when** to issue a cloud inference request.
 
@@ -69,7 +69,7 @@ class CloudScheduler(ABC):
         """
 
 
-class FixedIntervalScheduler(CloudScheduler):
+class FixedIntervalScheduler(CloudScheduler):  # pylint: disable=too-few-public-methods
     """
     Calls the cloud every *interval* steps.
 
@@ -91,7 +91,7 @@ class FixedIntervalScheduler(CloudScheduler):
         return step % self.interval == 0
 
 
-class AlwaysCallScheduler(CloudScheduler):
+class AlwaysCallScheduler(CloudScheduler):  # pylint: disable=too-few-public-methods
     """Calls the cloud on every single step (the default behaviour)."""
 
     def should_call_cloud(
