@@ -2,7 +2,8 @@
 F1TENTH Planning library.
 """
 
-from .base import Action, BasePlanner, CloudScheduler, FixedIntervalScheduler, AlwaysCallScheduler
+from .base import Action, BasePlanner, CloudScheduler
+from .schedulers import AlwaysCallScheduler, FixedIntervalScheduler
 
 # Import submodules AFTER defining Action and BasePlanner to avoid circular imports
 # pylint: disable=duplicate-code

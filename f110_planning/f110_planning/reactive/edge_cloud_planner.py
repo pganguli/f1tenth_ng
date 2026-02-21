@@ -12,7 +12,8 @@ from typing import Any, Optional
 
 import numpy as np
 
-from ..base import Action, AlwaysCallScheduler, BasePlanner, CloudScheduler
+from ..base import Action, BasePlanner, CloudScheduler
+from ..schedulers import AlwaysCallScheduler
 from .lidar_dnn_planner import LidarDNNPlanner
 
 
