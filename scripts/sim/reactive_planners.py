@@ -9,6 +9,7 @@ import time
 from typing import Any
 
 import numpy as np
+from f110_planning.metric_callbacks import MetricAggregator
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
@@ -17,8 +18,6 @@ from f110_planning.reactive import (
     GapFollowerPlanner,
     LidarDNNPlanner,
 )
-from f110_planning.schedulers import FixedIntervalScheduler
-from f110_planning.metric_callbacks import MetricAggregator
 from f110_planning.render_callbacks import (
     create_camera_tracking,
     create_dynamic_waypoint_renderer,
@@ -28,6 +27,7 @@ from f110_planning.render_callbacks import (
     render_lidar,
     render_side_distances,
 )
+from f110_planning.schedulers import FixedIntervalScheduler
 from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
 
 

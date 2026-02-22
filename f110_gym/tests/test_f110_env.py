@@ -4,6 +4,7 @@ Unit tests for the F1TENTH Gymnasium environment.
 
 import gymnasium as gym
 import numpy as np
+from f110_gym.envs.f110_env import update_lap_counts
 
 import f110_gym  # pylint: disable=unused-import
 
@@ -87,8 +88,6 @@ def test_default_max_laps_is_none() -> None:
 def test_lap_times_update_beyond_two_laps() -> None:
     """Calling the internal utility should update lap_times regardless of
     toggle count (regression for issue where label froze at 2 laps)."""
-    from f110_gym.envs.f110_env import update_lap_counts
-
     # create minimal arrays for a single agent
     poses_x = np.array([0.0])
     poses_y = np.array([0.0])
