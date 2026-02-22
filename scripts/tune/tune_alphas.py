@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
 """Coarse-to-fine alpha sweep for Edge-Cloud planner."""
+# pylint: disable=wrong-import-position
 
-import sys
 import copy
-import numpy as np
+import sys
 from pathlib import Path
 
-# make sibling packages importable
+# import gym to ensure environment registration side effects
+import gymnasium  # noqa: F401 pylint: disable=unused-import
+import numpy as np
+
+# make sibling packages importable before pulling in local modules
 sys.path.append(str(Path(__file__).resolve().parent.parent / "sim"))
 sys.path.append(str(Path(__file__).resolve().parent))
 
-import gymnasium as gym
-import f110_gym
-
-# We import the exact argument parser from reactive_planners so we can
-# pass all args (map, lookahead, models, etc.) identically.
-from reactive_planners import parse_args, _create_planner, _run_reactive_sim
-
-from f110_planning.utils import load_waypoints, setup_env
+# the following modules reside in sibling directories added above; pylint
+# can't resolve them statically.
+from reactive_planners import (  # pylint: disable=import-error
+    _create_planner,
+    _run_reactive_sim,
+    parse_args,
+)
 from tune_utils import coarse_to_fine_search
+
+# import first-party modules after third-party/local ones to satisfy
+# pylint's import-order checks
+import f110_gym  # noqa: F401 pylint: disable=unused-import
+from f110_planning.utils import load_waypoints, setup_env
 
 
 def evaluate_runner(args, waypoints, start_pose, render_override=None):
@@ -46,6 +54,8 @@ def evaluate_runner(args, waypoints, start_pose, render_override=None):
 
 
 def main() -> None:
+    """Execute the tuning sweep based on CLI arguments."""
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     coarse_grid_size = 3
     fine_grid_size = 3
     alpha_steer_min = 0.0
@@ -61,30 +71,39 @@ def main() -> None:
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg == "--coarse-points":
-            coarse_grid_size = int(sys.argv[i + 1]); i += 2
+            coarse_grid_size = int(sys.argv[i + 1])
+            i += 2
         elif arg == "--fine-points":
-            fine_grid_size = int(sys.argv[i + 1]); i += 2
+            fine_grid_size = int(sys.argv[i + 1])
+            i += 2
         elif arg == "--alpha-steer-min":
-            alpha_steer_min = float(sys.argv[i + 1]); i += 2
+            alpha_steer_min = float(sys.argv[i + 1])
+            i += 2
         elif arg == "--alpha-steer-max":
-            alpha_steer_max = float(sys.argv[i + 1]); i += 2
+            alpha_steer_max = float(sys.argv[i + 1])
+            i += 2
         elif arg == "--alpha-speed-min":
-            alpha_speed_min = float(sys.argv[i + 1]); i += 2
+            alpha_speed_min = float(sys.argv[i + 1])
+            i += 2
         elif arg == "--alpha-speed-max":
-            alpha_speed_max = float(sys.argv[i + 1]); i += 2
+            alpha_speed_max = float(sys.argv[i + 1])
+            i += 2
         elif arg == "--no-parallel":
-            parallel_enabled = False; i += 1
+            parallel_enabled = False
+            i += 1
         elif arg == "--parallel":
-            parallel_enabled = True; i += 1
+            parallel_enabled = True
+            i += 1
         else:
-            argv_clean.append(arg); i += 1
+            argv_clean.append(arg)
+            i += 1
 
     sys.argv = argv_clean
     args = parse_args()
     if not render_given:
         args.render_mode = "None"
     if args.planner != "edge_cloud":
-        print(f"Overriding planner to edge_cloud for tuning.")
+        print("Overriding planner to edge_cloud for tuning.")
         args.planner = "edge_cloud"
 
     waypoints = load_waypoints(args.waypoints)
@@ -93,18 +112,17 @@ def main() -> None:
     render_override = None if args.render_mode == "None" else args.render_mode
     print("rendering:", render_override or "off")
 
-    eval_fn_raw_tuple = evaluate_runner(args, waypoints, start_pose, render_override)
-    # Adapter: returns only the score (float), as required by coarse_to_fine_search
-    def eval_fn_raw(alpha_steer: float, alpha_speed: float) -> float:
-        return eval_fn_raw_tuple(alpha_steer, alpha_speed)[0]
+    eval_fn_raw = evaluate_runner(args, waypoints, start_pose, render_override)
 
     # show effective parallel setting
     actual_parallel = parallel_enabled and (render_override is None)
-    print("parallel:" , "on" if actual_parallel else "off")
+    print("parallel:", "on" if actual_parallel else "off")
 
-    print("\nCoarse-to-fine search",
-          f"map={args.map} latency={args.cloud_latency}/{args.cloud_interval}",
-          f"grid {coarse_grid_size}x{coarse_grid_size} -> {fine_grid_size}x{fine_grid_size}")
+    print(
+        "\nCoarse-to-fine search",
+        f"map={args.map} latency={args.cloud_latency}/{args.cloud_interval}",
+        f"grid {coarse_grid_size}x{coarse_grid_size} -> {fine_grid_size}x{fine_grid_size}",
+    )
     print("-" * 50)
 
     # Run coarse_to_fine_search, giving it the raw evaluator directly so that
@@ -125,8 +143,10 @@ def main() -> None:
 
     any_crash_free = False
     for alpha_steer in np.linspace(alpha_steer_min, alpha_steer_max, coarse_grid_size):
-        for alpha_speed in np.linspace(alpha_speed_min, alpha_speed_max, coarse_grid_size):
-            score, crash_free = eval_fn_raw_tuple(alpha_steer, alpha_speed)
+        for alpha_speed in np.linspace(
+            alpha_speed_min, alpha_speed_max, coarse_grid_size
+        ):
+            _, crash_free = eval_fn_raw(alpha_steer, alpha_speed)
             if crash_free:
                 any_crash_free = True
                 break

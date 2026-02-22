@@ -2,9 +2,9 @@
 Utilities for systematically tuning hyperparameters.
 """
 
-from typing import Callable, Tuple
-import math
 import concurrent.futures
+import math
+from typing import Callable, Tuple
 
 import numpy as np
 
@@ -20,10 +20,11 @@ def coarse_to_fine_search(
     speed_min: float = 0.0,
     speed_max: float = 1.0,
 ) -> Tuple[float, float, float, bool]:
-    """Coarse‑to‑fine grid search.  evaluate_fn may return (score, crash).
+    """Coarse-to-fine grid search with optional parallelism.
 
-    Returns (best_steer, best_speed, best_score, any_crash_free).
+    many parameters allow restricting search ranges.
     """
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments,too-many-branches,too-many-statements
 
     # coarse grid
     if coarse_grid_size > 1:
@@ -62,7 +63,7 @@ def coarse_to_fine_search(
             crash_free = False
         if verbose:
             print(
-                f"  [Coarse] steer={steer:.2f} speed={speed:.2f} | score={score:.2f} crash_free={crash_free}"
+                f"  [Coarse] {steer=:.2f} {speed=:.2f} | {score=:.2f} {crash_free=}"
             )
         if crash_free:
             any_crash_free = True
@@ -72,7 +73,9 @@ def coarse_to_fine_search(
             best_speed = speed
 
     if verbose:
-        print(f"coarse winner: {best_steer:.2f},{best_speed:.2f} score={best_score:.2f}")
+        print(
+            f"coarse winner: {best_steer:.2f},{best_speed:.2f} score={best_score:.2f}"
+        )
 
     # fine grid
     if coarse_grid_size > 1:
@@ -101,8 +104,8 @@ def coarse_to_fine_search(
         steer_cands, speed_cands = [best_steer], [best_speed]
 
     # Remove duplicates and round to avoid float precision issues
-    steer_cands = sorted(list(set([round(x, 4) for x in steer_cands])))
-    speed_cands = sorted(list(set([round(x, 4) for x in speed_cands])))
+    steer_cands = sorted({round(x, 4) for x in steer_cands})
+    speed_cands = sorted({round(x, 4) for x in speed_cands})
 
     if verbose:
         print("fine search")
@@ -130,7 +133,9 @@ def coarse_to_fine_search(
             score = result
             crash_free = False
         if verbose:
-            print(f"  fine {steer:.2f},{speed:.2f} score={score:.2f} crash={crash_free}")
+            print(
+                f"  fine {steer:.2f},{speed:.2f} score={score:.2f} crash={crash_free}"
+            )
         if crash_free:
             any_crash_free = True
         if score < best_score:

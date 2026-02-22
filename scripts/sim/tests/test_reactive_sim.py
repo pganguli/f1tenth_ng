@@ -1,7 +1,6 @@
 """Unit tests for reactive simulation scripts."""
 
 from argparse import Namespace
-
 from typing import Any
 
 import numpy as np
@@ -50,21 +49,26 @@ def test_simulation_step_logic(mocker: Any) -> None:
     """Smoke test for the simulation loop logic using mocks."""
     # Mock parse_args to return specific values
     # include new fields added by add_common_sim_args
-    mocker.patch("scripts.sim.reactive_planners.parse_args", return_value=Namespace(
-        planner="gap",
-        speed=2.0,
-        bubble_radius=160,
-        waypoints=None,
-        render_mode="None",
-        max_laps=None,
-        start_x=0.0,
-        start_y=0.0,
-        start_theta=0.0,
-        map="Budapest"
-    ))
+    mocker.patch(
+        "scripts.sim.reactive_planners.parse_args",
+        return_value=Namespace(
+            planner="gap",
+            speed=2.0,
+            bubble_radius=160,
+            waypoints=None,
+            render_mode="None",
+            max_laps=None,
+            start_x=0.0,
+            start_y=0.0,
+            start_theta=0.0,
+            map="Budapest",
+        ),
+    )
 
     # Mock dependencies
-    mocker.patch("scripts.sim.reactive_planners.load_waypoints", return_value=np.zeros((0, 2)))
+    mocker.patch(
+        "scripts.sim.reactive_planners.load_waypoints", return_value=np.zeros((0, 2))
+    )
     mock_env = mocker.Mock()
     base_obs = _sim_obs()
     reset_val = (base_obs, {})
