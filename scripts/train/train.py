@@ -25,7 +25,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchao.quantization import Int8DynamicActivationInt8WeightConfig, quantize_
 
-from f110_planning.utils.nn_models import get_architecture
+from f110_planning.utils.nn_models import BayesianLinear, get_architecture
 
 # Suppress library-level deprecation warnings for cleaner output
 warnings.filterwarnings("ignore", message=".*treespec.*")
@@ -177,6 +177,7 @@ class LidarLightningModule(L.LightningModule):
 
         self.model = get_architecture(arch_id, task=task)
         self.criterion = nn.MSELoss()
+        self.bnn_beta = float(getattr(self.hparams, "bnn_beta", 1e-4))
 
         self.example_input_array = torch.randn(1, 1, 1080)
         self.train_step_count = 0
@@ -215,9 +216,23 @@ class LidarLightningModule(L.LightningModule):
         _ = batch_idx
         x_in, y_target = batch
         y_hat = self(x_in)
-        loss = self.criterion(y_hat, y_target)
+        mse_loss = self.criterion(y_hat, y_target)
+        if hasattr(self.model, "kl_loss"):
+            kl_loss = self.model.kl_loss()
+            kl_per_sample = kl_loss / x_in.size(0)
+        else:
+            kl_per_sample = torch.zeros((), device=mse_loss.device)
+        loss = mse_loss + self.bnn_beta * kl_per_sample
 
         self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
+        self.log("train/mse", mse_loss, prog_bar=False, on_step=True, on_epoch=True)
+        self.log(
+            "train/kl",
+            kl_per_sample,
+            prog_bar=False,
+            on_step=True,
+            on_epoch=True,
+        )
 
         opt = self.optimizers()
         if isinstance(opt, list):
@@ -259,9 +274,17 @@ class LidarLightningModule(L.LightningModule):
         _ = batch_idx
         x_in, y_target = batch
         y_hat = self(x_in)
-        loss = self.criterion(y_hat, y_target)
+        mse_loss = self.criterion(y_hat, y_target)
+        if hasattr(self.model, "kl_loss"):
+            kl_loss = self.model.kl_loss()
+            kl_per_sample = kl_loss / x_in.size(0)
+        else:
+            kl_per_sample = torch.zeros((), device=mse_loss.device)
+        loss = mse_loss + self.bnn_beta * kl_per_sample
 
         self.log("val/loss", loss, prog_bar=True, on_epoch=True, sync_dist=False)
+        self.log("val/mse", mse_loss, prog_bar=False, on_epoch=True)
+        self.log("val/kl", kl_per_sample, prog_bar=False, on_epoch=True)
 
         mae = torch.mean(torch.abs(y_hat - y_target))
         self.log("val/mae", mae, prog_bar=False, on_epoch=True)
@@ -351,7 +374,17 @@ def _save_model(model: nn.Module, config: dict[str, Any], model_name: str) -> No
     out_path = Path("data/models")
     out_path.mkdir(parents=True, exist_ok=True)
 
-    if config.get("quantization", {}).get("enabled", False):
+    quant_enabled = config.get("quantization", {}).get("enabled", False)
+    has_bayesian_layers = any(isinstance(m, BayesianLinear) for m in model.modules())
+
+    if quant_enabled and has_bayesian_layers:
+        print(
+            f"Quantization skipped for {model_name}: BayesianLinear layers are not "
+            "supported by this INT8 path."
+        )
+        torch.save(model.state_dict(), out_path / f"{model_name}.pth")
+        print(f"Saved model to data/models/{model_name}.pth")
+    elif quant_enabled:
         print(f"Applying INT8 dynamic quantization to {model_name}...")
         model.cpu().eval()
         quantize_(model, Int8DynamicActivationInt8WeightConfig())
@@ -386,6 +419,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
         task=task,
         lr=float(config["training"]["lr"]),
         weight_decay=float(config["training"]["weight_decay"]),
+        bnn_beta=float(config["training"].get("bnn_beta", 1e-4)),
         lr_patience=config["training"]["lr_patience"],
         lr_scheduler_factor=float(config["training"].get("lr_scheduler_factor", 0.1)),
         optimizer=config["training"].get("optimizer", "adam"),

@@ -1,4 +1,4 @@
-# Config for Heading Error Angle Prediction
+# Config for Heading Error Angle Prediction (Bayesian Medium)
 data:
   train_path: "data/datasets/lidar_tracking_combined_pure_pursuit_n17607.npz"
   target_col: "heading_error"

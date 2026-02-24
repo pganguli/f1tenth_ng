@@ -3,6 +3,7 @@ LiDAR visualization and analysis utilities for the F1TENTH simulation.
 """
 
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pyglet
@@ -155,3 +156,44 @@ def create_heading_error_renderer(
         e.heading_error_label.y = 80
 
     return render_heading_error
+
+
+def create_uncertainty_renderer(planner: Any) -> Callable[[EnvRenderer], None]:
+    """
+    Factory to render live Bayesian uncertainty and scaling diagnostics.
+    """
+
+    def render_uncertainty(env_renderer: EnvRenderer) -> None:
+        e = env_renderer
+
+        if not hasattr(e, "uncertainty_label"):
+            e.uncertainty_label = pyglet.text.Label(
+                "",
+                font_size=14,
+                x=e.width - 20,
+                y=110,
+                anchor_x="right",
+                color=(100, 255, 255, 255),
+                batch=e.ui_batch,
+            )
+
+        mode = getattr(planner, "bayes_inference_mode", "deterministic")
+        heading_std = float(getattr(planner, "last_heading_std", 0.0))
+        left_std = float(getattr(planner, "last_left_std", 0.0))
+        right_std = float(getattr(planner, "last_right_std", 0.0))
+        unc = float(getattr(planner, "last_uncertainty", 0.0))
+        s_scale = float(getattr(planner, "last_speed_scale", 1.0))
+        l_scale = float(getattr(planner, "last_lookahead_scale", 1.0))
+        mc_samples = int(getattr(planner, "mc_samples", 1))
+
+        e.uncertainty_label.text = (
+            "Bayes "
+            f"[{mode}, mc={mc_samples}] "
+            f"std(h/l/r)=({heading_std:.4f}/{left_std:.4f}/{right_std:.4f}) "
+            f"u={unc:.4f} "
+            f"sx={s_scale:.2f} lx={l_scale:.2f}"
+        )
+        e.uncertainty_label.x = e.width - 20
+        e.uncertainty_label.y = 110
+
+    return render_uncertainty

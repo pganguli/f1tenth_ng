@@ -108,31 +108,35 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
 
         Call this once per simulation step.  Internally it:
 
-        1. Uses the scheduler to decide whether to issue a cloud request.
-        2. Checks whether any in-flight cloud response has arrived.
-        3. Runs the edge planner on the *current* observation.
+        1. Checks whether any in-flight cloud response has arrived.
+        2. Runs the edge planner on the *current* observation.
+        3. Uses scheduler (optionally uncertainty-aware) to decide
+           whether to issue a cloud request.
         4. Returns either the pure edge action (if no cloud result yet) or
            the weighted blend of cloud and edge.
         """
         step = self._step
 
-        # 1. Use scheduler to decide whether to issue a cloud request
-        if self.scheduler.should_call_cloud(step, obs, self._latest_cloud_action):
-            obs_snapshot = {
-                k: (v.copy() if isinstance(v, np.ndarray) else v)
-                for k, v in obs.items()
-            }
-            self._cloud_requests.append((step + self.cloud_latency, obs_snapshot))
-
-        # 2. Receive any cloud result whose arrival time has been reached
+        # 1. Receive any cloud result whose arrival time has been reached
         while self._cloud_requests and self._cloud_requests[0][0] <= step:
             _, stale_obs = self._cloud_requests.popleft()
             self._latest_cloud_action = self.cloud_planner.plan(
                 stale_obs, ego_idx=ego_idx
             )
 
-        # 3. Edge action (always latest obs)
+        # 2. Edge action (always latest obs)
         edge_action = self.edge_planner.plan(obs, ego_idx=ego_idx)
+
+        # 3. Use scheduler to decide whether to issue a cloud request
+        context = {"edge_uncertainty": self.edge_planner.last_uncertainty}
+        if self.scheduler.should_call_cloud(
+            step, obs, self._latest_cloud_action, context=context
+        ):
+            obs_snapshot = {
+                k: (v.copy() if isinstance(v, np.ndarray) else v)
+                for k, v in obs.items()
+            }
+            self._cloud_requests.append((step + self.cloud_latency, obs_snapshot))
 
         # Keep render-callback pointer in sync
         self.last_target_point = self.edge_planner.last_target_point

@@ -2,7 +2,10 @@
 Shared DNN architectures for F1TENTH.
 """
 
+import math
+
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 
@@ -47,14 +50,160 @@ class DualHeadWallModel(nn.Module):
         return torch.cat([left, right], dim=1)
 
 
+class BayesianLinear(nn.Module):
+    """
+    Variational Bayesian linear layer with diagonal Gaussian posterior.
+    """
+
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        prior_sigma: float = 0.1,
+        init_rho: float = -3.0,
+    ) -> None:
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.prior_sigma = prior_sigma
+        self.init_rho = init_rho
+
+        self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
+        self.weight_rho = nn.Parameter(torch.empty(out_features, in_features))
+        self.bias_mu = nn.Parameter(torch.empty(out_features))
+        self.bias_rho = nn.Parameter(torch.empty(out_features))
+
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        bound = 1.0 / math.sqrt(self.in_features)
+        nn.init.uniform_(self.weight_mu, -bound, bound)
+        nn.init.constant_(self.weight_rho, self.init_rho)
+        nn.init.uniform_(self.bias_mu, -bound, bound)
+        nn.init.constant_(self.bias_rho, self.init_rho)
+
+    @staticmethod
+    def _sigma(rho: torch.Tensor) -> torch.Tensor:
+        return F.softplus(rho)
+
+    @staticmethod
+    def _sample(mu: torch.Tensor, rho: torch.Tensor) -> torch.Tensor:
+        sigma = F.softplus(rho)
+        eps = torch.randn_like(mu)
+        return mu + sigma * eps
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.training:
+            weight = self._sample(self.weight_mu, self.weight_rho)
+            bias = self._sample(self.bias_mu, self.bias_rho)
+        else:
+            weight = self.weight_mu
+            bias = self.bias_mu
+        return F.linear(x, weight, bias)
+
+    def kl_loss(self) -> torch.Tensor:
+        """
+        KL[q(w|theta)||p(w)] for all weights and biases.
+        """
+
+        prior_var = self.prior_sigma**2
+
+        def _kl(mu: torch.Tensor, rho: torch.Tensor) -> torch.Tensor:
+            var = self._sigma(rho).pow(2)
+            term = (var + mu.pow(2)) / prior_var - 1.0 + torch.log(prior_var / var)
+            return 0.5 * torch.sum(term)
+
+        return _kl(self.weight_mu, self.weight_rho) + _kl(self.bias_mu, self.bias_rho)
+
+
+class BayesianHeadingModel(nn.Module):
+    """
+    Heading predictor with deterministic CNN backbone and Bayesian FC head.
+    """
+
+    def __init__(
+        self,
+        backbone: nn.Module,
+        feature_dim: int,
+        hidden_dim: int,
+        prior_sigma: float = 0.1,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+        self.backbone = backbone
+        layers: list[nn.Module] = [
+            BayesianLinear(feature_dim, hidden_dim, prior_sigma=prior_sigma),
+            nn.ELU(),
+        ]
+        if dropout > 0:
+            layers.append(nn.Dropout(dropout))
+        layers.append(BayesianLinear(hidden_dim, 1, prior_sigma=prior_sigma))
+        self.head = nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        features = self.backbone(x)
+        return self.head(features)
+
+    def kl_loss(self) -> torch.Tensor:
+        kl = torch.tensor(0.0, device=next(self.parameters()).device)
+        for module in self.modules():
+            if isinstance(module, BayesianLinear):
+                kl = kl + module.kl_loss()
+        return kl
+
+
+class BayesianDualHeadWallModel(nn.Module):
+    """
+    Dual-head wall-distance predictor with Bayesian fully connected heads.
+    """
+
+    def __init__(
+        self,
+        backbone: nn.Module,
+        feature_dim: int,
+        hidden_dim: int,
+        prior_sigma: float = 0.1,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+        self.backbone = backbone
+
+        def _make_head() -> nn.Sequential:
+            layers: list[nn.Module] = [
+                BayesianLinear(feature_dim, hidden_dim, prior_sigma=prior_sigma),
+                nn.ELU(),
+            ]
+            if dropout > 0:
+                layers.append(nn.Dropout(dropout))
+            layers.append(BayesianLinear(hidden_dim, 1, prior_sigma=prior_sigma))
+            return nn.Sequential(*layers)
+
+        self.left_head = _make_head()
+        self.right_head = _make_head()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        features = self.backbone(x)
+        left = self.left_head(features)
+        right = self.right_head(features)
+        return torch.cat([left, right], dim=1)
+
+    def kl_loss(self) -> torch.Tensor:
+        kl = torch.tensor(0.0, device=next(self.parameters()).device)
+        for module in self.modules():
+            if isinstance(module, BayesianLinear):
+                kl = kl + module.kl_loss()
+        return kl
+
+
 def get_architecture(arch_id: int, task: str = "heading") -> nn.Module:
     """
     Factory function for standard F1TENTH neural network architectures.
 
     Args:
-        arch_id: An index (1-10) identifying the specific layer configuration.
+        arch_id: An index (1-13) identifying the specific layer configuration.
             Legacy heading architectures: 1-7.
             Multi-size architectures (heading & wall): 8 (small), 9 (medium), 10 (large).
+            Bayesian architectures (heading & wall): 11 (small), 12 (medium), 13 (large).
         task: Either 'heading' (1 output) or 'wall' (2 outputs via DualHeadWallModel).
 
     Returns:
@@ -141,6 +290,24 @@ def get_architecture(arch_id: int, task: str = "heading") -> nn.Module:
             if use_bn:
                 backbone = _insert_batchnorm(backbone)
             return DualHeadWallModel(backbone, dim, hidden_dim=hidden, dropout=dropout)
+
+        bayes_wall_configs: dict[int, tuple[int, int, bool, float, float]] = {
+            11: (0, 16, False, 0.0, 0.1),  # Small Bayesian wall model
+            12: (1, 32, True, 0.0, 0.1),   # Medium Bayesian wall model
+            13: (3, 64, True, 0.3, 0.1),   # Large Bayesian wall model
+        }
+        if arch_id in bayes_wall_configs:
+            bb_id, hidden, use_bn, dropout, prior_sigma = bayes_wall_configs[arch_id]
+            backbone, dim = get_backbone(bb_id)
+            if use_bn:
+                backbone = _insert_batchnorm(backbone)
+            return BayesianDualHeadWallModel(
+                backbone,
+                dim,
+                hidden_dim=hidden,
+                prior_sigma=prior_sigma,
+                dropout=dropout,
+            )
         # Legacy wall dispatch (arch_ids 1-7)
         backbone_id = 1 if arch_id <= 4 else 2
         backbone, dim = get_backbone(backbone_id)
@@ -277,6 +444,24 @@ def get_architecture(arch_id: int, task: str = "heading") -> nn.Module:
             nn.Linear(128, 1),
         ),
     }
+
+    bayes_heading_configs: dict[int, tuple[int, int, bool, float, float]] = {
+        11: (0, 16, False, 0.0, 0.1),  # Small Bayesian heading model
+        12: (1, 32, True, 0.0, 0.1),   # Medium Bayesian heading model
+        13: (3, 128, True, 0.3, 0.1),  # Large Bayesian heading model
+    }
+    if arch_id in bayes_heading_configs:
+        bb_id, hidden, use_bn, dropout, prior_sigma = bayes_heading_configs[arch_id]
+        backbone, dim = get_backbone(bb_id)
+        if use_bn:
+            backbone = _insert_batchnorm(backbone)
+        return BayesianHeadingModel(
+            backbone,
+            dim,
+            hidden_dim=hidden,
+            prior_sigma=prior_sigma,
+            dropout=dropout,
+        )
 
     if arch_id not in factories:
         raise ValueError(f"Architecture ID {arch_id} not supported for {task}.")

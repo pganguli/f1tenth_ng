@@ -1,11 +1,11 @@
-# Config for Heading Error Angle Prediction
+# Config for Heading Error Angle Prediction (Bayesian Large)
 data:
   train_path: "data/datasets/lidar_tracking_combined_pure_pursuit_n17607.npz"
   target_col: "heading_error"
-  batch_size: 128
-  num_workers: 8
+  batch_size: 64
+  num_workers: 0
   val_split: 0.1
-  pin_memory: true
+  pin_memory: false
   prefetch_factor: 2
   use_cache: true # Load into memory
 
@@ -14,13 +14,13 @@ training:
   lr: 5e-4
   weight_decay: 1e-5
   bnn_beta: 1e-4
-  early_stopping_patience: 20
+  early_stopping_patience: 1000
   lr_patience: 10
-  auto_lr_find: true
-  resume: true
+  auto_lr_find: false
+  resume: false
   precision: "32"
   gradient_clip_val: 1.0
-  profiler: "simple" # Choices: null, "simple", "advanced", "pytorch"
+  profiler: null # Choices: null, "simple", "advanced", "pytorch"
 
 model:
-  arch_id: 12  # Bayesian medium heading model
+  arch_id: 13  # Bayesian large heading model

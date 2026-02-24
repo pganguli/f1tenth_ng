@@ -5,10 +5,27 @@ Supports: bubble, gap_follower, disparity, and dynamic.
 """
 
 import argparse
+import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+# Prefer local source checkout over an older site-packages install.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOCAL_PLANNING_SRC = REPO_ROOT / "f110_planning"
+LOCAL_GYM_SRC = REPO_ROOT / "f110_gym"
+if str(LOCAL_PLANNING_SRC) not in sys.path:
+    sys.path.insert(0, str(LOCAL_PLANNING_SRC))
+if str(LOCAL_GYM_SRC) not in sys.path:
+    sys.path.insert(0, str(LOCAL_GYM_SRC))
+
+from f110_planning import (
+    AlwaysCallScheduler,
+    FixedIntervalScheduler,
+    UncertaintyThresholdScheduler,
+)
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
@@ -23,6 +40,7 @@ from f110_planning.render_callbacks import (
     create_dynamic_waypoint_renderer,
     create_heading_error_renderer,
     create_trace_renderer,
+    create_uncertainty_renderer,
     create_waypoint_renderer,
     render_lidar,
     render_side_distances,
@@ -118,14 +136,43 @@ def parse_args() -> argparse.Namespace:
         "--arch",
         type=int,
         default=5,
-        help="Architecture index (1-7) used during wall-distance training.",
+        help="Architecture index (1-13) used during wall-distance training.",
     )
 
     parser.add_argument(
         "--heading-arch",
         type=int,
         default=7,
-        help="Architecture index (1-7) used during heading-error training.",
+        help="Architecture index (1-13) used during heading-error training.",
+    )
+
+    parser.add_argument(
+        "--mc-samples",
+        type=int,
+        default=3,
+        help="MC samples for Bayesian inference (ignored for deterministic models).",
+    )
+
+    parser.add_argument(
+        "--bayes-inference",
+        type=str,
+        choices=["deterministic", "mc"],
+        default="deterministic",
+        help="Bayesian inference mode: deterministic uses mu-weights, mc uses sampling.",
+    )
+
+    parser.add_argument(
+        "--uncertainty-speed-gain",
+        type=float,
+        default=0.6,
+        help="How strongly predictive std reduces max speed.",
+    )
+
+    parser.add_argument(
+        "--uncertainty-lookahead-gain",
+        type=float,
+        default=0.8,
+        help="How strongly predictive std increases lookahead distance.",
     )
 
     # ---- edge-cloud specific ----
@@ -133,6 +180,37 @@ def parse_args() -> argparse.Namespace:
     ec.add_argument(
         "--cloud-latency", type=int, default=30,
         help="Round-trip latency in simulation steps for cloud inference.",
+    )
+    ec.add_argument(
+        "--cloud-scheduler",
+        type=str,
+        choices=["always", "interval", "uncertainty"],
+        default="uncertainty",
+        help="Policy for when to request cloud inference.",
+    )
+    ec.add_argument(
+        "--cloud-call-interval",
+        type=int,
+        default=10,
+        help="Step interval for interval scheduler or uncertainty fallback refresh.",
+    )
+    ec.add_argument(
+        "--uncertainty-threshold",
+        type=float,
+        default=0.03,
+        help="Request cloud when edge uncertainty is at least this value.",
+    )
+    ec.add_argument(
+        "--cloud-scheduler-warmup",
+        type=int,
+        default=1,
+        help="Always request cloud during the first N steps.",
+    )
+    ec.add_argument(
+        "--cloud-min-interval",
+        type=int,
+        default=1,
+        help="Minimum steps between cloud requests.",
     )
     ec.add_argument(
         "--alpha-steer", type=float, default=0.7,
@@ -211,14 +289,29 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
             "heading_arch_id": args.heading_arch,
             "lookahead_distance": args.lookahead,
             "lateral_gain": args.lateral_gain,
+            "mc_samples": args.mc_samples,
+            "bayes_inference_mode": args.bayes_inference,
+            "uncertainty_speed_gain": args.uncertainty_speed_gain,
+            "uncertainty_lookahead_gain": args.uncertainty_lookahead_gain,
         }
         if args.speed is not None:
             kwargs["max_speed"] = args.speed
         return LidarDNNPlanner(**kwargs)
 
     if args.planner == "edge_cloud":
+        scheduler = AlwaysCallScheduler()
+        if args.cloud_scheduler == "interval":
+            scheduler = FixedIntervalScheduler(interval=args.cloud_call_interval)
+        elif args.cloud_scheduler == "uncertainty":
+            scheduler = UncertaintyThresholdScheduler(
+                threshold=args.uncertainty_threshold,
+                min_interval=args.cloud_min_interval,
+                warmup_steps=args.cloud_scheduler_warmup,
+                fallback_interval=args.cloud_call_interval,
+            )
         kwargs = {
             "cloud_latency": args.cloud_latency,
+            "scheduler": scheduler,
             "alpha_steer": args.alpha_steer,
             "alpha_speed": args.alpha_speed,
             "lookahead_distance": args.lookahead,
@@ -256,6 +349,8 @@ def _setup_rendering(
         env.unwrapped.add_render_callback(
             create_dynamic_waypoint_renderer(planner, agent_idx=0)
         )
+    if args.planner == "dnn":
+        env.unwrapped.add_render_callback(create_uncertainty_renderer(planner))
 
 
 def _run_reactive_sim(
