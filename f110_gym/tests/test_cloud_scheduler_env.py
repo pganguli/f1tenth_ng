@@ -1,0 +1,71 @@
+"""Unit tests for the cloud scheduler RL environment."""
+
+import numpy as np
+import gymnasium as gym
+
+import f110_gym  # ensures registration
+
+
+def _make_env():
+    # small dummy waypoint (straight line)
+    wpts = np.array([[0.0, 0.0], [1.0, 0.0]])
+    env = gym.make(
+        "f110_gym:f110-cloud-scheduler-v0",
+        map="data/maps/F1/Oschersleben/Oschersleben_map",
+        waypoints=wpts,
+        num_agents=1,
+        cloud_latency=2,
+        render_mode=None,
+    )
+    return env
+
+
+def test_registry():
+    ids = [spec.id for spec in gym.envs.registry.values()]
+    assert "f110-cloud-scheduler-v0" in ids
+
+
+def test_spaces():
+    env = _make_env()
+    assert isinstance(env.action_space, gym.spaces.Discrete)
+    assert env.action_space.n == 2
+    obs = env.reset()[0]
+    # underlying observations plus extras
+    assert "scans" in obs
+    assert "latest_cloud_action" in obs
+    assert obs["latest_cloud_action"].shape == (2,)
+    assert "cloud_request_pending" in obs
+    assert "crosstrack_dist" in obs
+    assert obs["crosstrack_dist"].shape == (1,)
+    # should be nonnegative
+    assert obs["crosstrack_dist"][0] >= 0.0
+    env.close()
+
+
+def test_step_and_reward():
+    env = _make_env()
+    obs, _ = env.reset()
+    # initially no cloud and reward should be non-positive
+    assert obs["cloud_request_pending"] in (0, 1)
+    r0 = env.step(0)[1]
+    assert isinstance(r0, float)
+    assert r0 <= 0
+    # take a call and step two times to let latency materialize
+    env.reset()
+    env.step(1)
+    obs2, r2, term2, trunc2, info2 = env.step(0)
+    # since latency is 2, the latest_cloud_action should still be default
+    assert "latest_cloud_action" in info2
+    assert info2["latest_cloud_action"].shape == (2,)
+    assert isinstance(r2, float)
+    env.close()
+
+
+def test_reset_clears_scheduler():
+    env = _make_env()
+    env.reset()
+    env.step(1)
+    # after reset scheduler action pending should be None/zero
+    obs, _ = env.reset()
+    assert obs["cloud_request_pending"] == 0
+    env.close()

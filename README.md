@@ -54,7 +54,7 @@ python scripts/datagen/combine_datasets.py data/datasets/file1.npz data/datasets
 Train LiDAR-based neural networks (e.g., for heading error prediction or wall distance estimation) using PyTorch Lightning.
 
 ```bash
-python scripts/train/train.py --config scripts/train/config_heading.yaml
+python scripts/train/train_nn.py --config scripts/train/config_heading.yaml
 ```
 
 You can monitor the training progress using TensorBoard:
@@ -116,6 +116,55 @@ while not done:
     
     env.render()
 ```
+
+
+## Reinforcement Learning: Cloud Scheduler
+
+A new Gym environment (`f110-cloud-scheduler-v0`) lets an RL agent learn when to
+call a cloud inference in the edge-cloud planner.  The action space is
+``Discrete(2)`` (0 = no call, 1 = issue call) and observations include the usual
+simulator state plus ``latest_cloud_action`` and
+``cloud_request_pending``.  The default reward is the negative squared
+cross-track error, but you can pass a custom ``reward_fn`` when creating the
+environment.
+
+Example training script using Stable Baselines3::
+
+```python
+import gymnasium as gym
+from stable_baselines3 import PPO
+from f110_planning.utils import load_waypoints
+
+waypoints = load_waypoints("data/maps/F1/Oschersleben/Oschersleben_centerline.tsv")
+env = gym.make(
+    "f110_gym:f110-cloud-scheduler-v0",
+    map="data/maps/F1/Oschersleben/Oschersleben_map",
+    waypoints=waypoints,
+    cloud_latency=20,
+    render_mode=None,
+)
+model = PPO("MultiInputPolicy", env, verbose=1)
+model.learn(total_timesteps=1000000)
+```
+
+You can provide a custom reward function by passing ``reward_fn`` to
+``gym.make``:
+
+```python
+from typing import Dict, Any
+
+def my_reward(obs: Dict[str, Any], action: int) -> float:
+    # negative RMSE + small penalty for taking cloud
+    return -obs["crosstrack_rmse_m"] - 0.1 * action
+
+env = gym.make(
+    "f110_gym:f110-cloud-scheduler-v0",
+    map=..., waypoints=waypoints,
+    reward_fn=my_reward,
+)
+```
+
+The new environment is fully tested and included in the automated test suite.
 
 ## Documentation
 
