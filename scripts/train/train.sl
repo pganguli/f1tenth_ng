@@ -38,4 +38,4 @@ cd "$SLURM_SUBMIT_DIR" || exit 1
 source .venv/bin/activate
 
 # ── Run training ──
-srun python scripts/train/train.py --config "$CONFIG"
+srun python scripts/train/train_nn.py --config "$CONFIG"

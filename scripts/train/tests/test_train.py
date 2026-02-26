@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from scripts.train.train import LidarDataModule, LidarDataset, LidarLightningModule
+from scripts.train.train_nn import LidarDataModule, LidarDataset, LidarLightningModule
 
 
 def test_lidar_dataset_normalization(tmp_path: Path) -> None:
