@@ -78,7 +78,7 @@ def main():
         "MultiInputPolicy",
         env,
         verbose=args.verbose,
-        tensorboard_log="tb_logs/rl_scheduler",
+        tensorboard_log="data/models/sb3_logs/rl_scheduler",
     )
 
     # callback to save periodic checkpoints
