@@ -30,6 +30,7 @@ from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
     DynamicWaypointPlanner,
+    EdgeCloudBNNVariancePlanner,
     EdgeCloudPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
@@ -64,7 +65,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--planner",
         type=str,
-        choices=["bubble", "gap", "disparity", "dynamic", "dnn", "edge_cloud"],
+        choices=[
+            "bubble",
+            "gap",
+            "disparity",
+            "dynamic",
+            "dnn",
+            "edge_cloud",
+            "edge_cloud_bnn",
+        ],
         default=DEFAULT_PLANNER,
         help="Algorithm for obstacle avoidance and navigation.",
     )
@@ -174,6 +183,12 @@ def parse_args() -> argparse.Namespace:
         default=0.8,
         help="How strongly predictive std increases lookahead distance.",
     )
+    parser.add_argument(
+        "--uncertainty-rise-delta",
+        type=float,
+        default=0.002,
+        help="Delta threshold to mark uncertainty as rising in live HUD.",
+    )
 
     # ---- edge-cloud specific ----
     ec = parser.add_argument_group("edge-cloud", "Edge-Cloud DNN settings")
@@ -244,6 +259,32 @@ def parse_args() -> argparse.Namespace:
     )
     ec.add_argument("--cloud-arch", type=int, default=10)
     ec.add_argument("--cloud-heading-arch", type=int, default=10)
+    ec.add_argument(
+        "--edge-bayes-inference",
+        type=str,
+        choices=["deterministic", "mc"],
+        default="mc",
+        help="Edge BNN inference mode for edge_cloud_bnn planner.",
+    )
+    ec.add_argument(
+        "--cloud-bayes-inference",
+        type=str,
+        choices=["deterministic", "mc"],
+        default="mc",
+        help="Cloud BNN inference mode for edge_cloud_bnn planner.",
+    )
+    ec.add_argument(
+        "--edge-mc-samples",
+        type=int,
+        default=3,
+        help="Edge MC sample count for edge_cloud_bnn planner.",
+    )
+    ec.add_argument(
+        "--cloud-mc-samples",
+        type=int,
+        default=3,
+        help="Cloud MC sample count for edge_cloud_bnn planner.",
+    )
 
     return parser.parse_args()
 
@@ -293,6 +334,7 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
             "bayes_inference_mode": args.bayes_inference,
             "uncertainty_speed_gain": args.uncertainty_speed_gain,
             "uncertainty_lookahead_gain": args.uncertainty_lookahead_gain,
+            "uncertainty_rise_delta": args.uncertainty_rise_delta,
         }
         if args.speed is not None:
             kwargs["max_speed"] = args.speed
@@ -329,6 +371,37 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
             kwargs["max_speed"] = args.speed
         return EdgeCloudPlanner(**kwargs)
 
+    if args.planner == "edge_cloud_bnn":
+        kwargs = {
+            "cloud_latency": args.cloud_latency,
+            "alpha_steer": args.alpha_steer,
+            "alpha_speed": args.alpha_speed,
+            "lookahead_distance": args.lookahead,
+            "lateral_gain": args.lateral_gain,
+            "uncertainty_threshold": args.uncertainty_threshold,
+            "min_interval": args.cloud_min_interval,
+            "warmup_steps": args.cloud_scheduler_warmup,
+            "fallback_interval": args.cloud_call_interval,
+            "edge_wall_model_path": args.edge_wall_model,
+            "edge_heading_model_path": args.edge_heading_model,
+            "edge_arch_id": args.edge_arch,
+            "edge_heading_arch_id": args.edge_heading_arch,
+            "edge_mc_samples": args.edge_mc_samples,
+            "edge_bayes_inference_mode": args.edge_bayes_inference,
+            "cloud_wall_model_path": args.cloud_wall_model,
+            "cloud_heading_model_path": args.cloud_heading_model,
+            "cloud_arch_id": args.cloud_arch,
+            "cloud_heading_arch_id": args.cloud_heading_arch,
+            "cloud_mc_samples": args.cloud_mc_samples,
+            "cloud_bayes_inference_mode": args.cloud_bayes_inference,
+            "uncertainty_speed_gain": args.uncertainty_speed_gain,
+            "uncertainty_lookahead_gain": args.uncertainty_lookahead_gain,
+            "uncertainty_rise_delta": args.uncertainty_rise_delta,
+        }
+        if args.speed is not None:
+            kwargs["max_speed"] = args.speed
+        return EdgeCloudBNNVariancePlanner(**kwargs)
+
     raise ValueError(f"Unsupported planner logic: {args.planner}")
 
 
@@ -345,12 +418,16 @@ def _setup_rendering(
         env.unwrapped.add_render_callback(create_waypoint_renderer(waypoints))
         env.unwrapped.add_render_callback(create_heading_error_renderer(waypoints, 0))
 
-    if args.planner in ["dynamic", "dnn", "edge_cloud"]:
+    if args.planner in ["dynamic", "dnn", "edge_cloud", "edge_cloud_bnn"]:
         env.unwrapped.add_render_callback(
             create_dynamic_waypoint_renderer(planner, agent_idx=0)
         )
     if args.planner == "dnn":
         env.unwrapped.add_render_callback(create_uncertainty_renderer(planner))
+    if args.planner in ["edge_cloud", "edge_cloud_bnn"]:
+        env.unwrapped.add_render_callback(
+            create_uncertainty_renderer(planner.edge_planner)
+        )
 
 
 def _run_reactive_sim(
