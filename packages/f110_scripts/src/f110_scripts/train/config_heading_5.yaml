@@ -10,15 +10,16 @@ data:
 
 training:
   max_epochs: 450
-  lr: 5e-4
+  lr: 1e-4
   weight_decay: 1e-5
-  early_stopping_patience: 20
-  lr_patience: 10
+  early_stopping_patience: 60
+  lr_patience: 20
   lr_scheduler_factor: 0.5
   optimizer: adam
   scheduler: reduce_on_plateau
   auto_lr_find: true
   resume: true
+  resume_weights_only: true
   precision: "32"
   gradient_clip_val: 1.0
   profiler: null
