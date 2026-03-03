@@ -397,40 +397,101 @@ def _save_model(
         print(f"Saved model to data/models/{model_name}.pt")
 
 
-def _resolve_checkpoint(config: dict[str, Any], model_name: str) -> str | None:
-    """Check for an existing checkpoint to resume from."""
-    if config["training"].get("resume", True):
-        last_ckpt = Path(f"data/models/checkpoints/{model_name}/last.ckpt")
-        if last_ckpt.exists():
-            print(f"Resuming from {last_ckpt}")
-            return str(last_ckpt)
-    return None
+def _find_last_checkpoint(model_name: str) -> Path | None:
+    """Return the path to last.ckpt if it exists, else None."""
+    last_ckpt = Path(f"data/models/checkpoints/{model_name}/last.ckpt")
+    return last_ckpt if last_ckpt.exists() else None
+
+
+def _load_weights_from_checkpoint(module: "LidarLightningModule", ckpt_path: Path) -> None:
+    """Load only model weights from a Lightning checkpoint, ignoring optimizer state.
+
+    This enables a warm restart: the network starts from a trained parameter
+    state but the optimizer/scheduler are freshly initialised, allowing a new
+    learning-rate schedule to take effect immediately.
+    """
+    ckpt = torch.load(ckpt_path, map_location="cpu")
+    # Lightning stores the full module state_dict under "state_dict".
+    # Keys are prefixed with "model." matching LidarLightningModule.model.
+    state = {
+        k.removeprefix("model."): v
+        for k, v in ckpt["state_dict"].items()
+        if k.startswith("model.")
+    }
+    missing, unexpected = module.model.load_state_dict(state, strict=True)
+    if missing or unexpected:
+        print(f"  Warning — missing keys: {missing}, unexpected keys: {unexpected}")
+    print(f"Warm-restart: loaded weights from {ckpt_path} (optimizer reset)")
 
 
 def run_single_training(config: dict[str, Any], arch_id: int) -> None:
-    """Run a single training session for a specific architecture."""
-    # Set matmul precision for better GPU utilization and to suppress warnings
+    """Run a single training session for a specific architecture.
+
+    Checkpoint behaviour is controlled by two YAML flags:
+
+    resume: true/false          — whether to load model weights from the last
+                                   checkpoint.  When false, training always
+                                   starts from random initialisation and
+                                   resume_weights_only is irrelevant.
+    resume_weights_only: true   — when resume is also true, load only the model
+                                   weights and start the optimizer/scheduler
+                                   from scratch (useful after a cosine-schedule
+                                   run where the LR has decayed to ~0).
+                                   When false (default), full Lightning restore:
+                                   weights + optimizer + scheduler + epoch
+                                   counter are all restored.
+
+    Decision table
+    ──────────────
+    resume=false, resume_weights_only=any    →  random weights,    fresh optimizer
+    resume=true,  resume_weights_only=false  →  weights from ckpt, optimizer from ckpt
+    resume=true,  resume_weights_only=true   →  weights from ckpt, fresh optimizer"""
+    # Set matmul precision for better GPU utilisation and to suppress warnings
     torch.set_float32_matmul_precision("high")
 
     L.seed_everything(42)
 
+    training_cfg = config["training"]
+    do_resume = training_cfg.get("resume", True)
+    do_weights_only = training_cfg.get("resume_weights_only", False)
+
     # Setup Model
     module = LidarLightningModule(
         arch_id=arch_id,
-        lr=float(config["training"]["lr"]),
-        weight_decay=float(config["training"]["weight_decay"]),
-        lr_patience=config["training"]["lr_patience"],
-        lr_scheduler_factor=float(config["training"].get("lr_scheduler_factor", 0.1)),
-        optimizer=config["training"].get("optimizer", "adam"),
-        scheduler=config["training"].get("scheduler", "reduce_on_plateau"),
-        max_epochs=config["training"]["max_epochs"],
+        lr=float(training_cfg["lr"]),
+        weight_decay=float(training_cfg["weight_decay"]),
+        lr_patience=training_cfg["lr_patience"],
+        lr_scheduler_factor=float(training_cfg.get("lr_scheduler_factor", 0.1)),
+        optimizer=training_cfg.get("optimizer", "adam"),
+        scheduler=training_cfg.get("scheduler", "reduce_on_plateau"),
+        max_epochs=training_cfg["max_epochs"],
     )
 
-    # Apply weight initialization for fresh models
-    _init_weights(module.model)
+    model_name = f"{config['data']['target_col']}_arch{arch_id}"
+    existing_ckpt = _find_last_checkpoint(model_name)
+
+    if not do_resume:
+        # resume=false → always random init; resume_weights_only is irrelevant.
+        if do_weights_only:
+            print("resume_weights_only ignored because resume=false — starting from random initialisation")
+        _init_weights(module.model)
+        ckpt_path = None
+    elif existing_ckpt:
+        if do_weights_only:
+            # resume=true, resume_weights_only=true → weights only, fresh optimizer.
+            _load_weights_from_checkpoint(module, existing_ckpt)
+            ckpt_path = None
+        else:
+            # resume=true, resume_weights_only=false → full Lightning restore.
+            print(f"Full resume (weights + optimizer) from {existing_ckpt}")
+            ckpt_path = str(existing_ckpt)
+    else:
+        # resume=true but no checkpoint exists yet.
+        print("resume=true but no checkpoint found — starting from random initialisation")
+        _init_weights(module.model)
+        ckpt_path = None
 
     # Logger
-    model_name = f"{config['data']['target_col']}_arch{arch_id}"
     logger = TensorBoardLogger("data/models/lightning_logs", name=model_name)
 
     # Callbacks
@@ -445,7 +506,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
         ),
         EarlyStopping(
             monitor="val/loss",
-            patience=config["training"]["early_stopping_patience"],
+            patience=training_cfg["early_stopping_patience"],
             mode="min",
         ),
         LearningRateMonitor(logging_interval="epoch"),
@@ -453,25 +514,22 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
 
     # Trainer
     trainer = L.Trainer(
-        max_epochs=config["training"]["max_epochs"],
+        max_epochs=training_cfg["max_epochs"],
         accelerator="auto",
         devices=1,
-        precision=config["training"].get("precision", "32")
+        precision=training_cfg.get("precision", "32")
         if torch.cuda.is_available()
         else "32",
-        gradient_clip_val=config["training"].get("gradient_clip_val", None),
+        gradient_clip_val=training_cfg.get("gradient_clip_val", None),
         logger=logger,
         callbacks=callbacks,
-        profiler=config["training"].get("profiler", None),
+        profiler=training_cfg.get("profiler", None),
     )
 
     dm = LidarDataModule(config)
 
-    # 1. Resume Support — check BEFORE auto LR find
-    ckpt_path = _resolve_checkpoint(config, model_name)
-
-    # 2. Automatic LR Finding (skip when resuming — LR is in checkpoint)
-    if config["training"].get("auto_lr_find", False) and ckpt_path is None:
+    # Auto LR find: only when the optimizer is fresh (not a full resume).
+    if training_cfg.get("auto_lr_find", False) and ckpt_path is None:
         tuner = Tuner(trainer)
         lr_finder = tuner.lr_find(module, datamodule=dm)
         if lr_finder:
@@ -480,7 +538,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
                 print(f"Best LR found: {suggested_lr}")
                 module.hparams.lr = suggested_lr
 
-    # 3. Training
+    # Training
     trainer.fit(module, datamodule=dm, ckpt_path=ckpt_path)
 
     # 4. Save final model
