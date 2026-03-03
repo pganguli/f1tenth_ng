@@ -25,7 +25,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchao.quantization import Int8DynamicActivationInt8WeightConfig, quantize_
 
-from f110_planning.utils.nn_models import get_architecture
+from f110_planning.utils.nn_models import get_architecture, save_as_torchscript
 
 # Suppress library-level deprecation warnings for cleaner output
 warnings.filterwarnings("ignore", message=".*treespec.*")
@@ -39,7 +39,7 @@ class LidarDataset(Dataset):
 
     Attributes:
         x (np.ndarray): Normalized LiDAR scans.
-        y (np.ndarray): Target values (e.g., heading, path distances).
+        y (np.ndarray): Target values (heading_error, left_wall_dist, or track_width).
     """
 
     def __init__(self, data_path: str, target_col: str) -> None:
@@ -48,15 +48,19 @@ class LidarDataset(Dataset):
 
         Args:
             data_path: Path to the .npz dataset file.
-            target_col: Name of the column(s) to use as regression targets.
+            target_col: Name of the target column.  Use ``"track_width"`` to
+                derive track width on-the-fly as
+                ``left_wall_dist + right_wall_dist`` when the key is absent.
         """
         data = np.load(data_path)
         self.x = data["scans"].astype(np.float32)
 
-        # Handle multi-target columns (e.g., "left_dist,right_dist")
-        if "," in target_col:
-            cols = [c.strip() for c in target_col.split(",")]
-            self.y = np.stack([data[c].astype(np.float32) for c in cols], axis=1)
+        # Derive track_width on-the-fly when the column is absent from the file
+        if target_col == "track_width" and "track_width" not in data:
+            self.y = (
+                data["left_wall_dist"].astype(np.float32)
+                + data["right_wall_dist"].astype(np.float32)
+            ).reshape(-1, 1)
         else:
             self.y = data[target_col].astype(np.float32).reshape(-1, 1)
 
@@ -161,21 +165,19 @@ class LidarLightningModule(L.LightningModule):
     def __init__(
         self,
         arch_id: int,
-        task: str = "heading",
         **kwargs: Any,
     ) -> None:
         """
         Initializes the lightning module.
 
         Args:
-            arch_id: Unique identifier for the network architecture.
-            task: Prediction task ("heading" or "wall").
+            arch_id: Unique identifier for the network architecture (1–7).
             **kwargs: Hyperparameters passed to save_hyperparameters.
         """
         super().__init__()
         self.save_hyperparameters()
 
-        self.model = get_architecture(arch_id, task=task)
+        self.model = get_architecture(arch_id)
         self.criterion = nn.MSELoss()
 
         self.example_input_array = torch.randn(1, 1, 1080)
@@ -346,20 +348,53 @@ def _init_weights(model: nn.Module) -> None:
             nn.init.zeros_(m.bias)
 
 
-def _save_model(model: nn.Module, config: dict[str, Any], model_name: str) -> None:
-    """Save final model weights, optionally with INT8 quantization."""
+def _save_model(
+    model: nn.Module,
+    config: dict[str, Any],
+    model_name: str,
+    arch_id: int,
+) -> None:
+    """Save the model as a self-sufficient TorchScript ``.pt`` file.
+
+    All metadata (arch_id, target_col, training / data / quantization config)
+    is embedded inside the same file so that no external class definitions or
+    config files are needed at inference time.
+
+    For quantized models the FP32 computation graph is scripted *before*
+    ``quantize_()`` is applied (torchao ``AffineQuantizedTensor`` weights are
+    not TorchScript-serialisable).  The FP32 ``state_dict`` is also embedded
+    so that the quantized module can be faithfully reconstructed at load time.
+    """
     out_path = Path("data/models")
     out_path.mkdir(parents=True, exist_ok=True)
 
-    if config.get("quantization", {}).get("enabled", False):
+    is_quantized = config.get("quantization", {}).get("enabled", False)
+    metadata: dict[str, Any] = {
+        "arch_id": arch_id,
+        "target_col": config["data"]["target_col"],
+        "model_name": model_name,
+        "quantized": is_quantized,
+        "training": config.get("training", {}),
+        "data": config.get("data", {}),
+        "quantization": config.get("quantization", {}),
+    }
+
+    model.cpu().eval()
+
+    if is_quantized:
         print(f"Applying INT8 dynamic quantization to {model_name}...")
-        model.cpu().eval()
+        # Apply quantisation first so the stored state_dict contains quantized
+        # tensors.  save_as_torchscript handles quantized models by scripting a
+        # fresh FP32 architecture for the computation graph while embedding the
+        # quantized state_dict as a binary extra file.  At load time the
+        # inference code rebuilds a fresh module, re-applies quantize_(), and
+        # then loads the quantized state_dict — no dequantisation required.
         quantize_(model, Int8DynamicActivationInt8WeightConfig())
-        torch.save(model.state_dict(), out_path / f"{model_name}.pth")
-        print(f"Saved quantized model to data/models/{model_name}.pth")
+        save_as_torchscript(model, out_path / f"{model_name}.pt", metadata)
+        print(f"Saved quantized model to data/models/{model_name}.pt")
     else:
-        torch.save(model.state_dict(), out_path / f"{model_name}.pth")
-        print(f"Saved model to data/models/{model_name}.pth")
+        save_as_torchscript(model, out_path / f"{model_name}.pt", metadata)
+        print(f"Saved model to data/models/{model_name}.pt")
 
 
 def _resolve_checkpoint(config: dict[str, Any], model_name: str) -> str | None:
@@ -380,10 +415,8 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
     L.seed_everything(42)
 
     # Setup Model
-    task = "wall" if "," in config["data"]["target_col"] else "heading"
     module = LidarLightningModule(
         arch_id=arch_id,
-        task=task,
         lr=float(config["training"]["lr"]),
         weight_decay=float(config["training"]["weight_decay"]),
         lr_patience=config["training"]["lr_patience"],
@@ -398,7 +431,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
 
     # Logger
     model_name = f"{config['data']['target_col']}_arch{arch_id}"
-    logger = TensorBoardLogger("data/datasets/lightning_logs", name=model_name)
+    logger = TensorBoardLogger("data/models/lightning_logs", name=model_name)
 
     # Callbacks
     callbacks = [
@@ -451,7 +484,7 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
     trainer.fit(module, datamodule=dm, ckpt_path=ckpt_path)
 
     # 4. Save final model
-    _save_model(module.model, config, model_name)
+    _save_model(module.model, config, model_name, arch_id)
 
 
 def main() -> None:
@@ -461,7 +494,8 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--config", type=str, default="scripts/train/config_heading.yaml",
+        "--config", type=str,
+        default="packages/f110_scripts/src/f110_scripts/train/config_heading_7.yaml",
         help="Path to the YAML training configuration file.",
     )
     args = parser.parse_args()

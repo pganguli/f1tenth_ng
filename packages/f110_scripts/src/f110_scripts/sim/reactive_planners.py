@@ -140,45 +140,24 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--wall-model",
+        "--left-wall-model",
         type=str,
-        default="data/models/left_wall_dist,right_wall_dist_arch5.pth",
-        help="Path to the trained DualHeadWallModel state dictionary.",
+        default="data/models/left_wall_dist_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt model for left wall distance.",
     )
 
     parser.add_argument(
-        "--left-model",
+        "--track-width-model",
         type=str,
-        default=None,
-        help="Path to a standalone Left wall distance model.",
-    )
-
-    parser.add_argument(
-        "--right-model",
-        type=str,
-        default=None,
-        help="Path to a standalone Right wall distance model.",
+        default="data/models/track_width_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt model for total track width.",
     )
 
     parser.add_argument(
         "--heading-model",
         type=str,
-        default="data/models/heading_error_arch7.pth",
-        help="Path to the trained HeadingError model.",
-    )
-
-    parser.add_argument(
-        "--arch",
-        type=int,
-        default=5,
-        help="Architecture index (1-10) used during wall-distance training.",
-    )
-
-    parser.add_argument(
-        "--heading-arch",
-        type=int,
-        default=7,
-        help="Architecture index (1-10) used during heading-error training.",
+        default="data/models/heading_error_arch7.pt",
+        help="Path to the self-sufficient TorchScript .pt heading-error model.",
     )
 
     # ---- edge-cloud specific ----
@@ -220,52 +199,40 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         ),
     )
     ec.add_argument(
-        "--edge-wall-model",
+        "--edge-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist,right_wall_dist_arch8.pth",
-        help="Path to edge wall-distance model.",
+        default="data/models/left_wall_dist_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
+    )
+    ec.add_argument(
+        "--edge-track-width-model",
+        type=str,
+        default="data/models/track_width_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch8.pth",
-        help="Path to edge heading-error model.",
+        default="data/models/heading_error_arch7.pt",
+        help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
-        "--edge-arch",
-        type=int,
-        default=8,
-        help="Architecture index used for the edge wall-distance model.",
-    )
-    ec.add_argument(
-        "--edge-heading-arch",
-        type=int,
-        default=8,
-        help="Architecture index used for the edge heading-error model.",
-    )
-    ec.add_argument(
-        "--cloud-wall-model",
+        "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist,right_wall_dist_arch10.pth",
-        help="Path to cloud wall-distance model.",
+        default="data/models/left_wall_dist_arch7.pt",
+        help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
+    )
+    ec.add_argument(
+        "--cloud-track-width-model",
+        type=str,
+        default="data/models/track_width_arch7.pt",
+        help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
         "--cloud-heading-model",
         type=str,
-        default="data/models/heading_error_arch10.pth",
-        help="Path to cloud heading-error model.",
-    )
-    ec.add_argument(
-        "--cloud-arch",
-        type=int,
-        default=10,
-        help="Architecture index used for the cloud wall-distance model.",
-    )
-    ec.add_argument(
-        "--cloud-heading-arch",
-        type=int,
-        default=10,
-        help="Architecture index used for the cloud heading-error model.",
+        default="data/models/heading_error_arch7.pt",
+        help="Path to self-sufficient TorchScript .pt cloud heading-error model.",
     )
 
     return parser
@@ -322,12 +289,9 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
 
     if args.planner == "dnn":
         kwargs = {
-            "wall_model_path": args.wall_model,
-            "left_model_path": args.left_model,
-            "right_model_path": args.right_model,
+            "left_model_path": args.left_wall_model,
+            "track_width_model_path": args.track_width_model,
             "heading_model_path": args.heading_model,
-            "arch_id": args.arch,
-            "heading_arch_id": args.heading_arch,
             "lookahead_distance": args.lookahead,
             "lateral_gain": args.lateral_gain,
         }
@@ -356,14 +320,12 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
             "alpha_speed": args.alpha_speed,
             "lookahead_distance": args.lookahead,
             "lateral_gain": args.lateral_gain,
-            "edge_wall_model_path": args.edge_wall_model,
+            "edge_left_wall_model_path": args.edge_left_wall_model,
+            "edge_track_width_model_path": args.edge_track_width_model,
             "edge_heading_model_path": args.edge_heading_model,
-            "edge_arch_id": args.edge_arch,
-            "edge_heading_arch_id": args.edge_heading_arch,
-            "cloud_wall_model_path": args.cloud_wall_model,
+            "cloud_left_wall_model_path": args.cloud_left_wall_model,
+            "cloud_track_width_model_path": args.cloud_track_width_model,
             "cloud_heading_model_path": args.cloud_heading_model,
-            "cloud_arch_id": args.cloud_arch,
-            "cloud_heading_arch_id": args.cloud_heading_arch,
         }
         if args.speed is not None:
             kwargs["max_speed"] = args.speed

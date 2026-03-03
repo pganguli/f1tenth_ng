@@ -1,152 +1,43 @@
 """
-Shared DNN architectures for F1TENTH.
+Shared DNN architectures and serialisation helpers for F1TENTH.
+
+Architecture overview (all produce a single scalar output):
+    1 – tiny single-channel CNN (~134 params)
+    2 – 3-stage single-channel CNN (~small)
+    3 – [Conv(1→1), Conv(1→8)] → Linear(1072, 32) (~small)
+    4 – [Conv(1→1), Conv(1→16)] → Linear(2144, 32) (~small-medium)
+    5 – [Conv(1→8), Conv(8→16)] → Linear(2144, 64) (~medium)
+    6 – [Conv(1→8), Conv(8→32)] → Linear(4288, 64) (~medium-large)
+    7 – [Conv(1→16), Conv(16→32)] → Linear(4288, 128) (~large)
 """
+
+import io
+import json
+from pathlib import Path
+from typing import Any
 
 import torch
 from torch import nn
 
 
-class DualHeadWallModel(nn.Module):
+def get_architecture(arch_id: int) -> nn.Module:
     """
-    Predicts both Left and Right wall distances from a single LiDAR scan.
+    Factory function for F1TENTH single-output LiDAR neural network architectures.
 
-    This model share a common feature-extraction backbone but uses independent
-    fully-connected heads for the two wall distance predictions.
-    """
-
-    def __init__(
-        self,
-        backbone: nn.Module,
-        feature_dim: int,
-        hidden_dim: int = 64,
-        dropout: float = 0.0,
-    ):
-        super().__init__()
-        self.backbone = backbone
-
-        def _make_head() -> nn.Sequential:
-            layers: list[nn.Module] = [
-                nn.Linear(feature_dim, hidden_dim),
-                nn.ELU(),
-            ]
-            if dropout > 0:
-                layers.append(nn.Dropout(dropout))
-            layers.append(nn.Linear(hidden_dim, 1))
-            return nn.Sequential(*layers)
-
-        self.left_head = _make_head()
-        self.right_head = _make_head()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Processes the input scan and returns [left_dist, right_dist].
-        """
-        features = self.backbone(x)
-        left = self.left_head(features)
-        right = self.right_head(features)
-        return torch.cat([left, right], dim=1)
-
-
-def get_architecture(arch_id: int, task: str = "heading") -> nn.Module:
-    """
-    Factory function for standard F1TENTH neural network architectures.
+    All architectures accept a ``(batch, 1, 1080)`` tensor and return a
+    ``(batch, 1)`` scalar — suitable for heading error, left wall distance,
+    or track width prediction.
 
     Args:
-        arch_id: An index (1-10) identifying the specific layer configuration.
-            Legacy heading architectures: 1-7.
-            Multi-size architectures (heading & wall): 8 (small), 9 (medium), 10 (large).
-        task: Either 'heading' (1 output) or 'wall' (2 outputs via DualHeadWallModel).
+        arch_id: An integer in ``{1, 2, 3, 4, 5, 6, 7}`` identifying the
+            specific layer configuration (ordered roughly by parameter count).
 
     Returns:
-        An initialized PyTorch nn.Module.
+        An uninitialised ``nn.Sequential`` module.
+
+    Raises:
+        ValueError: If ``arch_id`` is not in the supported set.
     """
-
-    def get_backbone(backbone_id: int) -> tuple[nn.Module, int]:
-        # Base families of feature extractors
-        families = {
-            0: (  # Tiny: ~140 conv params, dim=528
-                nn.Sequential(
-                    nn.Conv1d(1, 4, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=4),
-                    nn.Conv1d(4, 8, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=4),
-                    nn.Flatten(),
-                ),
-                528,
-            ),
-            1: (  # Medium: ~440 conv params, dim=2144
-                nn.Sequential(
-                    nn.Conv1d(1, 8, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=2),
-                    nn.Conv1d(8, 16, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=4),
-                    nn.Flatten(),
-                ),
-                2144,
-            ),
-            2: (  # Large: ~1.5K conv params, dim=4288
-                nn.Sequential(
-                    nn.Conv1d(1, 16, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=2),
-                    nn.Conv1d(16, 32, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=4),
-                    nn.Flatten(),
-                ),
-                4288,
-            ),
-            3: (  # Deep: 3-layer CNN, ~20K conv params, dim=8512
-                nn.Sequential(
-                    nn.Conv1d(1, 16, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=2),
-                    nn.Conv1d(16, 32, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=2),
-                    nn.Conv1d(32, 64, kernel_size=3),
-                    nn.ELU(),
-                    nn.MaxPool1d(kernel_size=2),
-                    nn.Flatten(),
-                ),
-                8512,
-            ),
-        }
-        return families.get(backbone_id, families[1])
-
-    def _insert_batchnorm(seq: nn.Sequential) -> nn.Sequential:
-        """Insert BatchNorm1d after every Conv1d in a flat Sequential."""
-        new_layers: list[nn.Module] = []
-        for layer in seq:
-            new_layers.append(layer)
-            if isinstance(layer, nn.Conv1d):
-                new_layers.append(nn.BatchNorm1d(layer.out_channels))
-        return nn.Sequential(*new_layers)
-
-    # --- Wall task: DualHeadWallModel with configurable backbone + heads ---
-    if task == "wall":
-        # Multi-size wall configs: (backbone_id, head_hidden, use_batchnorm, dropout)
-        wall_configs: dict[int, tuple[int, int, bool, float]] = {
-            8: (0, 16, False, 0.0),  # Small: tiny backbone, no BN, no dropout
-            9: (1, 32, True, 0.0),   # Medium: BN in backbone
-            10: (3, 64, True, 0.3),  # Large: BN in backbone + dropout in heads
-        }
-        if arch_id in wall_configs:
-            bb_id, hidden, use_bn, dropout = wall_configs[arch_id]
-            backbone, dim = get_backbone(bb_id)
-            if use_bn:
-                backbone = _insert_batchnorm(backbone)
-            return DualHeadWallModel(backbone, dim, hidden_dim=hidden, dropout=dropout)
-        # Legacy wall dispatch (arch_ids 1-7)
-        backbone_id = 1 if arch_id <= 4 else 2
-        backbone, dim = get_backbone(backbone_id)
-        return DualHeadWallModel(backbone, dim)
-
-    # Legacy / Heading architectures (arch_id 1-7)
     factories = {
         1: lambda: nn.Sequential(
             nn.Conv1d(1, 1, kernel_size=3),
@@ -230,55 +121,117 @@ def get_architecture(arch_id: int, task: str = "heading") -> nn.Module:
             nn.ELU(),
             nn.Linear(128, 1),
         ),
-        # --- Multi-size heading architectures ---
-        8: lambda: nn.Sequential(  # Small: ~8.6K params
-            nn.Conv1d(1, 4, kernel_size=3),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=4),
-            nn.Conv1d(4, 8, kernel_size=3),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=4),
-            nn.Flatten(),
-            nn.Linear(528, 16),
-            nn.ELU(),
-            nn.Linear(16, 1),
-        ),
-        9: lambda: nn.Sequential(  # Medium: ~69K params, with BatchNorm
-            nn.Conv1d(1, 8, kernel_size=3),
-            nn.BatchNorm1d(8),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Conv1d(8, 16, kernel_size=3),
-            nn.BatchNorm1d(16),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=4),
-            nn.Flatten(),
-            nn.Linear(2144, 32),
-            nn.ELU(),
-            nn.Linear(32, 1),
-        ),
-        10: lambda: nn.Sequential(  # Large: ~1.1M params, with BatchNorm + Dropout
-            nn.Conv1d(1, 16, kernel_size=3),
-            nn.BatchNorm1d(16),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Conv1d(16, 32, kernel_size=3),
-            nn.BatchNorm1d(32),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Conv1d(32, 64, kernel_size=3),
-            nn.BatchNorm1d(64),
-            nn.ELU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Flatten(),
-            nn.Linear(8512, 128),
-            nn.ELU(),
-            nn.Dropout(0.3),
-            nn.Linear(128, 1),
-        ),
     }
 
     if arch_id not in factories:
-        raise ValueError(f"Architecture ID {arch_id} not supported for {task}.")
+        raise ValueError(
+            f"Architecture ID {arch_id} is not supported. "
+            f"Valid IDs are: {sorted(factories.keys())}"
+        )
 
     return factories[arch_id]()
+
+
+# ---------------------------------------------------------------------------
+# Self-sufficient model serialisation helpers
+# ---------------------------------------------------------------------------
+
+
+def save_as_torchscript(
+    model: nn.Module,
+    path: str | Path,
+    metadata: dict[str, Any],
+) -> None:
+    """Save an ``nn.Module`` as a self-sufficient TorchScript ``.pt`` file.
+
+    The saved file embeds both the full computation graph (via
+    ``torch.jit.script``) and all metadata (``arch_id``, ``target_col``,
+    training config, quantization flag, …) as a JSON sidecar inside the same
+    archive.  No separate architecture class or external config file is
+    required to load a non-quantized model.
+
+    For quantized models (``metadata["quantized"] is True``) the *FP32*
+    computation graph is scripted and the FP32 ``state_dict`` is additionally
+    embedded as a binary extra file.  This is necessary because
+    ``torchao.AffineQuantizedTensor`` weights are not TorchScript-serialisable.
+    At load time the caller rebuilds the module, loads the FP32 weights, and
+    re-applies ``quantize_()``—which is semantically equivalent since torchao
+    INT8 weight quantisation is deterministic given the FP32 weights.
+
+    Args:
+        model: The FP32 ``nn.Module`` to script and save.  Must be in eval
+            mode and **not** yet quantized.
+        path: Destination path for the ``.pt`` file.
+        metadata: Dict of metadata to embed (must be JSON-serialisable).
+            Should contain at minimum ``"quantized"`` (bool).  For quantized
+            models ``"arch_id"`` is also required so the model can be
+            faithfully reconstructed at load time.
+    """
+    path = Path(path)
+    extra_files: dict[str, bytes] = {
+        "metadata.json": json.dumps(metadata).encode(),
+    }
+
+    # For quantized models embed the FP32 state_dict as well.
+    # This lets _load_model reconstruct the quantized module without the
+    # ScriptModule state_dict key-name complications.
+    if metadata.get("quantized", False):
+        buf = io.BytesIO()
+        torch.save(model.state_dict(), buf)
+        extra_files["state_dict.pt"] = buf.getvalue()
+
+    if metadata.get("quantized", False):
+        # torchao AffineQuantizedTensor / LinearActivationQuantizedTensor
+        # weights are not TorchScript-serialisable, so we script a freshly
+        # instantiated FP32 architecture for the computation graph but store
+        # the quantized state_dict so it can be loaded directly after
+        # re-applying quantize_() at inference time.
+        arch_id: int = metadata["arch_id"]
+        fp32_for_graph = get_architecture(arch_id)
+        fp32_for_graph.eval()
+        scripted = torch.jit.script(fp32_for_graph)
+    else:
+        scripted = torch.jit.script(model)
+    torch.jit.save(scripted, str(path), _extra_files=extra_files)
+
+
+def load_torchscript(
+    path: str | Path,
+    map_location: str | torch.device = "cpu",
+) -> tuple[torch.ScriptModule, dict[str, Any]]:
+    """Load a self-sufficient TorchScript model saved by :func:`save_as_torchscript`.
+
+    For *non-quantized* models the returned :class:`torch.ScriptModule` is
+    ready for inference with **no** additional imports required — no
+    ``nn_models.py``, no ``arch_id``, no config file.
+
+    For *quantized* models (``metadata["quantized"] is True``), the returned
+    module is the FP32 TorchScript graph.  Use the ``"arch_id"`` and the
+    ``"_state_dict_bytes"`` private key in *metadata* to reconstruct the
+    quantized module::
+
+        scripted, meta = load_torchscript(path)
+        if meta["quantized"]:
+            model = get_architecture(meta["arch_id"])
+            buf = io.BytesIO(meta["_state_dict_bytes"])
+            model.load_state_dict(torch.load(buf, map_location=device))
+            model.eval()
+            quantize_(model, Int8DynamicActivationInt8WeightConfig())
+
+    Args:
+        path: Path to the ``.pt`` file produced by :func:`save_as_torchscript`.
+        map_location: Device to map tensors to on load.
+
+    Returns:
+        A ``(scripted_model, metadata)`` tuple where *metadata* mirrors the
+        dict passed to :func:`save_as_torchscript`.  For quantized files an
+        extra ``"_state_dict_bytes"`` key (raw ``bytes``) is injected by this
+        function for downstream reconstruction.
+    """
+    extra: dict[str, bytes] = {"metadata.json": b"", "state_dict.pt": b""}
+    scripted = torch.jit.load(str(path), _extra_files=extra, map_location=map_location)
+    metadata: dict[str, Any] = json.loads(extra["metadata.json"].decode())
+    if extra["state_dict.pt"]:
+        # Attach raw bytes under a private key; caller decides whether to use them.
+        metadata["_state_dict_bytes"] = extra["state_dict.pt"]
+    return scripted, metadata
