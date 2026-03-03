@@ -17,6 +17,7 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 
 
 def main() -> None:
+    """Print a summary table of best validation metrics from TensorBoard logs."""
     log_root = Path("data/models/lightning_logs")
 
     if not log_root.exists():
@@ -28,7 +29,7 @@ def main() -> None:
     rows: list[tuple[str, float, float]] = []
 
     for version_dir in sorted(log_root.glob("*/version_*")):
-        model_name = version_dir.parent.name
+        model_name = f"{version_dir.parent.name}/{version_dir.name}"
         ea = EventAccumulator(str(version_dir))
         ea.Reload()
         try:
@@ -43,9 +44,12 @@ def main() -> None:
         return
 
     col_model = max(len(r[0]) for r in rows)
-    col_model = max(col_model, len("Model"))
+    col_model = max(col_model, len("Model/Version"))
 
-    header = f"{'Model':<{col_model}}  {'Best val/loss (MSE)':>20}  {'Best val/mae (MAE)':>18}"
+    header = (
+        f"{'Model/Version':<{col_model}}"
+        f"  {'Best val/loss (MSE)':>20}  {'Best val/mae (MAE)':>18}"
+    )
     separator = "-" * len(header)
 
     print(header)
