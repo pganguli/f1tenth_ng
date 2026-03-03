@@ -9,7 +9,7 @@ data:
   prefetch_factor: 2
 
 training:
-  max_epochs: 400
+  max_epochs: 700
   lr: 3e-4
   weight_decay: 1e-4
   early_stopping_patience: 30

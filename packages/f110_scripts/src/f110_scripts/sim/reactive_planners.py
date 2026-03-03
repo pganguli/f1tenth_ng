@@ -213,7 +213,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch7.pt",
+        default="data/models/heading_error_arch5.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
