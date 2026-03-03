@@ -1,3 +1,5 @@
+"""Sphinx configuration file for the F1TENTH-NG documentation."""
+# pylint: disable=invalid-name,redefined-builtin
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:

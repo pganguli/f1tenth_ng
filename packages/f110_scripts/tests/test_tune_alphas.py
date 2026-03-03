@@ -14,7 +14,7 @@ def run_main_with_args(monkeypatch, args_list):
 
     def fake_search(*_args, **kwargs):
         called.update(kwargs)
-        return 0.0, 0.0, 0.0, False
+        return 0.0, 0.0, 0.0, True
 
     # stub out the expensive parts of ``main``. previous versions of this
     # test only replaced ``coarse_to_fine_search`` but the final sanity loop

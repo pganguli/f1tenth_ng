@@ -149,21 +149,21 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch5.pt",
+        default="data/models/left_wall_dist_arch6.pt",
         help="Path to self-sufficient TorchScript .pt model for left wall distance.",
     )
 
     parser.add_argument(
         "--track-width-model",
         type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch6.pt",
         help="Path to self-sufficient TorchScript .pt model for total track width.",
     )
 
     parser.add_argument(
         "--heading-model",
         type=str,
-        default="data/models/heading_error_arch7.pt",
+        default="data/models/heading_error_arch6.pt",
         help="Path to the self-sufficient TorchScript .pt heading-error model.",
     )
 
@@ -208,37 +208,37 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch3.pt",
+        default="data/models/left_wall_dist_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
     )
     ec.add_argument(
         "--edge-track-width-model",
         type=str,
-        default="data/models/track_width_arch3.pt",
+        default="data/models/track_width_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch3.pt",
+        default="data/models/heading_error_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
         "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch5.pt",
+        default="data/models/left_wall_dist_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
     )
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
         "--cloud-heading-model",
         type=str,
-        default="data/models/heading_error_arch5.pt",
+        default="data/models/heading_error_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud heading-error model.",
     )
 
