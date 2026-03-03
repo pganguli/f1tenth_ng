@@ -41,6 +41,12 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
     forwarded to the edge planner and ``cloud_*`` prefixed arguments to the
     cloud planner.  ``lookahead_distance``, ``max_speed``, and
     ``lateral_gain`` are shared by both unless overridden per-planner.
+
+    Three separate single-output model files are required per planner:
+    ``*_left_wall_model_path`` (left wall distance),
+    ``*_track_width_model_path`` (track width = left + right), and
+    ``*_heading_model_path`` (heading error).  Right wall distance is derived
+    at inference time as ``track_width - left_dist``.
     """
 
     def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
@@ -54,16 +60,14 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         lookahead_distance: float = 1.0,
         max_speed: float = 5.0,
         lateral_gain: float = 1.0,
-        # ---- edge model paths / arch ----
-        edge_wall_model_path: Optional[str] = None,
+        # ---- edge model paths ----
+        edge_left_wall_model_path: Optional[str] = None,
+        edge_track_width_model_path: Optional[str] = None,
         edge_heading_model_path: Optional[str] = None,
-        edge_arch_id: int = 8,
-        edge_heading_arch_id: Optional[int] = None,
-        # ---- cloud model paths / arch ----
-        cloud_wall_model_path: Optional[str] = None,
+        # ---- cloud model paths ----
+        cloud_left_wall_model_path: Optional[str] = None,
+        cloud_track_width_model_path: Optional[str] = None,
         cloud_heading_model_path: Optional[str] = None,
-        cloud_arch_id: int = 10,
-        cloud_heading_arch_id: Optional[int] = None,
     ) -> None:
         # CloudScheduler / FixedIntervalScheduler imported at module level
 
@@ -75,19 +79,17 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         )
 
         self.edge_planner = LidarDNNPlanner(
-            wall_model_path=edge_wall_model_path,
+            left_model_path=edge_left_wall_model_path,
+            track_width_model_path=edge_track_width_model_path,
             heading_model_path=edge_heading_model_path,
-            arch_id=edge_arch_id,
-            heading_arch_id=edge_heading_arch_id,
             lookahead_distance=lookahead_distance,
             max_speed=max_speed,
             lateral_gain=lateral_gain,
         )
         self.cloud_planner = LidarDNNPlanner(
-            wall_model_path=cloud_wall_model_path,
+            left_model_path=cloud_left_wall_model_path,
+            track_width_model_path=cloud_track_width_model_path,
             heading_model_path=cloud_heading_model_path,
-            arch_id=cloud_arch_id,
-            heading_arch_id=cloud_heading_arch_id,
             lookahead_distance=lookahead_distance,
             max_speed=max_speed,
             lateral_gain=lateral_gain,

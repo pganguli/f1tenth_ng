@@ -11,7 +11,7 @@ from f110_scripts.train.train_nn import LidarDataModule, LidarDataset, LidarLigh
 
 
 def test_lidar_dataset_normalization(tmp_path: Path) -> None:
-    """Tests that LidarDataset correctly normalizes LiDAR ranges and handles multi-targets."""
+    """Tests that LidarDataset correctly normalizes LiDAR ranges."""
     data_path = tmp_path / "test_data.npz"
     # Create dummy data: 10 samples, 1080 beams
     # Some values > 10 to test clipping
@@ -40,35 +40,46 @@ def test_lidar_dataset_normalization(tmp_path: Path) -> None:
     )  # 15.0 clipped to 10.0 then / 10.0
     assert y1 is not None
 
-    # 2. Test multi-target (wall)
-    ds_w = LidarDataset(str(data_path), "left_dist,right_dist")
+    # 2. Test single target (left_dist)
+    ds_w = LidarDataset(str(data_path), "left_dist")
     x_w, y_w = ds_w[0]
     assert x_w is not None
-    assert y_w.shape == (2,)
-    assert torch.allclose(y_w, torch.tensor([1.0, 3.0]))
+    assert y_w.shape == (1,)
+    assert torch.allclose(y_w, torch.tensor([1.0]))
 
 
 def test_model_architectures() -> None:
-    """Tests that different architectures produce the expected output shapes."""
-    # Heading task
-    model_h = LidarLightningModule(
-        arch_id=1, task="heading", lr=1e-3, weight_decay=1e-5, lr_patience=5
-    )
-    out_h = model_h(torch.randn(2, 1, 1080))
-    assert out_h.shape == (2, 1)
+    """Tests that different architectures produce the expected scalar output shape."""
+    for arch_id in range(1, 8):
+        model = LidarLightningModule(
+            arch_id=arch_id, lr=1e-3, weight_decay=1e-5, lr_patience=5
+        )
+        out = model(torch.randn(2, 1, 1080))
+        assert out.shape == (2, 1), f"arch {arch_id}: expected (2,1) got {out.shape}"
 
-    # Wall task (Dual head)
-    model_w = LidarLightningModule(
-        arch_id=5, task="wall", lr=1e-3, weight_decay=1e-5, lr_patience=5
+
+def test_lidar_dataset_track_width_derivation(tmp_path: Path) -> None:
+    """track_width is derived as left_wall_dist + right_wall_dist when absent."""
+    data_path = tmp_path / "track.npz"
+    left = np.array([1.0, 2.0], dtype=np.float32)
+    right = np.array([3.0, 1.5], dtype=np.float32)
+    np.savez(
+        data_path,
+        scans=np.ones((2, 1080), dtype=np.float32),
+        left_wall_dist=left,
+        right_wall_dist=right,
     )
-    out_w = model_w(torch.randn(2, 1, 1080))
-    assert out_w.shape == (2, 2)
+    ds = LidarDataset(str(data_path), "track_width")
+    _, y0 = ds[0]
+    _, y1 = ds[1]
+    assert torch.allclose(y0, torch.tensor([4.0]))
+    assert torch.allclose(y1, torch.tensor([3.5]))
 
 
 def test_training_step(mocker: Any) -> None:
     """Tests the training_step logic with optimizer mocking."""
     model = LidarLightningModule(
-        arch_id=1, task="heading", lr=1e-3, weight_decay=1e-5, lr_patience=5
+        arch_id=1, lr=1e-3, weight_decay=1e-5, lr_patience=5
     )
 
     # Mock self.optimizers() and self.log()
@@ -122,7 +133,7 @@ def test_datamodule_setup(tmp_path: Path) -> None:
 def test_validation_step_logs_val_loss(mocker: Any, tmp_path: Path) -> None:
     """validation_step should compute a finite loss and log it under 'val/loss'."""
     model = LidarLightningModule(
-        arch_id=1, task="heading", lr=1e-3, weight_decay=1e-5, lr_patience=5
+        arch_id=1, lr=1e-3, weight_decay=1e-5, lr_patience=5
     )
     mocker.patch.object(model, "log")
 

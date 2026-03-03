@@ -46,14 +46,12 @@ class CloudSchedulerEnv(gym.Env):
         cloud_latency: int = 10,
         alpha_steer: float = 0.7,
         alpha_speed: float = 0.7,
-        edge_wall_model_path: Optional[str] = None,
+        edge_left_wall_model_path: Optional[str] = None,
+        edge_track_width_model_path: Optional[str] = None,
         edge_heading_model_path: Optional[str] = None,
-        edge_arch_id: int = 8,
-        edge_heading_arch_id: Optional[int] = None,
-        cloud_wall_model_path: Optional[str] = None,
+        cloud_left_wall_model_path: Optional[str] = None,
+        cloud_track_width_model_path: Optional[str] = None,
         cloud_heading_model_path: Optional[str] = None,
-        cloud_arch_id: int = 10,
-        cloud_heading_arch_id: Optional[int] = None,
         reward_fn: Optional[Callable[[dict[str, Any], int], float]] = None,
         **env_kwargs: Any,
     ) -> None:
@@ -63,7 +61,10 @@ class CloudSchedulerEnv(gym.Env):
         planner configuration.  ``reward_fn`` receives the observation returned
         by the low-level environment (after the planner has stepped) and the
         binary scheduling action (0 or 1) and must return a scalar reward.
-        """
+        Model paths should point to self-sufficient ``.pt`` TorchScript files
+        produced by :func:`~f110_planning.utils.nn_models.save_as_torchscript`.
+        Architecture and hyperparameter information is read directly from each
+        file — no separate ``arch_id`` argument is required.        """
         # underlying simulator
         self._env = gym.make("f110_gym:f110-v0", map=map, **env_kwargs)
         self._waypoints = waypoints.copy()
@@ -78,14 +79,12 @@ class CloudSchedulerEnv(gym.Env):
             alpha_steer=alpha_steer,
             alpha_speed=alpha_speed,
             scheduler=self._rl_scheduler,
-            edge_wall_model_path=edge_wall_model_path,
+            edge_left_wall_model_path=edge_left_wall_model_path,
+            edge_track_width_model_path=edge_track_width_model_path,
             edge_heading_model_path=edge_heading_model_path,
-            edge_arch_id=edge_arch_id,
-            edge_heading_arch_id=edge_heading_arch_id,
-            cloud_wall_model_path=cloud_wall_model_path,
+            cloud_left_wall_model_path=cloud_left_wall_model_path,
+            cloud_track_width_model_path=cloud_track_width_model_path,
             cloud_heading_model_path=cloud_heading_model_path,
-            cloud_arch_id=cloud_arch_id,
-            cloud_heading_arch_id=cloud_heading_arch_id,
         )
 
         # reward function

@@ -1,0 +1,27 @@
+# Track Width prediction -- arch 4
+data:
+  train_path: "data/datasets/_lidar_tracking_combined_map_pure_pursuit_n295712.npz"
+  target_col: "track_width"
+  batch_size: 128
+  num_workers: 8
+  val_split: 0.1
+  pin_memory: true
+  prefetch_factor: 2
+
+training:
+  max_epochs: 250
+  lr: 5e-4
+  weight_decay: 1e-5
+  early_stopping_patience: 20
+  lr_patience: 10
+  lr_scheduler_factor: 0.5
+  optimizer: adam
+  scheduler: reduce_on_plateau
+  auto_lr_find: true
+  resume: true
+  precision: "32"
+  gradient_clip_val: 1.0
+  profiler: null
+
+model:
+  arch_id: 4

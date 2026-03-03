@@ -3,6 +3,8 @@ PyTorch-based DNN planner for F1TENTH.
 Uses trained models to predict wall distances and heading errors for navigation.
 """
 
+import io
+import json
 from typing import Any, Optional
 
 import numpy as np
@@ -21,14 +23,11 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
     to predict wall distances and orientation errors directly from raw sensor data.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(
         self,
         left_model_path: Optional[str] = None,
-        right_model_path: Optional[str] = None,
+        track_width_model_path: Optional[str] = None,
         heading_model_path: Optional[str] = None,
-        wall_model_path: Optional[str] = None,
-        arch_id: int = 5,
-        heading_arch_id: Optional[int] = None,
         lookahead_distance: float = 1.0,
         max_speed: float = 5.0,
         lateral_gain: float = 1.0,
@@ -36,13 +35,23 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         """
         Initializes the DNN planner and loads the specified models.
 
+        Each model path should point to a self-sufficient ``.pt`` file produced
+        by :func:`~f110_planning.utils.nn_models.save_as_torchscript`.  The
+        architecture and all hyperparameters are read directly from the file —
+        no ``arch_id`` or external config is required.
+
+        Three separate single-output models are used at inference time:
+
+        * ``left_model_path``         — predicts left wall distance.
+        * ``track_width_model_path``  — predicts total track width
+          (left + right wall distance).  Right wall distance is derived
+          as ``track_width - left_dist``.
+        * ``heading_model_path``      — predicts path heading error.
+
         Args:
-            left_model_path: Path to separate model for left wall distance.
-            right_model_path: Path to separate model for right wall distance.
-            heading_model_path: Path to model for path heading error.
-            wall_model_path: Path to dual-head model for both wall distances.
-            arch_id: Architecture index for the backbone and wall heads.
-            heading_arch_id: Architecture index specifically for the heading model.
+            left_model_path: Path to ``.pt`` model for left wall distance.
+            track_width_model_path: Path to ``.pt`` model for track width.
+            heading_model_path: Path to ``.pt`` model for path heading error.
             lookahead_distance: Gain for the adaptive lookahead calculation.
             max_speed: Velocity limit on straight sections.
             lateral_gain: Scaling for the lateral centering response.
@@ -55,60 +64,66 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
 
         self.last_target_point = None
 
-        self.wall_model = self._load_model(wall_model_path, arch_id, task="wall")
-        self.left_model = self._load_model(left_model_path, arch_id, task="heading")
-        self.right_model = self._load_model(right_model_path, arch_id, task="heading")
-
-        h_arch = heading_arch_id if heading_arch_id is not None else arch_id
-        self.heading_model = self._load_model(
-            heading_model_path, h_arch, task="heading"
-        )
+        self.left_model = self._load_model(left_model_path)
+        self.track_width_model = self._load_model(track_width_model_path)
+        self.heading_model = self._load_model(heading_model_path)
 
     def _load_model(
         self,
         path: Optional[str],
-        arch_id: int,
-        task: str = "heading",
     ) -> Optional[torch.nn.Module]:
-        """
-        Internal helper to instantiate and load weights for a single model.
+        """Load a self-sufficient ``.pt`` TorchScript model file.
 
-        Supports standard state_dict files and torchao-quantized state_dict files.
-        Automatically detects whether the checkpoint was saved with INT8
-        quantization and prepares the architecture accordingly.
+        The file must have been produced by
+        :func:`~f110_planning.utils.nn_models.save_as_torchscript`.  All
+        architecture and configuration information is read from the embedded
+        metadata — no ``arch_id`` argument is needed.
+
+        For non-quantized models the returned :class:`torch.ScriptModule` is
+        used directly (no Python class definitions required at inference time).
+
+        For quantized models the embedded FP32 ``state_dict`` is loaded into a
+        freshly instantiated :func:`~f110_planning.utils.nn_models.get_architecture`
+        module, after which ``quantize_()`` is re-applied.  This faithfully
+        reproduces the INT8 dynamic-activation / INT8-weight quantisation used
+        during training.
         """
         if not path:
             return None
-        from ..utils.nn_models import (  # pylint: disable=import-outside-toplevel
-            get_architecture,
-        )
 
-        model = get_architecture(arch_id, task=task)
-        state_dict = torch.load(path, map_location=self.device, weights_only=False)
+        extra: dict[str, bytes] = {"metadata.json": b"", "state_dict.pt": b""}
+        scripted = torch.jit.load(path, _extra_files=extra, map_location=self.device)
+        metadata: dict[str, Any] = json.loads(extra["metadata.json"].decode())
 
-        # Auto-detect torchao INT8-quantized checkpoints
-        is_quantized = any(
-            "AffineQuantizedTensor" in type(v).__name__
-            or "LinearActivationQuantizedTensor" in type(v).__name__
-            for v in state_dict.values()
-        )
-        if is_quantized:
-            model.eval()
+        if metadata.get("quantized", False):
+            # Re-instantiate the FP32 module, load embedded FP32 weights, then
+            # re-apply quantization so the in-memory representation matches what
+            # was used at training time.
+            from ..utils.nn_models import (  # pylint: disable=import-outside-toplevel
+                get_architecture,
+            )
             from torchao.quantization import (  # pylint: disable=import-outside-toplevel
                 Int8DynamicActivationInt8WeightConfig,
                 quantize_,
             )
 
+            model = get_architecture(metadata["arch_id"])
+            model.eval()
             quantize_(model, Int8DynamicActivationInt8WeightConfig())
+            buf = io.BytesIO(extra["state_dict.pt"])
+            state_dict = torch.load(buf, map_location=self.device, weights_only=False)
+            model.load_state_dict(state_dict)
+            model.to(self.device)
+            return model
 
-        model.load_state_dict(state_dict)
-        model.to(self.device)
-        model.eval()
-        return model
+        scripted.eval()
+        return scripted
 
     def predict(self, model: Optional[torch.nn.Module], scan: np.ndarray) -> Any:
         """
         Performs a forward pass through the provided model using normalized scan data.
+
+        Returns a scalar float, or ``None`` if *model* is ``None``.
         """
         if model is None:
             return None
@@ -117,8 +132,6 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
             # Normalize to 0-1 range based on training assumptions
             x = torch.clip(x / 10.0, 0, 1)
             out = model(x)
-            if out.shape[1] > 1:
-                return out.cpu().numpy().flatten()
             return out.item()
 
     def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Action:  # pylint: disable=too-many-locals
@@ -128,15 +141,9 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         current_speed = obs["linear_vels_x"][ego_idx]
 
         # 1. Predict geometric features using DNNs
-        if self.wall_model is not None:
-            wall_dists = self.predict(self.wall_model, scan)
-            if wall_dists is not None and len(wall_dists) >= 2:
-                left_dist, right_dist = wall_dists[0], wall_dists[1]
-            else:
-                left_dist, right_dist = 0.0, 0.0
-        else:
-            left_dist = self.predict(self.left_model, scan) or 0.0
-            right_dist = self.predict(self.right_model, scan) or 0.0
+        left_dist = self.predict(self.left_model, scan) or 0.0
+        track_width = self.predict(self.track_width_model, scan) or 0.0
+        right_dist = max(track_width - left_dist, 0.0)
 
         heading_error = self.predict(self.heading_model, scan) or 0.0
 
