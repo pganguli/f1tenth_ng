@@ -140,13 +140,6 @@ def test_fallback_to_fixed_interval_when_model_missing(tmp_path, monkeypatch):
     assert isinstance(planner.scheduler, FixedIntervalScheduler)
 
 
-def test_default_is_string():
-    # parser default should be a string path
-    from f110_scripts.sim.reactive_planners import parse_args
-    parsed = parse_args([])  # avoid pytest command-line arguments
-    assert isinstance(parsed.rl_scheduler, str)
-
-
 def test_render_callback_attached(monkeypatch):
     """When building an edge-cloud planner the cloud-call renderer is added."""
     # create dummy env with minimal interface

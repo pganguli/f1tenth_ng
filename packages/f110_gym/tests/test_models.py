@@ -2,7 +2,7 @@
 Unit tests for F1TENTH vehicle dynamics models.
 """
 
-from f110_gym.envs.dynamic_models import accl_constraints
+from f110_gym.envs.dynamic_models import accl_constraints, steering_constraint
 from f110_gym.envs.vehicle_params import VehicleParams
 
 
@@ -38,3 +38,45 @@ def test_accl_constraints():
     # Above switch velocity
     accl = accl_constraints(14.0, 10.0, params)
     assert accl < 9.5
+
+
+def test_steering_constraint():
+    """Test that steering velocity is clamped correctly in all regimes."""
+    params = VehicleParams(
+        mu=1.0,
+        C_Sf=4.7,
+        C_Sr=5.4,
+        lf=0.15,
+        lr=0.17,
+        h=0.07,
+        m=3.7,
+        MoI=0.04,
+        s_min=-0.4,
+        s_max=0.4,
+        sv_min=-3.2,
+        sv_max=3.2,
+        v_switch=7.0,
+        a_max=9.5,
+        v_min=-5.0,
+        v_max=20.0,
+    )
+
+    # Within bounds – returned unchanged
+    sv = steering_constraint(0.1, 1.0, params)
+    assert sv == 1.0
+
+    # Exceeds sv_max – clamped to sv_max
+    sv = steering_constraint(0.1, 10.0, params)
+    assert sv == params.sv_max
+
+    # Exceeds -sv_min (below sv_min) – clamped to sv_min
+    sv = steering_constraint(0.1, -10.0, params)
+    assert sv == params.sv_min
+
+    # At s_min with negative velocity – clamped to 0
+    sv = steering_constraint(-0.4, -1.0, params)
+    assert sv == 0.0
+
+    # At s_max with positive velocity – clamped to 0
+    sv = steering_constraint(0.4, 1.0, params)
+    assert sv == 0.0

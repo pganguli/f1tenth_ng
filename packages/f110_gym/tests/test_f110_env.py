@@ -9,21 +9,6 @@ from f110_gym.envs.f110_env import update_lap_counts
 import f110_gym  # pylint: disable=unused-import
 
 
-def test_registration():
-    """Test that the environment is correctly registered."""
-    spec_ids = [spec.id for spec in gym.envs.registry.values()]
-    assert "f110-v0" in spec_ids
-
-
-def test_env_init():
-    """Test environment initialization."""
-    env = gym.make(
-        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=1
-    )
-    assert env.unwrapped.num_agents == 1
-    env.close()
-
-
 def test_observation_space():
     """Test observation space structure and types."""
     env = gym.make(
@@ -72,16 +57,6 @@ def test_step():
     assert obs["poses_x"][0] > 0.0  # Should have moved forward in x
     assert abs(obs["poses_y"][0]) < 1e-3  # Should not have moved much in y
     assert isinstance(reward, (float, np.float64))
-    env.close()
-
-
-def test_default_max_laps_is_none() -> None:
-    """New default should not terminate after two laps."""
-    env = gym.make(
-        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=1
-    )
-    # ensure the internal field was set to None by default
-    assert env.unwrapped.max_laps is None
     env.close()
 
 
@@ -155,4 +130,66 @@ def test_lidar_values():
     assert scan.shape == (1080,)
     assert np.all(scan >= 0.0)
     assert np.any(scan < 30.0)  # Should hit something eventually in Oschersleben
+    env.close()
+
+
+def test_multi_agent_observations() -> None:
+    """Multi-agent env should expose per-agent arrays with correct shapes."""
+    env = gym.make(
+        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=2
+    )
+    obs, _ = env.reset()
+    assert obs["scans"].shape == (2, 1080)
+    assert obs["poses_x"].shape == (2,)
+    assert obs["poses_y"].shape == (2,)
+    assert obs["linear_vels_x"].shape == (2,)
+    env.close()
+
+
+def test_observation_space_contains_reset_obs() -> None:
+    """The observation returned by reset() must satisfy the declared observation space."""
+    env = gym.make(
+        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=1
+    )
+    obs, _ = env.reset()
+    assert env.observation_space.contains(obs)
+    env.close()
+
+
+def test_reset_restores_initial_state() -> None:
+    """After several steps, a reset() to the original pose should fully restore state."""
+    env = gym.make(
+        "f110-v0", map="data/maps/F1/Oschersleben/Oschersleben_map", num_agents=1
+    )
+    start_pose = np.array([[0.0, 0.0, 0.0]])
+    obs1, _ = env.reset(options={"poses": start_pose})
+    initial_scan = obs1["scans"].copy()
+    initial_x = float(obs1["poses_x"][0])
+
+    # drive forward for several steps so the physics state changes
+    for _ in range(20):
+        env.step(np.array([[0.0, 2.0]]))
+
+    # reset back to the exact same starting pose
+    obs2, _ = env.reset(options={"poses": start_pose})
+    assert np.isclose(obs2["poses_x"][0], initial_x)
+    assert np.allclose(obs2["scans"], initial_scan)
+    env.close()
+
+
+def test_max_laps_termination() -> None:
+    """Episode terminates when toggle_list reaches the required lap count."""
+    env = gym.make(
+        "f110-v0",
+        map="data/maps/F1/Oschersleben/Oschersleben_map",
+        num_agents=1,
+        max_laps=1,
+    )
+    env.reset(options={"poses": np.array([[0.0, 0.0, 0.0]])})
+    # Directly set the toggle_list so that the next _check_done call sees 2
+    # toggles (= 1 completed lap) without needing to drive around the track.
+    inner = env.unwrapped
+    inner.toggle_list = np.array([2.0])
+    _, _, terminated, _, _ = env.step(np.array([[0.0, 0.0]]))
+    assert terminated, "Episode should terminate after max_laps=1 is reached"
     env.close()

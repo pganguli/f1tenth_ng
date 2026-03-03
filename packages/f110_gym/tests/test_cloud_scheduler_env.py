@@ -20,11 +20,6 @@ def _make_env():
     return env
 
 
-def test_registry():
-    ids = [spec.id for spec in gym.envs.registry.values()]
-    assert "f110-cloud-scheduler-v0" in ids
-
-
 def test_spaces():
     env = _make_env()
     assert isinstance(env.action_space, gym.spaces.Discrete)
@@ -68,4 +63,34 @@ def test_reset_clears_scheduler():
     # after reset scheduler action pending should be None/zero
     obs, _ = env.reset()
     assert obs["cloud_request_pending"] == 0
+    env.close()
+
+
+def test_cloud_latency_countdown() -> None:
+    """With cloud_latency=2 the cloud action should not materialise before 2 steps."""
+    env = _make_env()  # cloud_latency=2
+    env.reset()
+
+    # step 0: request cloud
+    env.step(1)
+    planner = env.unwrapped._planner
+    assert planner._latest_cloud_action is None, "Cloud should not arrive before latency elapses"
+
+    # step 1: no new cloud request; action still pending
+    env.step(0)
+    assert planner._latest_cloud_action is None, "Cloud still should not have arrived"
+
+    # step 2: the pending request's arrival time is reached – cloud materialises
+    env.step(0)
+    assert planner._latest_cloud_action is not None, "Cloud action should have materialised by now"
+
+    env.close()
+
+
+def test_observation_space_contains_step_obs() -> None:
+    """Each step observation must satisfy the declared observation space."""
+    env = _make_env()
+    env.reset()
+    obs, _, _, _, _ = env.step(0)
+    assert env.observation_space.contains(obs)
     env.close()

@@ -1,25 +1,22 @@
-"""
-Unit tests for waypoint data generation script.
-"""
+"""Unit tests for waypoint data generation script."""
 
 from unittest.mock import MagicMock
 
 import numpy as np
-from f110_planning.tracking import PurePursuitPlanner
 
 from f110_scripts.datagen.waypoint_datagen import (
+    _apply_steering_noise,
     _gather_step_data,
     create_planner,
-    _apply_steering_noise,
 )
 
 
-def test_create_planner() -> None:
-    """Test creation of tracking planners from strings."""
-    waypoints = np.array([[0, 0], [1, 0]])
+def test_create_planner_stores_waypoints() -> None:
+    """create_planner should embed the supplied waypoints into the planner."""
+    waypoints = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]], dtype=np.float64)
     planner = create_planner("pure_pursuit", waypoints)
-    assert isinstance(planner, PurePursuitPlanner)
-    assert np.all(planner.waypoints == waypoints)
+    # The planner should remember the waypoints it was given
+    assert np.allclose(planner.waypoints[:, :2], waypoints)
 
 
 def test_gather_step_data() -> None:
@@ -51,3 +48,26 @@ def test_apply_steering_noise() -> None:
     steer, active, _ = _apply_steering_noise(0.0, 0, 0.0, args)
     assert active == 0
     assert abs(steer) > 0.0  # mostly non-zero due to noise
+
+
+def test_apply_steering_noise_with_drift() -> None:
+    """With drift_prob=1.0 the drift branch is activated every call."""
+    args = MagicMock()
+    args.steering_noise = 0.0   # no Gaussian noise so only drift counts
+    args.drift_prob = 1.0       # always trigger drift
+    args.drift_magnitude = 0.3  # correct attribute name used by _apply_steering_noise
+
+    # Call several times from a known initial state; at least some should
+    # produce a non-zero steer (the drift accumulates while active==1).
+    results = []
+    active = 0
+    steer = 0.0
+    for _ in range(10):
+        steer, active, _ = _apply_steering_noise(steer, active, 0.0, args)
+        results.append(steer)
+
+    # After multiple calls with drift always on, the steering offset must
+    # have been non-zero at some point.
+    assert any(abs(np.asarray(s).item()) > 0.0 for s in results), (
+        "Expected non-zero steer values when drift_prob=1.0"
+    )

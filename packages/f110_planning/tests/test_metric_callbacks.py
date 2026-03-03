@@ -323,3 +323,70 @@ class TestMetricAggregator:
         assert "lap_time_s" in report
         assert "crosstrack_rmse_m" not in report
         assert "speed_mean_m_s" in report
+
+
+# ---------------------------------------------------------------------------
+# SmoothnessMetric — first-step edge case
+# ---------------------------------------------------------------------------
+
+
+class TestSmoothnessFirstStep:
+    def test_no_rate_on_first_step(self) -> None:
+        """The very first on_step call should not generate a steering-rate sample
+        (there is no previous value to diff against)."""
+        m = SmoothnessMetric()
+        m.on_reset(_make_obs())
+        m.on_step(_make_obs(), Action(0.5, 1.0), 0.01)  # first step
+        # _steering_rates list should still be empty
+        assert m._steering_rates == []
+        report = m.report()
+        assert report["steering_rate_mean_rad_s"] == 0.0
+        assert report["steering_rate_max_rad_s"] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# HeadingErrorMetric — angle wrapping
+# ---------------------------------------------------------------------------
+
+
+class TestHeadingErrorWrapping:
+    def test_near_positive_pi_small_error(self) -> None:
+        """Vehicle heading just above +π should yield a normalised, small error
+        relative to a +x path (not an error near 2π)."""
+        wpts = _make_waypoints_line()
+        m = HeadingErrorMetric()
+        m.on_reset(_make_obs(), waypoints=wpts)
+        # Heading slightly above π – after pi_2_pi this wraps to near -π,
+        # so the error magnitude should be close to π (180°), not ~360°.
+        large_theta = math.pi + 0.01
+        obs = _make_obs(x=1.0, y=0.0, theta=large_theta)
+        m.on_step(obs, Action(0.0, 1.0), 0.01)
+        report = m.report()
+        # Error should be normalised to < 180° (not 360° territory)
+        assert report["heading_error_mean_deg"] <= 180.0
+
+
+# ---------------------------------------------------------------------------
+# CrossTrackErrorMetric — RMSE strictly greater than mean for mixed errors
+# ---------------------------------------------------------------------------
+
+
+class TestCrossTrackRmsVsMean:
+    def test_rmse_exceeds_mean_for_unequal_errors(self) -> None:
+        """When individual cross-track errors are unequal, RMSE > mean."""
+        wpts = _make_waypoints_line(spacing=0.1)
+        m = CrossTrackErrorMetric()
+        m.on_reset(_make_obs(), waypoints=wpts)
+
+        # Alternate between 0 m and 1 m offset so RMSE = sqrt(0.5) ≈ 0.707
+        # and mean = 0.5, confirming RMSE > mean.
+        for i in range(10):
+            y_offset = 1.0 if i % 2 == 0 else 0.0
+            obs = _make_obs(x=i * 0.1, y=y_offset)
+            m.on_step(obs, Action(0.0, 1.0), 0.01)
+
+        report = m.report()
+        assert report["crosstrack_rmse_m"] > report["crosstrack_mean_m"] + 0.05, (
+            f"RMSE {report['crosstrack_rmse_m']:.4f} should exceed mean "
+            f"{report['crosstrack_mean_m']:.4f} for unequal errors"
+        )

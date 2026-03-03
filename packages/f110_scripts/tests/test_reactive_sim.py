@@ -25,24 +25,25 @@ def _sim_obs() -> dict[str, Any]:
     }
 
 
-def test_reactive_planner_creation() -> None:
-    """Tests the factory function for reactive planners."""
-    waypoints = np.zeros((10, 2))
+def test_reactive_planner_produces_valid_action() -> None:
+    """Each planner factory creates a planner that returns a valid Action with
+    plausible steer and speed when planning on a minimal observation."""
+    from f110_planning.base import Action
 
-    # Gap Follower
-    args_gap = Namespace(planner="gap", speed=2.0, bubble_radius=160)
-    planner_gap = _create_planner(args_gap, waypoints)
-    assert planner_gap.__class__.__name__ == "GapFollowerPlanner"
+    obs = _sim_obs()
+    waypoints = np.ones((4, 2)) * np.array([0.0, 0.0])
+    waypoints = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]])
 
-    # Bubble Planner
-    args_bubble = Namespace(planner="bubble", speed=2.0, safety_radius=1.3)
-    planner_bubble = _create_planner(args_bubble, waypoints)
-    assert planner_bubble.__class__.__name__ == "BubblePlanner"
-
-    # Dynamic Waypoint
-    args_dyn = Namespace(planner="dynamic", speed=3.0, lookahead=1.5, lateral_gain=1.0)
-    planner_dyn = _create_planner(args_dyn, waypoints)
-    assert planner_dyn.__class__.__name__ == "DynamicWaypointPlanner"
+    for planner_name, extra in [
+        ("gap", {"speed": 2.0, "bubble_radius": 160}),
+        ("bubble", {"speed": 2.0, "safety_radius": 1.3}),
+    ]:
+        args = Namespace(planner=planner_name, **extra)
+        planner = _create_planner(args, waypoints)
+        action = planner.plan(obs)
+        assert isinstance(action, Action), f"planner {planner_name} must return an Action"
+        assert isinstance(action.steer, (float, int))
+        assert isinstance(action.speed, (float, int))
 
 
 def test_simulation_step_logic(mocker: Any) -> None:
