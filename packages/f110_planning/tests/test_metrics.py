@@ -179,3 +179,36 @@ def test_has_collision_multi_agent() -> None:
     obs = {"collisions": np.array([0.0, 1.0])}
     assert metrics.has_collision(obs, ego_idx=0) is False
     assert metrics.has_collision(obs, ego_idx=1) is True
+
+
+# ---------------------------------------------------------------------------
+# pi_2_pi
+# ---------------------------------------------------------------------------
+
+
+def test_pi_2_pi_identity() -> None:
+    """Values already in [-π, π] are returned unchanged."""
+    from f110_planning.utils.geometry_utils import pi_2_pi
+
+    assert pi_2_pi(0.0) == pytest.approx(0.0)
+    assert pi_2_pi(1.0) == pytest.approx(1.0)
+    assert pi_2_pi(-1.0) == pytest.approx(-1.0)
+
+
+def test_pi_2_pi_wraps_above_pi() -> None:
+    """Angles just above +π should be mapped to near -π."""
+    from f110_planning.utils.geometry_utils import pi_2_pi
+
+    result = pi_2_pi(math.pi + 0.5)
+    assert result == pytest.approx(math.pi + 0.5 - 2 * math.pi, abs=1e-9)
+    # must lie within (-π, π]
+    assert -math.pi <= result <= math.pi
+
+
+def test_pi_2_pi_wraps_below_minus_pi() -> None:
+    """Angles just below -π should be mapped to near +π."""
+    from f110_planning.utils.geometry_utils import pi_2_pi
+
+    result = pi_2_pi(-math.pi - 0.5)
+    assert result == pytest.approx(-math.pi - 0.5 + 2 * math.pi, abs=1e-9)
+    assert -math.pi <= result <= math.pi

@@ -9,4 +9,5 @@ addopts = ["-v", "--durations=5"]
 
 filterwarnings = [
   "ignore::DeprecationWarning:torchao",
+  "ignore:Lookahead point not found.*:UserWarning",
 ]

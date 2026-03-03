@@ -1,11 +1,10 @@
-"""
-Unit tests for the training scripts.
-"""
+"""Unit tests for the training scripts."""
 
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 
 from f110_scripts.train.train_nn import LidarDataModule, LidarDataset, LidarLightningModule
@@ -118,3 +117,29 @@ def test_datamodule_setup(tmp_path: Path) -> None:
     loader = dm.train_dataloader()
     assert isinstance(loader, torch.utils.data.DataLoader)
     assert loader.batch_size == 4
+
+
+def test_validation_step_logs_val_loss(mocker: Any, tmp_path: Path) -> None:
+    """validation_step should compute a finite loss and log it under 'val/loss'."""
+    model = LidarLightningModule(
+        arch_id=1, task="heading", lr=1e-3, weight_decay=1e-5, lr_patience=5
+    )
+    mocker.patch.object(model, "log")
+
+    batch = (torch.randn(4, 1, 1080), torch.randn(4, 1))
+    loss = model.validation_step(batch, 0)
+
+    assert loss > 0
+    assert not torch.isnan(loss)
+    model.log.assert_any_call(
+        "val/loss", loss, prog_bar=True, on_epoch=True, sync_dist=False
+    )
+
+
+def test_lidar_dataset_invalid_target_key(tmp_path: Path) -> None:
+    """Requesting an unknown target column should raise KeyError."""
+    data_path = tmp_path / "tiny.npz"
+    np.savez(data_path, scans=np.random.rand(4, 1080).astype(np.float32))
+
+    with pytest.raises(KeyError):
+        LidarDataset(str(data_path), "nonexistent_column")

@@ -5,6 +5,7 @@ Unit tests for planning utility functions.
 import os
 
 import numpy as np
+import pytest
 
 from f110_planning.utils import get_vehicle_state, load_waypoints, nearest_point
 
@@ -54,3 +55,41 @@ def test_nearest_point_with_duplicate() -> None:
     p, _, _, i = nearest_point(point, path)
     assert np.allclose(p, [0.5, 0.0])
     assert i == 0
+
+
+def test_nearest_point_endpoint_clamping() -> None:
+    """A query point far past the last waypoint should project onto the last segment end."""
+    path = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
+    point = np.array([100.0, 0.0])  # far beyond path end
+    p, dist, t, _ = nearest_point(point, path)
+    # The projection parameter t is clamped to 1.0 on the last segment, so the
+    # projected point should be the last waypoint [2.0, 0.0].
+    assert np.allclose(p, [2.0, 0.0]), f"Expected [2, 0] but got {p}"
+    assert dist == pytest.approx(98.0, abs=1e-6)
+
+
+def test_get_vehicle_state_includes_velocity() -> None:
+    """get_vehicle_state should also extract linear_vels_x (index 3)."""
+    obs = {
+        "poses_x": np.array([5.0, 6.0]),
+        "poses_y": np.array([7.0, 8.0]),
+        "poses_theta": np.array([1.0, 2.0]),
+        "linear_vels_x": np.array([3.5, 9.1]),
+        "linear_vels_y": np.array([0.0, 0.0]),
+        "ang_vels_z": np.array([0.0, 0.0]),
+    }
+    state = get_vehicle_state(obs, ego_idx=0)
+    assert state[3] == pytest.approx(3.5), f"velocity at index 3 should be 3.5, got {state[3]}"
+
+    state1 = get_vehicle_state(obs, ego_idx=1)
+    assert state1[3] == pytest.approx(9.1)
+
+
+def test_load_waypoints_bad_path() -> None:
+    """Passing a non-existent file should raise FileNotFoundError or return an empty array."""
+    try:
+        result = load_waypoints("/nonexistent/path/to/waypoints.tsv")
+        # If a fallback is implemented it must be either None or an empty array
+        assert result is None or (hasattr(result, "size") and result.size == 0)
+    except (FileNotFoundError, OSError):
+        pass  # also acceptable behaviour

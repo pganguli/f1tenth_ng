@@ -12,8 +12,11 @@ import pytest
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
+    EdgeCloudPlanner,
     GapFollowerPlanner,
 )
+from f110_planning.base import Action
+from f110_planning.utils import F110_MAX_STEER
 
 
 @pytest.fixture
@@ -53,8 +56,53 @@ def test_bubble_planner_safety(reactive_obs: dict[str, Any]) -> None:
     assert action.steer > 0.1
 
 
-def test_disparity_extender_planner(reactive_obs: dict[str, Any]) -> None:
-    """Test initialization and basic planning of Disparity Extender."""
+def test_disparity_extender_output_bounds(reactive_obs: dict[str, Any]) -> None:
+    """DisparityExtenderPlanner output must be within the physical steering envelope."""
     planner = DisparityExtenderPlanner()
-    action = planner.plan(reactive_obs)
-    assert hasattr(action, "steer")
+    # Run several times with varied scans to exercise different code paths.
+    for _ in range(5):
+        reactive_obs["scans"][0] = np.random.rand(1080) * 10.0
+        action = planner.plan(reactive_obs)
+        assert abs(action.steer) <= F110_MAX_STEER + 1e-9, (
+            f"steer {action.steer} exceeds F110_MAX_STEER {F110_MAX_STEER}"
+        )
+        assert action.speed >= 0.0, f"speed {action.speed} must be non-negative"
+
+
+def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> None:
+    """alpha=0 means edge-only; alpha=1 means cloud-only."""
+    import copy
+
+    scan = np.ones(1080) * 5.0
+    reactive_obs["scans"][0] = scan
+
+    # Build two planners whose edge and cloud sub-planners produce predictable
+    # outputs by relying entirely on the lateral_gain path (no DNN model loaded).
+    # With alpha_steer=0 the final action steers must equal the edge action steers.
+    planner_edge_only = EdgeCloudPlanner(
+        cloud_latency=0, alpha_steer=0.0, alpha_speed=0.0
+    )
+    planner_cloud_only = EdgeCloudPlanner(
+        cloud_latency=0, alpha_steer=1.0, alpha_speed=1.0
+    )
+
+    # Force a cloud result by running step 0 (FixedIntervalScheduler calls at step 0)
+    action_edge = planner_edge_only.plan(copy.deepcopy(reactive_obs))
+    action_cloud = planner_cloud_only.plan(copy.deepcopy(reactive_obs))
+
+    # With alpha=0 the result must be the pure edge output; with alpha=1 the
+    # pure cloud output.  Since both planners share the same scan and model config
+    # (no weights: both return 0/0 heading+wall signals), edge and cloud
+    # produce the same Action, so the blended result equals either.
+    # What we verify is that the blending coefficients are applied correctly:
+    # manually compute expected blend and cross-check.
+    edge_planner = planner_edge_only.edge_planner
+    cloud_planner = planner_edge_only.cloud_planner
+    edge_act = edge_planner.plan(copy.deepcopy(reactive_obs))
+    cloud_act = cloud_planner.plan(copy.deepcopy(reactive_obs))
+
+    expected_edge_only_steer = 0.0 * cloud_act.steer + 1.0 * edge_act.steer
+    expected_cloud_only_steer = 1.0 * cloud_act.steer + 0.0 * edge_act.steer
+
+    assert abs(action_edge.steer - expected_edge_only_steer) < 1e-9
+    assert abs(action_cloud.steer - expected_cloud_only_steer) < 1e-9
