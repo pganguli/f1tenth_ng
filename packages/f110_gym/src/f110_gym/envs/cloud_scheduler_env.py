@@ -15,6 +15,7 @@ other signal that depends on the observation and chosen scheduling action.
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any, Callable, Optional
 
 import gymnasium as gym
@@ -28,7 +29,7 @@ from f110_planning.schedulers import RLScheduler
 from f110_planning.metrics import crosstrack_error
 
 
-class CloudSchedulerEnv(gym.Env):
+class CloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-attributes
     """Gym environment that exposes cloud scheduling as the action.
 
     The environment forwards low-level control decisions to an internal
@@ -38,7 +39,7 @@ class CloudSchedulerEnv(gym.Env):
 
     metadata = {"render_modes": ["human", "human_fast"], "render_fps": 200}
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-locals, redefined-builtin
         self,
         *,
         map: str,
@@ -53,6 +54,8 @@ class CloudSchedulerEnv(gym.Env):
         cloud_track_width_model_path: Optional[str] = None,
         cloud_heading_model_path: Optional[str] = None,
         reward_fn: Optional[Callable[[dict[str, Any], int], float]] = None,
+        cloud_cost: float = 0.1,
+        cloud_cost_window: int = 100,
         **env_kwargs: Any,
     ) -> None:
         """Initialise the scheduling environment.
@@ -64,16 +67,22 @@ class CloudSchedulerEnv(gym.Env):
         Model paths should point to self-sufficient ``.pt`` TorchScript files
         produced by :func:`~f110_planning.utils.nn_models.save_as_torchscript`.
         Architecture and hyperparameter information is read directly from each
-        file — no separate ``arch_id`` argument is required.        """
+        file — no separate ``arch_id`` argument is required.
+
+        ``cloud_cost`` scales the rolling call-rate penalty added to the
+        default reward.  ``cloud_cost_window`` sets the number of recent steps
+        used to compute that rate (a smaller window makes the penalty more
+        reactive; a larger window smooths it out).
+        """
         # underlying simulator
         self._env = gym.make("f110_gym:f110-v0", map=map, **env_kwargs)
         self._waypoints = waypoints.copy()
 
         # scheduler and planner
         self._rl_scheduler = RLScheduler()
-        # import here to avoid circular imports when the package is imported
-        from f110_planning.reactive import EdgeCloudPlanner
-
+        # deferred import to break the circular dependency between f110_gym and
+        # f110_planning (f110_planning.utils imports f110_gym internals).
+        from f110_planning.reactive import EdgeCloudPlanner  # pylint: disable=import-outside-toplevel
         self._planner = EdgeCloudPlanner(
             cloud_latency=cloud_latency,
             alpha_steer=alpha_steer,
@@ -87,6 +96,12 @@ class CloudSchedulerEnv(gym.Env):
             cloud_heading_model_path=cloud_heading_model_path,
         )
 
+        # cloud-cost penalty configuration
+        self._cloud_cost = cloud_cost
+        self._cloud_cost_window = cloud_cost_window
+        # rolling history of actions (0/1) for the call-rate penalty
+        self._call_history: deque[int] = deque(maxlen=cloud_cost_window)
+
         # reward function
         self._reward_fn = reward_fn if reward_fn is not None else self._default_reward
 
@@ -95,7 +110,9 @@ class CloudSchedulerEnv(gym.Env):
         base_obs_space = self._env.observation_space
         # add hints about cloud state
         extra = {
-            "latest_cloud_action": spaces.Box(low=-np.inf, high=np.inf, shape=(2,), dtype=np.float64),
+            "latest_cloud_action": spaces.Box(
+                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float64
+            ),
             "cloud_request_pending": spaces.Discrete(2),
             # ensure shape is at least 1d so that SB3 feature extractors can
             # flatten without errors
@@ -106,6 +123,7 @@ class CloudSchedulerEnv(gym.Env):
 
         # keep track of step count for info
         self._step = 0
+        self._last_obs: Optional[dict[str, Any]] = None
 
     # ------------------------------------------------------------------
     # Gymnasium interface
@@ -115,6 +133,7 @@ class CloudSchedulerEnv(gym.Env):
         self._planner.reset()
         self._rl_scheduler.reset()
         self._step = 0
+        self._call_history.clear()
         self._last_obs = obs
         return self._augment_obs(obs), info or {}
 
@@ -130,20 +149,25 @@ class CloudSchedulerEnv(gym.Env):
         control = self._planner.plan(self._last_obs)
 
         # step the underlying gym env with the control output
-        obs, base_reward, terminated, truncated, info = self._env.step(
+        obs, _base_reward, terminated, truncated, info = self._env.step(
             np.array([[control.steer, control.speed]])
         )
 
         # update stored observation for next call
         self._last_obs = obs
 
+        # record action before calling reward so _default_reward sees it
+        self._call_history.append(int(action))
+
         reward = self._reward_fn(obs, action)
         self._step += 1
 
+        # pylint: disable=protected-access
         new_info = {
             **info,
             "latest_cloud_action": np.array(
-                [self._planner._latest_cloud_action.steer, self._planner._latest_cloud_action.speed]
+                [self._planner._latest_cloud_action.steer,
+                 self._planner._latest_cloud_action.speed]
             )
             if self._planner._latest_cloud_action is not None
             else np.array([0.0, 0.0]),
@@ -163,9 +187,11 @@ class CloudSchedulerEnv(gym.Env):
     # ------------------------------------------------------------------
     def _augment_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
         # expense: copy to avoid surprising the caller if they mutate
+        # pylint: disable=protected-access
         out = {**obs}
         out["latest_cloud_action"] = (
-            np.array([self._planner._latest_cloud_action.steer, self._planner._latest_cloud_action.speed])
+            np.array([self._planner._latest_cloud_action.steer,
+                      self._planner._latest_cloud_action.speed])
             if self._planner._latest_cloud_action is not None
             else np.array([0.0, 0.0])
         )
@@ -177,8 +203,20 @@ class CloudSchedulerEnv(gym.Env):
         out["crosstrack_dist"] = np.array([float(dist)])
         return out
 
-    def _default_reward(self, obs: dict[str, Any], action: int) -> float:
-        """Default reward: negative squared cross-track error for ego vehicle."""
+    def _default_reward(self, obs: dict[str, Any], _action: int) -> float:
+        """Reward: negative squared CTE minus a rolling cloud call-rate penalty.
+
+        The penalty term is ``-cloud_cost * call_rate`` where ``call_rate`` is
+        the fraction of the last ``cloud_cost_window`` steps in which the agent
+        chose to call the cloud (action=1).  This discourages the agent from
+        always calling the cloud while still rewarding low cross-track error.
+        """
         pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
         dist = crosstrack_error(pos, self._waypoints)
-        return -float(dist ** 2)
+        cte_term = -float(dist ** 2)
+        if self._cloud_cost > 0.0 and len(self._call_history) > 0:
+            call_rate = sum(self._call_history) / len(self._call_history)
+            cost_term = -self._cloud_cost * call_rate
+        else:
+            cost_term = 0.0
+        return cte_term + cost_term

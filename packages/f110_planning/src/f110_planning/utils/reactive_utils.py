@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from .constants import (
+from .constants import (  # pylint: disable=unused-import  # re-exported for sub-modules
     F110_LENGTH,
     F110_MAX_STEER,
     F110_WHEELBASE,

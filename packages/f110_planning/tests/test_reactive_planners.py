@@ -6,6 +6,7 @@ Unit tests for reactive obstacle avoidance planners.
 
 from typing import Any
 
+import copy
 import numpy as np
 import pytest
 
@@ -15,7 +16,6 @@ from f110_planning.reactive import (
     EdgeCloudPlanner,
     GapFollowerPlanner,
 )
-from f110_planning.base import Action
 from f110_planning.utils import F110_MAX_STEER
 
 
@@ -71,7 +71,6 @@ def test_disparity_extender_output_bounds(reactive_obs: dict[str, Any]) -> None:
 
 def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> None:
     """alpha=0 means edge-only; alpha=1 means cloud-only."""
-    import copy
 
     scan = np.ones(1080) * 5.0
     reactive_obs["scans"][0] = scan

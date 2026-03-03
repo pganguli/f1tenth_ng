@@ -62,7 +62,9 @@ def test_stanley_convergence(dummy_waypoints: np.ndarray, dummy_obs: dict[str, A
     assert action.steer < 0.0
 
 
-def test_pure_pursuit_returns_zero_beyond_max_reacquire(dummy_waypoints: np.ndarray, dummy_obs: dict[str, Any]) -> None:
+def test_pure_pursuit_returns_zero_beyond_max_reacquire(
+    dummy_waypoints: np.ndarray, dummy_obs: dict[str, Any]
+) -> None:
     """When the vehicle is farther than max_reacquire from the path, plan() falls back to (0, 0)."""
     planner = PurePursuitPlanner(waypoints=dummy_waypoints)
     # Place the vehicle 100 m away from all waypoints (well beyond max_reacquire=20 m)

@@ -61,7 +61,7 @@ def test_nearest_point_endpoint_clamping() -> None:
     """A query point far past the last waypoint should project onto the last segment end."""
     path = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
     point = np.array([100.0, 0.0])  # far beyond path end
-    p, dist, t, _ = nearest_point(point, path)
+    p, dist, _t, _ = nearest_point(point, path)
     # The projection parameter t is clamped to 1.0 on the last segment, so the
     # projected point should be the last waypoint [2.0, 0.0].
     assert np.allclose(p, [2.0, 0.0]), f"Expected [2, 0] but got {p}"

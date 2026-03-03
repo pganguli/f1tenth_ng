@@ -23,7 +23,7 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
     to predict wall distances and orientation errors directly from raw sensor data.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         left_model_path: Optional[str] = None,
         track_width_model_path: Optional[str] = None,

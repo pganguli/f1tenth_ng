@@ -140,7 +140,7 @@ env = gym.make(
     "f110_gym:f110-cloud-scheduler-v0",
     map="data/maps/F1/Oschersleben/Oschersleben_map",
     waypoints=waypoints,
-    cloud_latency=20,
+    cloud_latency=10,
     render_mode=None,
 )
 model = PPO("MultiInputPolicy", env, verbose=1)

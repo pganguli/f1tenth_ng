@@ -2,7 +2,7 @@
 Unit tests for f110_planning.metrics.
 """
 
-# pylint: disable=missing-class-docstring,missing-function-docstring
+# pylint: disable=missing-class-docstring,missing-function-docstring,duplicate-code
 
 import math
 from typing import Any
@@ -330,7 +330,7 @@ class TestMetricAggregator:
 # ---------------------------------------------------------------------------
 
 
-class TestSmoothnessFirstStep:
+class TestSmoothnessFirstStep:  # pylint: disable=too-few-public-methods
     def test_no_rate_on_first_step(self) -> None:
         """The very first on_step call should not generate a steering-rate sample
         (there is no previous value to diff against)."""
@@ -338,7 +338,7 @@ class TestSmoothnessFirstStep:
         m.on_reset(_make_obs())
         m.on_step(_make_obs(), Action(0.5, 1.0), 0.01)  # first step
         # _steering_rates list should still be empty
-        assert m._steering_rates == []
+        assert not m._steering_rates  # pylint: disable=protected-access
         report = m.report()
         assert report["steering_rate_mean_rad_s"] == 0.0
         assert report["steering_rate_max_rad_s"] == 0.0
@@ -349,7 +349,7 @@ class TestSmoothnessFirstStep:
 # ---------------------------------------------------------------------------
 
 
-class TestHeadingErrorWrapping:
+class TestHeadingErrorWrapping:  # pylint: disable=too-few-public-methods
     def test_near_positive_pi_small_error(self) -> None:
         """Vehicle heading just above +π should yield a normalised, small error
         relative to a +x path (not an error near 2π)."""
@@ -371,7 +371,7 @@ class TestHeadingErrorWrapping:
 # ---------------------------------------------------------------------------
 
 
-class TestCrossTrackRmsVsMean:
+class TestCrossTrackRmsVsMean:  # pylint: disable=too-few-public-methods
     def test_rmse_exceeds_mean_for_unequal_errors(self) -> None:
         """When individual cross-track errors are unequal, RMSE > mean."""
         wpts = _make_waypoints_line(spacing=0.1)

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import numpy as np
-import pytest
+
 
 from f110_scripts.datagen.combine_datasets import combine_datasets
 

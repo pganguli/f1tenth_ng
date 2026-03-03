@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 
+from f110_planning.base import Action
 from f110_scripts.sim.reactive_planners import _create_planner, main
 
 
@@ -28,8 +29,6 @@ def _sim_obs() -> dict[str, Any]:
 def test_reactive_planner_produces_valid_action() -> None:
     """Each planner factory creates a planner that returns a valid Action with
     plausible steer and speed when planning on a minimal observation."""
-    from f110_planning.base import Action
-
     obs = _sim_obs()
     waypoints = np.ones((4, 2)) * np.array([0.0, 0.0])
     waypoints = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]])

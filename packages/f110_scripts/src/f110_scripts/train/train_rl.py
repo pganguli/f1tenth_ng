@@ -10,7 +10,7 @@ Usage example::
     python scripts/train/train_rl.py \
         --map data/maps/F1/Oschersleben/Oschersleben_map \
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \
-        --cloud-latency 20 \
+        --cloud-latency 10 \
         --timesteps 1000000 \
         --save-path data/models/cloud_scheduler.zip
 
@@ -22,7 +22,6 @@ import os
 from pathlib import Path
 
 import gymnasium as gym
-import numpy as np
 
 # stable-baselines3 is optional, so import lazily to keep the script lightweight
 from stable_baselines3 import PPO
@@ -31,7 +30,8 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from f110_planning.utils import load_waypoints
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for RL training."""
     parser = argparse.ArgumentParser(
         description="Train RL cloud scheduler policy.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -57,10 +57,23 @@ def parse_args():
     )
     parser.add_argument(
         "--verbose", type=int, default=1, help="Verbosity level for SB3")
+    parser.add_argument(
+        "--cloud-cost",
+        type=float,
+        default=0.1,
+        help="Scale factor \u03bb for the rolling cloud call-rate penalty in the reward",
+    )
+    parser.add_argument(
+        "--cloud-cost-window",
+        type=int,
+        default=100,
+        help="Number of recent steps used to compute the rolling cloud call rate",
+    )
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
+    """Entry point: parse args, build environment, train, and save the policy."""
     args = parse_args()
 
     waypoints = load_waypoints(args.waypoints)
@@ -71,6 +84,8 @@ def main():
         waypoints=waypoints,
         cloud_latency=args.cloud_latency,
         num_agents=args.num_agents,
+        cloud_cost=args.cloud_cost,
+        cloud_cost_window=args.cloud_cost_window,
         render_mode=None,
     )
     # Wrap with vectorized environment for SB3

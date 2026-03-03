@@ -57,7 +57,7 @@ def test_coarse_to_fine_flat_objective():
     """When all evaluations return the same score the result is deterministic
     (first grid mid-point wins when there are no better alternatives)."""
 
-    def eval_fn(s, v):
+    def eval_fn(_s, _v):
         return (0.0, False)
 
     out1 = coarse_to_fine_search(

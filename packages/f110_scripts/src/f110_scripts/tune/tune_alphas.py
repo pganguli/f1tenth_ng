@@ -50,46 +50,46 @@ def _parse_args() -> argparse.Namespace:
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    # Default to headless for sweep (override with --render-mode human)
-    parser.set_defaults(render_mode="None")
+    # Default to headless, single-lap for sweep
+    parser.set_defaults(render_mode="None", max_laps=2, cloud_strategy="always")
 
     tune = parser.add_argument_group("tuning", "Coarse-to-fine search configuration")
     tune.add_argument(
         "--coarse-points",
         type=int,
-        default=3,
+        default=4,
         metavar="N",
         help="Grid dimension for the coarse search phase (N×N evaluations).",
     )
     tune.add_argument(
         "--fine-points",
         type=int,
-        default=3,
+        default=4,
         metavar="N",
         help="Grid dimension for the fine search phase (N×N evaluations).",
     )
     tune.add_argument(
         "--alpha-steer-min",
         type=float,
-        default=0.0,
+        default=0.1,
         help="Lower bound of the alpha_steer search range.",
     )
     tune.add_argument(
         "--alpha-steer-max",
         type=float,
-        default=1.0,
+        default=0.9,
         help="Upper bound of the alpha_steer search range.",
     )
     tune.add_argument(
         "--alpha-speed-min",
         type=float,
-        default=0.0,
+        default=0.1,
         help="Lower bound of the alpha_speed search range.",
     )
     tune.add_argument(
         "--alpha-speed-max",
         type=float,
-        default=1.0,
+        default=0.9,
         help="Upper bound of the alpha_speed search range.",
     )
 
@@ -189,19 +189,7 @@ def main() -> None:
         speed_max=alpha_speed_max,
     )
 
-    any_crash_free = False
-    for alpha_steer in np.linspace(alpha_steer_min, alpha_steer_max, coarse_grid_size):
-        for alpha_speed in np.linspace(
-            alpha_speed_min, alpha_speed_max, coarse_grid_size
-        ):
-            _, crash_free = eval_fn_raw(alpha_steer, alpha_speed)
-            if crash_free:
-                any_crash_free = True
-                break
-        if any_crash_free:
-            break
-
-    if not any_crash_free:
+    if not best_crash_free:
         print("warning: no crash-free runs")
         sys.exit(1)
 

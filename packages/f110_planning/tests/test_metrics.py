@@ -7,12 +7,15 @@ inputs so that no simulator or gymnasium environment is required.
 
 from __future__ import annotations
 
+# pylint: disable=duplicate-code
+
 import math
 
 import numpy as np
 import pytest
 
-import f110_planning.metrics as metrics
+from f110_planning import metrics
+from f110_planning.utils.geometry_utils import pi_2_pi
 
 
 # ---------------------------------------------------------------------------
@@ -25,7 +28,7 @@ def _make_scan(n_beams: int = 1080, fill: float = 5.0) -> np.ndarray:
     return np.full(n_beams, fill, dtype=np.float64)
 
 
-def _make_obs(
+def _make_obs(  # pylint: disable=too-many-arguments, too-many-positional-arguments
     x: float = 0.0,
     y: float = 0.0,
     theta: float = 0.0,
@@ -151,11 +154,13 @@ def test_steering_rate_absolute_value() -> None:
 
 
 def test_current_speed() -> None:
+    """current_speed() should read the ego vehicle's longitudinal velocity."""
     obs = _make_obs(vx=7.5)
     assert metrics.current_speed(obs, ego_idx=0) == pytest.approx(7.5)
 
 
 def test_current_speed_multi_agent() -> None:
+    """current_speed() with ego_idx=1 should read the second agent's velocity."""
     obs = {"linear_vels_x": np.array([1.0, 9.9])}
     assert metrics.current_speed(obs, ego_idx=1) == pytest.approx(9.9)
 
@@ -166,16 +171,19 @@ def test_current_speed_multi_agent() -> None:
 
 
 def test_has_collision_false() -> None:
+    """has_collision() returns False when the collision flag is 0."""
     obs = _make_obs(collision=0.0)
     assert metrics.has_collision(obs) is False
 
 
 def test_has_collision_true() -> None:
+    """has_collision() returns True when the collision flag is 1."""
     obs = _make_obs(collision=1.0)
     assert metrics.has_collision(obs) is True
 
 
 def test_has_collision_multi_agent() -> None:
+    """has_collision() uses ego_idx to select the correct agent's flag."""
     obs = {"collisions": np.array([0.0, 1.0])}
     assert metrics.has_collision(obs, ego_idx=0) is False
     assert metrics.has_collision(obs, ego_idx=1) is True
@@ -188,8 +196,6 @@ def test_has_collision_multi_agent() -> None:
 
 def test_pi_2_pi_identity() -> None:
     """Values already in [-π, π] are returned unchanged."""
-    from f110_planning.utils.geometry_utils import pi_2_pi
-
     assert pi_2_pi(0.0) == pytest.approx(0.0)
     assert pi_2_pi(1.0) == pytest.approx(1.0)
     assert pi_2_pi(-1.0) == pytest.approx(-1.0)
@@ -197,8 +203,6 @@ def test_pi_2_pi_identity() -> None:
 
 def test_pi_2_pi_wraps_above_pi() -> None:
     """Angles just above +π should be mapped to near -π."""
-    from f110_planning.utils.geometry_utils import pi_2_pi
-
     result = pi_2_pi(math.pi + 0.5)
     assert result == pytest.approx(math.pi + 0.5 - 2 * math.pi, abs=1e-9)
     # must lie within (-π, π]
@@ -207,8 +211,6 @@ def test_pi_2_pi_wraps_above_pi() -> None:
 
 def test_pi_2_pi_wraps_below_minus_pi() -> None:
     """Angles just below -π should be mapped to near +π."""
-    from f110_planning.utils.geometry_utils import pi_2_pi
-
     result = pi_2_pi(-math.pi - 0.5)
     assert result == pytest.approx(-math.pi - 0.5 + 2 * math.pi, abs=1e-9)
     assert -math.pi <= result <= math.pi
