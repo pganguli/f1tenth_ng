@@ -3,7 +3,8 @@
 from f110_planning.schedulers import FixedIntervalScheduler, RLScheduler
 
 
-def test_fixed_interval():
+def test_fixed_interval() -> None:
+    """FixedIntervalScheduler should trigger on multiples of the given interval."""
     sched = FixedIntervalScheduler(interval=3)
     # should call on step 0,3,6,...
     calls = [sched.should_call_cloud(i, {}, None) for i in range(10)]
@@ -11,7 +12,8 @@ def test_fixed_interval():
     assert calls == expected
 
 
-def test_rl_scheduler_basic():
+def test_rl_scheduler_basic() -> None:
+    """RLScheduler should default to False and respect set_action / reset."""
     sched = RLScheduler()
     # no action set -> defaults to False
     assert not sched.should_call_cloud(0, {}, None)

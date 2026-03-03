@@ -29,10 +29,10 @@ from f110_planning.render_callbacks import (
     render_lidar,
     render_side_distances,
 )
-from f110_planning.schedulers import FixedIntervalScheduler
 from f110_planning.base import CloudScheduler
-from stable_baselines3 import PPO
+from f110_planning.schedulers import FixedIntervalScheduler
 from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
+from stable_baselines3 import PPO
 
 
 # ------------------------------------------------------------------
@@ -63,8 +63,7 @@ class PolicyScheduler(CloudScheduler):
         return bool(action)
 
     def reset(self) -> None:  # type: ignore[override]
-        # nothing to reset for a stateless policy
-        pass
+        """No persistent state to reset for a stateless policy."""
 
 
 def _build_reactive_parser() -> argparse.ArgumentParser:
@@ -140,6 +139,14 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--camera-tracking",
+        dest="camera_tracking",
+        action="store_true",
+        default=False,
+        help="Enable camera tracking of the car during rendering.",
+    )
+
+    parser.add_argument(
         "--left-wall-model",
         type=str,
         default="data/models/left_wall_dist_arch5.pt",
@@ -167,19 +174,19 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--cloud-latency",
         type=int,
-        default=20,
+        default=10,
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
         "--alpha-steer",
         type=float,
-        default=0.83,
+        default=0.1,
         help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
         "--alpha-speed",
         type=float,
-        default=0.83,
+        default=0.1,
         help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
@@ -201,37 +208,37 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch5.pt",
+        default="data/models/left_wall_dist_arch3.pt",
         help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
     )
     ec.add_argument(
         "--edge-track-width-model",
         type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch3.pt",
         help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch5.pt",
+        default="data/models/heading_error_arch3.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
         "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch7.pt",
+        default="data/models/left_wall_dist_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
     )
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch7.pt",
+        default="data/models/track_width_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
         "--cloud-heading-model",
         type=str,
-        default="data/models/heading_error_arch7.pt",
+        default="data/models/heading_error_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud heading-error model.",
     )
 
@@ -256,7 +263,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:
+def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # pylint: disable=too-many-branches
     """Instantiates the requested reactive planner based on CLI arguments."""
     if args.planner == "bubble":
         kwargs = {"safety_radius": args.safety_radius}
@@ -338,7 +345,8 @@ def _setup_rendering(
     env: Any, args: argparse.Namespace, waypoints: np.ndarray, planner: Any
 ) -> None:
     """Configures environment render callbacks."""
-    env.unwrapped.add_render_callback(create_camera_tracking(rotate=True))
+    if args.camera_tracking:
+        env.unwrapped.add_render_callback(create_camera_tracking(rotate=True))
     env.unwrapped.add_render_callback(render_lidar)
     env.unwrapped.add_render_callback(render_side_distances)
     env.unwrapped.add_render_callback(create_trace_renderer(agent_idx=0))

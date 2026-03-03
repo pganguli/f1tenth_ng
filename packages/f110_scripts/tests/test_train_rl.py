@@ -1,14 +1,12 @@
 """Tests for the RL training script argument parser and environment builder."""
 
 import sys
-import numpy as np
-import pytest
+
+from f110_scripts.train.train_rl import parse_args
 
 
 def _parse(extra_args=None, monkeypatch=None):
     """Call parse_args() after injecting synthetic sys.argv."""
-    from f110_scripts.train.train_rl import parse_args
-
     argv = ["prog", "--map", "some/map", "--waypoints", "some/waypoints.tsv"]
     if extra_args:
         argv.extend(extra_args)

@@ -424,7 +424,7 @@ def _load_weights_from_checkpoint(module: "LidarLightningModule", ckpt_path: Pat
     print(f"Warm-restart: loaded weights from {ckpt_path} (optimizer reset)")
 
 
-def run_single_training(config: dict[str, Any], arch_id: int) -> None:
+def run_single_training(config: dict[str, Any], arch_id: int) -> None:  # pylint: disable=too-many-locals
     """Run a single training session for a specific architecture.
 
     Checkpoint behaviour is controlled by two YAML flags:
@@ -473,7 +473,10 @@ def run_single_training(config: dict[str, Any], arch_id: int) -> None:
     if not do_resume:
         # resume=false → always random init; resume_weights_only is irrelevant.
         if do_weights_only:
-            print("resume_weights_only ignored because resume=false — starting from random initialisation")
+            print(
+                "resume_weights_only ignored because resume=false "
+                "\u2014 starting from random initialisation"
+            )
         _init_weights(module.model)
         ckpt_path = None
     elif existing_ckpt:

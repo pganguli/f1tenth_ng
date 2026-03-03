@@ -130,7 +130,7 @@ def test_datamodule_setup(tmp_path: Path) -> None:
     assert loader.batch_size == 4
 
 
-def test_validation_step_logs_val_loss(mocker: Any, tmp_path: Path) -> None:
+def test_validation_step_logs_val_loss(mocker: Any) -> None:
     """validation_step should compute a finite loss and log it under 'val/loss'."""
     model = LidarLightningModule(
         arch_id=1, lr=1e-3, weight_decay=1e-5, lr_patience=5
@@ -142,7 +142,7 @@ def test_validation_step_logs_val_loss(mocker: Any, tmp_path: Path) -> None:
 
     assert loss > 0
     assert not torch.isnan(loss)
-    model.log.assert_any_call(
+    model.log.assert_any_call(  # pylint: disable=no-member
         "val/loss", loss, prog_bar=True, on_epoch=True, sync_dist=False
     )
 
