@@ -27,8 +27,7 @@ def nearest_point(
     Returns:
         nearest_point (numpy.ndarray, (2, )): nearest point on the trajectory to the point
         nearest_dist (float): distance to the nearest point
-        t (float): nearest point's location as a segment between 0 and 1 on the vector
-            formed by the closest two points on the trajectory. (p_i---*-------p_i+1)
+        t (float): projection fraction in [0, 1] along the nearest trajectory segment
         i (int): index of nearest point in the array of trajectory waypoints
     """
     # ``trajectory`` is a sequence of waypoints; consecutive identical
