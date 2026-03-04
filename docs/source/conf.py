@@ -51,7 +51,7 @@ autodoc_mock_imports = ["pyglet"]
 # Suppress warnings that arise from intentional re-export patterns:
 # - ref.python: "more than one target" when a symbol lives in both its
 #   defining sub-module and a re-exporting parent.
-suppress_warnings = ["ref.python", "app.add_directive_to_domain:py"]
+suppress_warnings = ["ref.python", "ref.duplicate", "app.add_directive_to_domain:py"]
 
 
 # ---------------------------------------------------------------------------
