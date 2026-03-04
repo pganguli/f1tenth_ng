@@ -4,6 +4,14 @@ f110\_scripts.train package
 Submodules
 ----------
 
+f110\_scripts.train.eval\_nn module
+-----------------------------------
+
+.. automodule:: f110_scripts.train.eval_nn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 f110\_scripts.train.train\_nn module
 ------------------------------------
 

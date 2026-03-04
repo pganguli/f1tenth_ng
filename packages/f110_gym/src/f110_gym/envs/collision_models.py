@@ -167,7 +167,7 @@ def collision_multiple(vertices) -> tuple[np.ndarray, np.ndarray]:
     Returns:
         collisions (np.ndarray (num_vertices, )): whether each body is in collision
         collision_idx (np.ndarray (num_vertices, )): which index of other body is in collision
-                                                     with each index's body, -1 if not in collision
+            with each index's body, -1 if not in collision
     """
     collisions = np.zeros((vertices.shape[0],))
     collision_idx = -1 * np.ones((vertices.shape[0],))

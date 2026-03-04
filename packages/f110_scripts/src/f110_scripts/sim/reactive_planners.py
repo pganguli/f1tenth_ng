@@ -180,7 +180,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--alpha-steer",
         type=float,
-        default=0.1,
+        default=0.5,
         help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
