@@ -1,4 +1,4 @@
-#!/bin/bash
+# f1tenth DNN training — Slurm array job
 
 #SBATCH --job-name=f1tenth_dnn
 #SBATCH --qos=gpu_access

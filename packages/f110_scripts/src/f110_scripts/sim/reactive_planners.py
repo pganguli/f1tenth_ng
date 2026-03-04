@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 from f110_planning.metrics import MetricAggregator
+from f110_planning.metrics import crosstrack_error
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
@@ -18,6 +19,7 @@ from f110_planning.reactive import (
     EdgeCloudPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
+    SelectiveEdgeCloudPlanner,
 )
 from f110_planning.render_callbacks import (
     create_camera_tracking,
@@ -25,6 +27,7 @@ from f110_planning.render_callbacks import (
     create_heading_error_renderer,
     create_trace_renderer,
     create_cloud_call_renderer,
+    create_selective_cloud_call_renderer,
     create_waypoint_renderer,
     render_lidar,
     render_side_distances,
@@ -33,16 +36,40 @@ from f110_planning.base import CloudScheduler
 from f110_planning.schedulers import FixedIntervalScheduler
 from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
 from stable_baselines3 import PPO
+import gymnasium.spaces as _gym_spaces
 
 
 # ------------------------------------------------------------------
-# Cloud scheduler wrapper for policies saved by train_rl.py
+# Shared top-k helper (mirrors SelectiveCloudSchedulerEnv._resolve_topk)
+# ------------------------------------------------------------------
+def _resolve_topk(logits: np.ndarray, top_k: int) -> list[bool]:
+    """Numerically-stable softmax → top-k bool mask."""
+    logits = np.asarray(logits, dtype=np.float64).ravel()
+    shifted = logits - logits.max()
+    probs = np.exp(shifted)
+    probs /= probs.sum()
+    top_k_idx = np.argsort(probs)[-top_k:]
+    mask = [False] * len(logits)
+    for i in top_k_idx:
+        mask[i] = True
+    return mask
+
+
+# ------------------------------------------------------------------
+# Cloud scheduler wrapper for *binary* policies saved by train_rl.py
 # ------------------------------------------------------------------
 class PolicyScheduler(CloudScheduler):
-    """``CloudScheduler`` backed by an SB3 PPO policy"""
+    """``CloudScheduler`` backed by an SB3 binary policy (Discrete / Box(1))."""
 
     def __init__(self, policy_path: str) -> None:
         self._model = PPO.load(policy_path)
+
+    @classmethod
+    def _from_model(cls, model: Any) -> "PolicyScheduler":
+        """Construct from an already-loaded SB3 model (skips file I/O)."""
+        inst = cls.__new__(cls)
+        inst._model = model  # pylint: disable=protected-access
+        return inst
 
     def should_call_cloud(
         self,
@@ -64,6 +91,80 @@ class PolicyScheduler(CloudScheduler):
 
     def reset(self) -> None:  # type: ignore[override]
         """No persistent state to reset for a stateless policy."""
+
+
+# ------------------------------------------------------------------
+# Selective-policy planner (Box(3) logit action, per-DNN scheduling)
+# ------------------------------------------------------------------
+class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
+    """Wraps :class:`SelectiveEdgeCloudPlanner` + a trained SB3 policy.
+
+    At each planning step the policy predicts logits over the m=3 DNN slots;
+    the top-k indices are selected as the ``call_mask`` passed to the inner
+    :class:`SelectiveEdgeCloudPlanner`.  The augmented RL observation is
+    reconstructed from the planner's last outputs so the policy receives the
+    same feature vector it was trained on.
+    """
+
+    def __init__(
+        self,
+        inner_planner: SelectiveEdgeCloudPlanner,
+        model: Any,
+        waypoints: np.ndarray,
+        top_k: int = 1,
+    ) -> None:
+        self._planner = inner_planner
+        self._model = model
+        self._waypoints = waypoints
+        self._top_k = top_k
+
+    # ------------------------------------------------------------------
+    # Public planner interface
+    # ------------------------------------------------------------------
+    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Any:
+        obs_rl = self._build_rl_obs(obs)
+        logits, _ = self._model.predict(obs_rl, deterministic=True)
+        call_mask = _resolve_topk(np.asarray(logits), self._top_k)
+        return self._planner.plan(obs, call_mask=call_mask, ego_idx=ego_idx)
+
+    def reset(self) -> None:
+        self._planner.reset()
+
+    # Forward render-callback attributes
+    @property
+    def last_call_mask(self) -> list[bool]:
+        return self._planner.last_call_mask
+
+    @property
+    def last_target_point(self) -> Any:
+        return self._planner.last_target_point
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    def _build_rl_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
+        """Reconstruct the augmented observation expected by the trained policy."""
+        p = self._planner
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        last = p.last_action
+        rl_obs = {**obs}
+        rl_obs["edge_left_dist"] = np.array([p.last_edge_left], dtype=np.float32)
+        rl_obs["edge_track_width"] = np.array([p.last_edge_track], dtype=np.float32)
+        rl_obs["edge_heading_error"] = np.array([p.last_edge_heading], dtype=np.float32)
+        rl_obs["cloud_left_dist"] = np.array([p.last_cloud_left], dtype=np.float32)
+        rl_obs["cloud_track_width"] = np.array([p.last_cloud_track], dtype=np.float32)
+        rl_obs["cloud_heading_error"] = np.array([p.last_cloud_heading], dtype=np.float32)
+        rl_obs["last_steer"] = np.array(
+            [last.steer if last is not None else 0.0], dtype=np.float32
+        )
+        rl_obs["last_speed"] = np.array(
+            [last.speed if last is not None else 0.0], dtype=np.float32
+        )
+        rl_obs["crosstrack_dist"] = np.array(
+            [float(crosstrack_error(pos, self._waypoints))], dtype=np.float32
+        )
+        rl_obs["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
+        return rl_obs
 
 
 def _build_reactive_parser() -> argparse.ArgumentParser:
@@ -200,10 +301,24 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         type=str,
         default="data/models/cloud_scheduler.zip",
         help=(
-            "Path to a PPO policy (.zip) for cloud scheduling.  If the file "
-            "exists the policy will be used; otherwise the fixed-interval "
-            "scheduler (--cloud-interval) is employed."
+            "Path to a saved SB3 policy (.zip) for cloud scheduling.  If the "
+            "file exists the policy will be used; otherwise the fixed-interval "
+            "scheduler (--cloud-interval) is employed.  Both the old binary "
+            "scheduler (Discrete/Box(1)) and the new selective per-DNN "
+            "scheduler (Box(3) logits) are auto-detected from the model."
         ),
+    )
+    ec.add_argument(
+        "--rl-agent",
+        type=str,
+        default="ppo",
+        help="SB3 algorithm used to save --rl-scheduler (ppo | sac | td3 | a2c).",
+    )
+    ec.add_argument(
+        "--top-k",
+        type=int,
+        default=1,
+        help="Number of DNNs to call per step when using the selective RL policy.",
     )
     ec.add_argument(
         "--edge-left-wall-model",
@@ -308,21 +423,9 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
 
     if args.planner == "edge_cloud":
         # choose scheduler based on strategy
-        if args.cloud_strategy == "always":
-            scheduler = FixedIntervalScheduler(interval=1)
-        elif args.cloud_strategy == "interval":
-            scheduler = FixedIntervalScheduler(interval=args.cloud_interval)
-        else:  # rl
-            if args.rl_scheduler is not None and Path(args.rl_scheduler).exists():
-                print(f"Using RL scheduler at {args.rl_scheduler}")
-                scheduler = PolicyScheduler(args.rl_scheduler)
-            else:
-                # fall back to default interval behavior when policy missing
-                scheduler = FixedIntervalScheduler(interval=args.cloud_interval)
-
-        kwargs = {
+        # Shared planner kwargs (minus scheduler/top_k which depend on path)
+        ec_kwargs: dict[str, Any] = {
             "cloud_latency": args.cloud_latency,
-            "scheduler": scheduler,
             "alpha_steer": args.alpha_steer,
             "alpha_speed": args.alpha_speed,
             "lookahead_distance": args.lookahead,
@@ -335,8 +438,50 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
             "cloud_heading_model_path": args.cloud_heading_model,
         }
         if args.speed is not None:
-            kwargs["max_speed"] = args.speed
-        return EdgeCloudPlanner(**kwargs)
+            ec_kwargs["max_speed"] = args.speed
+
+        if args.cloud_strategy == "always":
+            return EdgeCloudPlanner(scheduler=FixedIntervalScheduler(interval=1), **ec_kwargs)
+
+        if args.cloud_strategy == "interval":
+            return EdgeCloudPlanner(
+                scheduler=FixedIntervalScheduler(interval=args.cloud_interval), **ec_kwargs
+            )
+
+        # rl: auto-detect policy type from saved action space
+        policy_path = args.rl_scheduler
+        if policy_path is not None and Path(policy_path).exists():
+            print(f"Using RL scheduler at {policy_path}")
+            # Use the module-level PPO for the default case so tests can
+            # monkeypatch it.  Other algorithms go through REGISTRY.
+            algo_name = getattr(args, "rl_agent", "ppo").lower()
+            if algo_name == "ppo":
+                algo_cls = PPO  # module-level, monkeypatchable
+            else:
+                from f110_scripts.train.agents import REGISTRY as _AGENT_REGISTRY  # pylint: disable=import-outside-toplevel
+                if not _AGENT_REGISTRY:
+                    from stable_baselines3 import A2C, SAC, TD3  # pylint: disable=import-outside-toplevel
+                    _AGENT_REGISTRY.update({"sac": SAC, "td3": TD3, "a2c": A2C})
+                algo_cls = _AGENT_REGISTRY.get(algo_name, PPO)
+            model = algo_cls.load(policy_path)
+
+            # Detect by action space: Box(3) → selective per-DNN policy
+            action_space = getattr(model, "action_space", None)
+            if (
+                isinstance(action_space, _gym_spaces.Box)
+                and action_space.shape == (3,)
+            ):
+                top_k = getattr(args, "top_k", 1)
+                inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
+                return SelectivePolicyPlanner(inner, model, waypoints, top_k=top_k)
+
+            # Fallback: old binary policy → PolicyScheduler + EdgeCloudPlanner
+            return EdgeCloudPlanner(scheduler=PolicyScheduler._from_model(model), **ec_kwargs)
+
+        # No valid policy file → fixed-interval fallback
+        return EdgeCloudPlanner(
+            scheduler=FixedIntervalScheduler(interval=args.cloud_interval), **ec_kwargs
+        )
 
     raise ValueError(f"Unsupported planner logic: {args.planner}")
 
@@ -361,9 +506,16 @@ def _setup_rendering(
         )
     # when using the edge-cloud planner we can also visualize the cloud calls
     if args.planner == "edge_cloud":
-        env.unwrapped.add_render_callback(
-            create_cloud_call_renderer(planner, agent_idx=0)
-        )
+        if hasattr(planner, "last_call_mask"):
+            # SelectiveEdgeCloudPlanner: colour-coded per-DNN dots
+            env.unwrapped.add_render_callback(
+                create_selective_cloud_call_renderer(planner, agent_idx=0)
+            )
+        else:
+            # EdgeCloudPlanner: single orange dot on any cloud call
+            env.unwrapped.add_render_callback(
+                create_cloud_call_renderer(planner, agent_idx=0)
+            )
 
 
 def _run_reactive_sim(

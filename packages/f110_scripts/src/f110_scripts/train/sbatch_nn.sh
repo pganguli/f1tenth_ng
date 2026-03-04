@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# slurm_batch.sh — interactive partition selector for train.sl
+# sbatch_nn.sh — interactive partition selector for train_nn.sl
 # Supports selecting multiple partitions (SLURM will use whichever has resources).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SLURM_SCRIPT="$SCRIPT_DIR/train.sl"
+SLURM_SCRIPT="$SCRIPT_DIR/train_nn.sl"
 
 # Collect available (up) partitions
 mapfile -t PARTITIONS < <(sinfo -h -o "%P %a" | awk '$2=="up"{gsub(/\*$/,"",$1); print $1}' | sort -u)
