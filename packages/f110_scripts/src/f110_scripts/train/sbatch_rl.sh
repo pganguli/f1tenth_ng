@@ -56,8 +56,8 @@ done
 PARTITION=$(printf '%s\n' "${SELECTED[@]}" | sort -u | paste -sd ',')
 
 # ── Optional: N_ENVS ─────────────────────────────────────────────────────────
-read -rp "Number of parallel envs/CPUs [default: 8, max ~17 for --cpus-per-task=18]: " N_ENVS_INPUT
-N_ENVS="${N_ENVS_INPUT:-8}"
+read -rp "Number of parallel envs/CPUs [default: 4, max ~7 for --cpus-per-task=8]: " N_ENVS_INPUT
+N_ENVS="${N_ENVS_INPUT:-4}"
 
 # ── Optional: resume path (if not passed as --resume flag) ───────────────────
 if [[ -z "$RESUME_PATH" ]]; then

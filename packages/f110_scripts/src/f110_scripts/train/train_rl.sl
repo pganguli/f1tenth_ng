@@ -17,16 +17,16 @@
 #SBATCH --qos=gpu_access
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
-#SBATCH --mem=32g
-#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=8g
+#SBATCH --time=4:00:00
 #SBATCH --output=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%j.out
 #SBATCH --error=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=pganguli@unc.edu
 
 # ── Defaults (all overridable via --export) ──────────────────────────────────
-: "${N_ENVS:=8}"
+: "${N_ENVS:=4}"
 : "${TIMESTEPS:=5000000}"
 : "${RESUME:=}"
 : "${MAP:=data/maps/F1/Oschersleben/Oschersleben_map}"
