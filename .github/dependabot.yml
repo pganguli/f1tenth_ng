@@ -7,8 +7,10 @@ version: 2
 updates:
   - package-ecosystem: "pip" # See documentation for possible values
     directories: # Location of package manifests
-      - "/f110_gym"
-      - "/f110_planning"
+      - "/"
+      - "/packages/f110_gym"
+      - "/packages/f110_planning"
+      - "/packages/f110_scripts"
     schedule:
       interval: "weekly"
 

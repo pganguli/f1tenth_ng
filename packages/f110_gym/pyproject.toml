@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "f110-gym"
+version = "0.3.1"
+authors = [
+  {name = "Hongrui Zheng", email = "billyzheng.bz@gmail.com"},
+  {name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com"}
+]
+description = "F1TENTH gymnasium environment"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+  "gymnasium>=0.29.1",
+  "numpy>=1.23.5",
+  "Pillow>=9.4.0",
+  "scipy>=1.10.1",
+  "numba>=0.57.0",
+  "pyyaml>=6.0",
+  "pyglet>=2.0.10",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-mock",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.urls]
+Homepage = "https://f1tenth.org"

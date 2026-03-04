@@ -1,0 +1,13 @@
+[pytest]
+testpaths = [
+  "packages/f110_gym/tests",
+  "packages/f110_planning/tests",
+  "packages/f110_scripts/tests",
+]
+
+addopts = ["-v", "--durations=5"]
+
+filterwarnings = [
+  "ignore::DeprecationWarning:torchao",
+  "ignore:Lookahead point not found.*:UserWarning",
+]
