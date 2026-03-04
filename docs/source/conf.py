@@ -48,6 +48,15 @@ exclude_patterns = []
 # at import time which fails on headless runners.
 autodoc_mock_imports = ["pyglet"]
 
+# Suppress warnings that arise from intentional re-export patterns:
+# - ref.python: "more than one target" when a symbol lives in both its
+#   defining sub-module (e.g. f110_planning.base.Action) and a re-exporting
+#   parent (e.g. f110_planning.Action).
+# - app.add_directive_to_domain:py: duplicate object descriptions created
+#   when autodoc documents the same class from both the canonical module and
+#   the re-exporting __init__.py.
+suppress_warnings = ["ref.python", "app.add_directive_to_domain:py"]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
