@@ -58,11 +58,11 @@ class RaceCar:
     """
     Base level race car class, handles the physics and laser scan of a single vehicle
 
-    Data Members:
+    Attributes:
         v_params (RaceCarVehicleParams): physical vehicle parameters
         config (RaceCarConfig): simulation configuration
-        state (np.ndarray (7, )): state vector
-            ``[x, y, steer_angle, vel, yaw_angle, yaw_rate, slip_angle]``
+        state (np.ndarray): state vector
+            ``[x, y, steer_angle, vel, yaw_angle, yaw_rate, slip_angle]``, shape ``(7,)``
         opp_poses (np.ndarray | None): current poses of other agents
         control (RaceCarControlState): control inputs and steering buffer
         in_collision (bool): collision indicator

@@ -4,8 +4,7 @@ Disparity extender planner module.
 Logic: Obstacle Inflation.
 Mechanism:
 1. Searches for 'disparities'—sudden jumps in distance between adjacent LiDAR beams.
-2. 'Blooms' or extends the nearer side of that disparity by the car's width to
-   mask out 'corners' where the car would otherwise clip its side.
+2. 'Blooms' (extends) the nearer side of that disparity by the car's width to mask out corners.
 3. Picks the furthest remaining point in the masked scan to steer towards.
 """
 

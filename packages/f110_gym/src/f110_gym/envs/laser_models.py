@@ -417,7 +417,7 @@ class ScanSimulator2D:
     """
     2D LIDAR scan simulator class
 
-    Init params:
+    Attributes:
         num_beams (int): number of beams in the scan
         fov (float): field of view of the laser scan
         eps (float, default=0.0001): ray tracing iteration termination condition

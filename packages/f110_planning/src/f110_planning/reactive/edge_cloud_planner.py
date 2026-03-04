@@ -36,6 +36,8 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
     alpha_speed : float
         Blending weight for speed (0 = edge only, 1 = cloud only).
 
+    Note
+    ----
     The remaining keyword arguments configure the two underlying
     :class:`LidarDNNPlanner` instances.  ``edge_*`` prefixed arguments are
     forwarded to the edge planner and ``cloud_*`` prefixed arguments to the
