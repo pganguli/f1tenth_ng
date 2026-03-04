@@ -5,8 +5,7 @@ Logic: Contiguous Free Space.
 Mechanism:
 1. Finds the closest obstacle and sets a 'bubble' of nearby LiDAR beams to zero.
 2. Identifies the largest contiguous sequence (the 'gap') of non-zero LiDAR beams.
-3. Finds the 'best point' (usually the midpoint or furthest point) within that
-   specific gap and steers towards it.
+3. Finds the 'best point' (midpoint or furthest point) within that gap and steers towards it.
 """
 
 from typing import Any

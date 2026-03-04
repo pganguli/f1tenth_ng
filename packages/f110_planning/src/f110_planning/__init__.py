@@ -34,9 +34,9 @@ from . import metrics
 
 __all__ = [
     "metrics",
-    "Action",
-    "BasePlanner",
-    "CloudScheduler",
+    # Action, BasePlanner, CloudScheduler are intentionally omitted — they are
+    # defined in f110_planning.base and documented there; including them here
+    # causes sphinx autodoc to generate duplicate object descriptions.
     "FixedIntervalScheduler",
     "DummyPlanner",
     "FlippyPlanner",

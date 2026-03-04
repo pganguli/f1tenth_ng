@@ -22,7 +22,7 @@ from .defaults import CAR_LENGTH, CAR_WIDTH
 # Only check DISPLAY on Linux (X11/Wayland). macOS uses Cocoa and Windows uses
 # its own windowing system, so DISPLAY is irrelevant on those platforms.
 if sys.platform == "linux" and os.environ.get("DISPLAY") is None:
-    pyglet.options["headless"] = True
+    pyglet.options.headless = True
 
 # In pyglet 2.x, legacy GL functions need to be imported from gl_compat or use ctypes
 # We use pyglet's built-in projection handling instead
