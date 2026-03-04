@@ -4,9 +4,9 @@ This repository is a modernized version of the F1TENTH Gym environment and plann
 
 ## Repository Structure
 
-- `f110_gym/`: The core F1TENTH Gymnasium environment.
-- `f110_planning/`: A library of planning and tracking algorithms (Pure Pursuit, LQR, etc.).
-- `scripts/`: Example scripts and simulation utilities.
+- `packages/f110_gym/`: The core F1TENTH Gymnasium environment.
+- `packages/f110_planning/`: A library of planning and tracking algorithms (Pure Pursuit, LQR, etc.).
+- `packages/f110_scripts/`: Example scripts and simulation utilities.
 - `data/`: Maps and waypoint files.
 
 ## Installation
@@ -24,9 +24,10 @@ cd f1tenth_ng
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install the gym and planning packages
-pip install -e ./f110_gym
-pip install -e "./f110_planning[test,train]"
+# Install the gym, planning, and scripts packages
+pip install -e packages/f110_gym
+pip install -e "packages/f110_planning[test]"
+pip install -e "packages/f110_scripts[test]"
 ```
 
 ## Usage Workflow
@@ -38,7 +39,7 @@ The repository supports a complete research workflow from data generation to mod
 Generate datasets of LiDAR scans and ground truth labels (heading error, wall distances) using a waypoint follower with added noise.
 
 ```bash
-python scripts/datagen/waypoint_datagen.py --map data/maps/F1/Oschersleben/Oschersleben_map --max-steps 10000
+python packages/f110_scripts/src/f110_scripts/datagen/waypoint_datagen.py --map data/maps/F1/Oschersleben/Oschersleben_map --max-steps 10000
 ```
 
 ### 2. Combine Datasets
@@ -46,7 +47,7 @@ python scripts/datagen/waypoint_datagen.py --map data/maps/F1/Oschersleben/Osche
 Merge multiple `.npz` files into a single training dataset with optional deduplication.
 
 ```bash
-python scripts/datagen/combine_datasets.py data/datasets/file1.npz data/datasets/file2.npz --output data/datasets/combined.npz --dedup
+python packages/f110_scripts/src/f110_scripts/datagen/combine_datasets.py data/datasets/file1.npz data/datasets/file2.npz --output data/datasets/combined.npz --dedup
 ```
 
 ### 3. Training
@@ -54,13 +55,13 @@ python scripts/datagen/combine_datasets.py data/datasets/file1.npz data/datasets
 Train LiDAR-based neural networks (e.g., for heading error prediction or wall distance estimation) using PyTorch Lightning.
 
 ```bash
-python scripts/train/train_nn.py --config scripts/train/config_heading.yaml
+python packages/f110_scripts/src/f110_scripts/train/train_nn.py --config packages/f110_scripts/src/f110_scripts/train/config_heading_1.yaml
 ```
 
 You can monitor the training progress using TensorBoard:
 
 ```bash
-tensorboard --logdir data/datasets/lightning_logs
+tensorboard --logdir data/models/lightning_logs
 ```
 
 ### 4. Simulation & Evaluation
@@ -70,13 +71,13 @@ Test your planners (classic or DNN-based) in the simulation environment.
 **Tracking Planners (Pure Pursuit, LQR, Stanley):**
 
 ```bash
-python scripts/sim/tracking_planners.py --map data/maps/F1/Oschersleben/Oschersleben_map
+python packages/f110_scripts/src/f110_scripts/sim/tracking_planners.py --map data/maps/F1/Oschersleben/Oschersleben_map
 ```
 
 **Reactive Planners (Gap Follower, Disparity Extender, LiDAR DNN):**
 
 ```bash
-python scripts/sim/reactive_planners.py --planner dnn --map data/maps/F1/Oschersleben/Oschersleben_map
+python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py --planner dnn --map data/maps/F1/Oschersleben/Oschersleben_map
 ```
 
 ## Quickstart: Waypoint Following
@@ -116,7 +117,6 @@ while not done:
     
     env.render()
 ```
-
 
 ## Reinforcement Learning: Cloud Scheduler
 
@@ -168,5 +168,5 @@ The new environment is fully tested and included in the automated test suite.
 
 ## Documentation
 
-- [f110_gym README](f110_gym/README.md)
-- [f110_planning README](f110_planning/README.md)
+- [f110_gym README](packages/f110_gym/README.md)
+- [f110_planning README](packages/f110_planning/README.md)
