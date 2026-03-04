@@ -485,10 +485,8 @@ class F110Env(gym.Env):
         and the race information near as text.
 
         Args:
-            mode (str, default='human'): rendering mode, currently supports:
-                'human': slowed down rendering such that the env is rendered in a way that sim time
-                         elapsed is close to real time elapsed
-                'human_fast': render as fast as possible
+            mode (str, default='human'): rendering mode, currently supports
+                ``'human'`` (real-time) or ``'human_fast'`` (as fast as possible)
 
         Returns:
             None
