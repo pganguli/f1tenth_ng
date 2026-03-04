@@ -66,7 +66,7 @@ read -ra MAP_ARGS      <<< "$MAP"
 read -ra WAYPOINT_ARGS <<< "$WAYPOINTS"
 
 CMD=(
-    .venv/bin/python packages/f110_scripts/src/f110_scripts/train/train_rl.py
+    python packages/f110_scripts/src/f110_scripts/train/train_rl.py
     --map      "${MAP_ARGS[@]}"
     --waypoints "${WAYPOINT_ARGS[@]}"
     --n-envs   "$N_ENVS"
