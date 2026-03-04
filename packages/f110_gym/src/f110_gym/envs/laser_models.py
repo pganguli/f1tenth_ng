@@ -421,7 +421,8 @@ class ScanSimulator2D:
         num_beams (int): number of beams in the scan
         fov (float): field of view of the laser scan
         eps (float, default=0.0001): ray tracing iteration termination condition
-        theta_dis (int, default=2000): number of steps to discretize the angles between 0 and 2pi for look up
+        theta_dis (int, default=2000): number of steps to discretize the angles
+            between 0 and 2pi for look up
         max_range (float, default=30.0): maximum range of the laser
     """
 
