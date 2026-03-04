@@ -1,3 +1,4 @@
+#!/bin/bash
 # train_rl.sl — Slurm batch script for RL cloud-scheduler policy training.
 #
 # Key environment variables (override via `sbatch --export=VAR=val,... train_rl.sl`
