@@ -43,6 +43,11 @@ myst_enable_extensions = [
 templates_path = ["_templates"]
 exclude_patterns = []
 
+# Mock heavy/graphics dependencies that are unavailable in headless CI.
+# autodoc imports every module it documents; pyglet tries to load EGL/OpenGL
+# at import time which fails on headless runners.
+autodoc_mock_imports = ["pyglet"]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 

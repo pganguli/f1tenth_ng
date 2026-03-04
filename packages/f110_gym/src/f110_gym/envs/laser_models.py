@@ -18,14 +18,14 @@ def get_dt(bitmap: np.ndarray, resolution: float) -> np.ndarray:
     Distance transformation, returns the distance matrix from the input bitmap.
     Uses scipy.ndimage, cannot be JITted.
 
-        Args:
-            bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment,
-                where 0 is obstacles, and 255 (or anything > 0) is freespace
-            resolution (float): resolution of the input bitmap (m/cell)
+    Args:
+        bitmap (numpy.ndarray, (n, m)): input binary bitmap of the environment,
+            where 0 is obstacles, and 255 (or anything > 0) is freespace
+        resolution (float): resolution of the input bitmap (m/cell)
 
-        Returns:
-            dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the
-                                        corresponding distance (in meters) to the closest obstacle
+    Returns:
+        dt (numpy.ndarray, (n, m)): output distance matrix, where each cell has the
+            corresponding distance (in meters) to the closest obstacle
     """
     dt = resolution * edt(bitmap)
     return dt
@@ -40,14 +40,14 @@ def xy_2_rc(
     """
     Translate (x, y) coordinate into (r, c) in the matrix
 
-        Args:
-            x (float): coordinate in x (m)
-            y (float): coordinate in y (m)
-            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
+    Args:
+        x (float): coordinate in x (m)
+        y (float): coordinate in y (m)
+        map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
 
-        Returns:
-            r (int): row number in the transform matrix of the given point
-            c (int): column number in the transform matrix of the given point
+    Returns:
+        r (int): row number in the transform matrix of the given point
+        c (int): column number in the transform matrix of the given point
     """
     orig_x, orig_y, orig_c, orig_s, height, width, resolution = map_params[:7]
 
@@ -80,13 +80,13 @@ def distance_transform(
     """
     Look up corresponding distance in the distance matrix
 
-        Args:
-            x (float): x coordinate of the lookup point
-            y (float): y coordinate of the lookup point
-            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
+    Args:
+        x (float): x coordinate of the lookup point
+        y (float): y coordinate of the lookup point
+        map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
 
-        Returns:
-            distance (float): corresponding shortest distance to obstacle in meters
+    Returns:
+        distance (float): corresponding shortest distance to obstacle in meters
     """
     dt = map_params[7]
     r, c = xy_2_rc(x, y, map_params)
@@ -106,15 +106,15 @@ def trace_ray(
     Find the length of a specific ray at a specific scan angle theta
     Purely math calculation and loops, should be JITted.
 
-        Args:
-            x (float): current x coordinate of the ego (scan) frame
-            y (float): current y coordinate of the ego (scan) frame
-            theta_index(int): current index of the scan beam in the scan range
-            sines (numpy.ndarray (n, )): pre-calculated sines of the angle array
-            cosines (numpy.ndarray (n, )): pre-calculated cosines ...
+    Args:
+        x (float): current x coordinate of the ego (scan) frame
+        y (float): current y coordinate of the ego (scan) frame
+        theta_index(int): current index of the scan beam in the scan range
+        sines (numpy.ndarray (n, )): pre-calculated sines of the angle array
+        cosines (numpy.ndarray (n, )): pre-calculated cosines ...
 
-        Returns:
-            total_distance (float): the distance to first obstacle on the current scan beam
+    Returns:
+        total_distance (float): the distance to first obstacle on the current scan beam
     """
 
     # int casting, and index precal trigs
@@ -157,15 +157,15 @@ def get_scan(
     Perform the scan for each discretized angle of each beam of the laser,
     loop heavy, should be JITted
 
-        Args:
-            pose (numpy.ndarray(3, )): current pose of the scan frame in the map
-            scan_params (tuple): (theta_dis, fov, num_beams, theta_index_increment,
-                                 sines, cosines, eps, max_range)
-            map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width,
-                                resolution, dt)
+    Args:
+        pose (numpy.ndarray(3, )): current pose of the scan frame in the map
+        scan_params (tuple): (theta_dis, fov, num_beams, theta_index_increment,
+            sines, cosines, eps, max_range)
+        map_params (tuple): (orig_x, orig_y, orig_c, orig_s, height, width,
+            resolution, dt)
 
-        Returns:
-            scan (numpy.ndarray(n, )): resulting laser scan at the pose, n=num_beams
+    Returns:
+        scan (numpy.ndarray(n, )): resulting laser scan at the pose, n=num_beams
     """
     theta_dis, fov, num_beams, theta_index_increment, _, _, _, _ = scan_params
 
@@ -421,8 +421,7 @@ class ScanSimulator2D:
         num_beams (int): number of beams in the scan
         fov (float): field of view of the laser scan
         eps (float, default=0.0001): ray tracing iteration termination condition
-        theta_dis (int, default=2000): number of steps to discretize the angles
-            between 0 and 2pi for look up
+        theta_dis (int, default=2000): number of steps to discretize the angles between 0 and 2pi for look up
         max_range (float, default=30.0): maximum range of the laser
     """
 
@@ -539,18 +538,18 @@ class ScanSimulator2D:
         """
         Perform simulated 2D scan by pose on the given map
 
-            Args:
-                pose (numpy.ndarray (3, )): pose of the scan frame (x, y, theta)
-                rng (numpy.random.Generator): random number generator to use for
-                    whitenoise in scan, or None
-                std_dev (float, default=0.01): standard deviation of the generated
-                    whitenoise in the scan
+        Args:
+            pose (numpy.ndarray (3, )): pose of the scan frame (x, y, theta)
+            rng (numpy.random.Generator): random number generator to use for
+                whitenoise in scan, or None
+            std_dev (float, default=0.01): standard deviation of the generated
+                whitenoise in the scan
 
-            Returns:
-                scan (numpy.ndarray (n, )): data array of the laserscan, n=num_beams
+        Returns:
+            scan (numpy.ndarray (n, )): data array of the laserscan, n=num_beams
 
-            Raises:
-                ValueError: when scan is called before a map is set
+        Raises:
+            ValueError: when scan is called before a map is set
         """
 
         if self.map_height is None:

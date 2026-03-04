@@ -64,7 +64,7 @@ def _parse_args() -> argparse.Namespace:
     tune.add_argument(
         "--fine-points",
         type=int,
-        default=4,
+        default=3,
         metavar="N",
         help="Grid dimension for the fine search phase (N×N evaluations).",
     )

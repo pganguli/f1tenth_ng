@@ -138,6 +138,21 @@ class CloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-attribute
         return self._augment_obs(obs), info or {}
 
     def step(self, action: int):
+        """Apply a scheduling action and advance the environment by one step.
+
+        Args:
+            action (int): scheduling decision; ``1`` triggers a cloud call on
+                this step, ``0`` uses the cached cloud result.
+
+        Returns:
+            tuple: ``(obs, reward, terminated, truncated, info)`` following the
+                Gymnasium convention.  ``obs`` is the augmented observation dict
+                (including ``latest_cloud_action``, ``cloud_request_pending``,
+                and ``crosstrack_dist``).  ``info`` contains the keys forwarded
+                from the underlying ``f110-v0`` environment plus
+                ``latest_cloud_action``, ``cloud_request_pending``, and
+                ``step``.
+        """
         # scheduler action is applied before planner invocation
         self._rl_scheduler.set_action(bool(action))
 
