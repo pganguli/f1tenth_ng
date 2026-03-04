@@ -28,7 +28,7 @@ apidoc:
 	@for pkg in $(PACKAGES); do \
 		pkg_name=$$(basename $$pkg); \
 		echo "  -> $$pkg_name"; \
-		sphinx-apidoc -T -o $(APIDIR) $$pkg; \
+		sphinx-apidoc -T -o $(APIDIR) $$pkg $$pkg/base_classes.py; \
 	done
 	@echo "API docs generated."
 
