@@ -102,3 +102,84 @@ def create_cloud_call_renderer(
                     old.delete()
 
     return render_cloud
+
+
+# Per-DNN colors for create_selective_cloud_call_renderer.
+# Index 0 = left_wall, 1 = track_width, 2 = heading — matches SelectiveEdgeCloudPlanner.
+_DNN_COLORS: list[tuple[int, int, int]] = [
+    (0, 210, 255),    # cyan      — left-wall distance
+    (100, 230, 40),   # lime      — track-width
+    (230, 60, 230),   # magenta   — heading error
+]
+_MULTI_CALL_COLOR: tuple[int, int, int] = (255, 255, 255)  # white — two or more DNNs called
+
+
+def create_selective_cloud_call_renderer(
+    planner,
+    agent_idx: int = 0,
+    max_points: int = 5000,
+    radius: float = 3.0,
+) -> Callable[[EnvRenderer], None]:
+    """Render callback for :class:`~f110_planning.reactive.SelectiveEdgeCloudPlanner`.
+
+    Draws a colour-coded dot at the agent's position whenever one or more cloud
+    DNNs were called on the last planning step.  The dot colour encodes *which*
+    DNN(s) were called:
+
+    * **cyan** ``(0, 210, 255)``   — left-wall distance DNN
+    * **lime** ``(100, 230, 40)``  — track-width DNN
+    * **magenta** ``(230, 60, 230)`` — heading-error DNN
+    * **white** ``(255, 255, 255)`` — two or more DNNs called simultaneously
+
+    When no DNN was called the regular yellow trace dot (from
+    :func:`create_trace_renderer`) is all that appears — no dot is added by
+    this callback.
+
+    Parameters
+    ----------
+    planner : SelectiveEdgeCloudPlanner
+        The planner whose ``last_call_mask`` attribute is read each frame.
+    agent_idx : int
+        Index of the agent to track.
+    max_points : int
+        Maximum retained dots before oldest are evicted.
+    radius : float
+        Circle radius in screen pixels.
+    """
+    shapes_attr = f"sel_cloud_shapes_{agent_idx}"
+
+    def render_selective_cloud(env_renderer: EnvRenderer) -> None:
+        if not hasattr(env_renderer, shapes_attr):
+            setattr(env_renderer, shapes_attr, [])
+        shapes = getattr(env_renderer, shapes_attr)
+
+        call_mask: list[bool] = getattr(planner, "last_call_mask", [])
+        n_calls = sum(call_mask)
+        if n_calls == 0:
+            return  # nothing to draw; regular trace handles baseline
+
+        if env_renderer.poses is None or env_renderer.poses.shape[0] <= agent_idx:
+            return
+
+        ego_pos = env_renderer.poses[agent_idx, 0:2]
+        scaled_pos = 50.0 * ego_pos
+
+        if n_calls > 1:
+            dot_color = _MULTI_CALL_COLOR
+        else:
+            called_idx = call_mask.index(True)
+            dot_color = _DNN_COLORS[called_idx] if called_idx < len(_DNN_COLORS) else _MULTI_CALL_COLOR
+
+        point = pyglet.shapes.Circle(
+            x=scaled_pos[0],
+            y=scaled_pos[1],
+            radius=radius,
+            color=dot_color,
+            batch=env_renderer.batch,
+        )
+        shapes.append(point)
+        if len(shapes) > max_points:
+            old = shapes.pop(0)
+            old.delete()
+
+    return render_selective_cloud

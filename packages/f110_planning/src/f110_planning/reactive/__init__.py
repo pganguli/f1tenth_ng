@@ -9,6 +9,7 @@ from .dynamic_waypoint_planner import DynamicWaypointPlanner
 from .edge_cloud_planner import EdgeCloudPlanner
 from .gap_follower_planner import GapFollowerPlanner
 from .lidar_dnn_planner import LidarDNNPlanner
+from .selective_edge_cloud_planner import SelectiveEdgeCloudPlanner
 
 __all__ = [
     "BubblePlanner",
@@ -17,4 +18,5 @@ __all__ = [
     "EdgeCloudPlanner",
     "GapFollowerPlanner",
     "LidarDNNPlanner",
+    "SelectiveEdgeCloudPlanner",
 ]

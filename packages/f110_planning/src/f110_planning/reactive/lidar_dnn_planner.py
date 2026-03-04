@@ -64,6 +64,12 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
 
         self.last_target_point = None
 
+        # cached outputs from the most recent plan() call; readable by external
+        # components (e.g. SelectiveEdgeCloudPlanner) without re-running the models
+        self.last_left_dist: float = 0.0
+        self.last_track_width: float = 0.0
+        self.last_heading_error: float = 0.0
+
         self.left_model = self._load_model(left_model_path)
         self.track_width_model = self._load_model(track_width_model_path)
         self.heading_model = self._load_model(heading_model_path)
@@ -146,6 +152,11 @@ class LidarDNNPlanner(BasePlanner):  # pylint: disable=too-many-instance-attribu
         right_dist = max(track_width - left_dist, 0.0)
 
         heading_error = self.predict(self.heading_model, scan) or 0.0
+
+        # cache for external readers (e.g. SelectiveEdgeCloudPlanner)
+        self.last_left_dist = left_dist
+        self.last_track_width = track_width
+        self.last_heading_error = heading_error
 
         # pylint: disable=duplicate-code
         # Compute dynamic waypoint and actuation using shared logic helper
