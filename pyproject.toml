@@ -1,27 +1,20 @@
 [project]
-name = "f1tenth_ng"
+name = "f1tenth-ng"
 version = "0.1.0"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
-dev = [
-    "pylint",
+docs = [
+  "sphinx>=7",
+  "myst-parser>=2.0",
+  "sphinx-markdown-builder",
+  "furo",
+]
+test = [
+  "pytest",
+  "pytest-mock",
+  "pylint",
 ]
 
-[tool.pytest.ini_options]
-testpaths = [
-    "f110_gym/tests",
-    "f110_planning/tests",
-    "scripts/datagen/tests",
-    "scripts/sim/tests",
-    "scripts/train/tests",
-]
-pythonpath = [
-    ".",
-    "f110_gym",
-    "f110_planning",
-]
-addopts = "-v --durations=5"
-filterwarnings = [
-    "ignore::DeprecationWarning:torchao",
-]
+[tool.setuptools]
+packages = []

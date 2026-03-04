@@ -1,0 +1,576 @@
+#!/usr/bin/env python3
+# pylint: disable=duplicate-code
+"""
+Advanced training script for F1Tenth LiDAR DNN models using PyTorch Lightning.
+Supports YAML configuration, advanced dataloading, and automatic tuning.
+"""
+
+import argparse
+import warnings
+from pathlib import Path
+from typing import Any, Optional
+
+import lightning as L
+import numpy as np
+import torch
+import yaml
+from lightning.pytorch.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+)
+from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.tuner.tuning import Tuner
+from torch import nn
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchao.quantization import Int8DynamicActivationInt8WeightConfig, quantize_
+
+from f110_planning.utils.nn_models import get_architecture, save_as_torchscript
+
+# Suppress library-level deprecation warnings for cleaner output
+warnings.filterwarnings("ignore", message=".*treespec.*")
+warnings.filterwarnings("ignore", category=FutureWarning, module="lightning")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="torchao")
+
+
+class LidarDataset(Dataset):
+    """
+    Advanced LiDAR Dataset with memory-resident caching.
+
+    Attributes:
+        x (np.ndarray): Normalized LiDAR scans.
+        y (np.ndarray): Target values (heading_error, left_wall_dist, or track_width).
+    """
+
+    def __init__(self, data_path: str, target_col: str) -> None:
+        """
+        Initializes the dataset.
+
+        Args:
+            data_path: Path to the .npz dataset file.
+            target_col: Name of the target column.  Use ``"track_width"`` to
+                derive track width on-the-fly as
+                ``left_wall_dist + right_wall_dist`` when the key is absent.
+        """
+        data = np.load(data_path)
+        self.x = data["scans"].astype(np.float32)
+
+        # Derive track_width on-the-fly when the column is absent from the file
+        if target_col == "track_width" and "track_width" not in data:
+            self.y = (
+                data["left_wall_dist"].astype(np.float32)
+                + data["right_wall_dist"].astype(np.float32)
+            ).reshape(-1, 1)
+        else:
+            self.y = data[target_col].astype(np.float32).reshape(-1, 1)
+
+        # Normalize LiDAR ranges (typically [0, 10]m -> [0, 1])
+        self.x = np.clip(self.x / 10.0, 0, 1)
+
+    def __len__(self) -> int:
+        """Returns the total number of samples."""
+        return len(self.y)
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Retrieves a single sample.
+
+        Args:
+            idx: Index of the sample to retrieve.
+
+        Returns:
+            A tuple of (lidar_tensor, target_tensor).
+        """
+        return torch.from_numpy(self.x[idx]).unsqueeze(0), torch.from_numpy(self.y[idx])
+
+
+class LidarDataModule(L.LightningDataModule):
+    """
+    Lightning DataModule managing dataset splitting and data loader creation.
+    """
+
+    def __init__(self, config: dict[str, Any]) -> None:
+        """
+        Initializes the data module.
+
+        Args:
+            config: Configuration dictionary containing data parameters.
+        """
+        super().__init__()
+        self.cfg = config["data"]
+        self.train_path = self.cfg["train_path"]
+        self.target_col = self.cfg["target_col"]
+        self.batch_size = self.cfg["batch_size"]
+
+        self.train_dataset: Optional[Dataset] = None
+        self.val_dataset: Optional[Dataset] = None
+
+    def setup(self, stage: Optional[str] = None) -> None:
+        """
+        Loads and splits the dataset.
+
+        Args:
+            stage: Current stage (fit, test, etc.).
+        """
+        full_dataset = LidarDataset(self.train_path, self.target_col)
+
+        val_split = self.cfg.get("val_split", 0.2)
+        val_size = int(len(full_dataset) * val_split)
+        train_size = len(full_dataset) - val_size
+        self.train_dataset, self.val_dataset = random_split(
+            full_dataset, [train_size, val_size]
+        )
+
+    def train_dataloader(self) -> DataLoader:
+        """Creates the training data loader."""
+        if self.train_dataset is None:
+            raise ValueError("train_dataset is None. Call setup() first.")
+        num_workers = self.cfg.get("num_workers", 4)
+        pin_memory = self.cfg.get("pin_memory", True) and torch.cuda.is_available()
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            prefetch_factor=self.cfg.get("prefetch_factor", 2)
+            if num_workers > 0
+            else None,
+            persistent_workers=num_workers > 0,
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        """Creates the validation data loader."""
+        if self.val_dataset is None:
+            raise ValueError("val_dataset is None. Call setup() first.")
+        num_workers = self.cfg.get("num_workers", 4)
+        pin_memory = self.cfg.get("pin_memory", True) and torch.cuda.is_available()
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            prefetch_factor=self.cfg.get("prefetch_factor", 2)
+            if num_workers > 0
+            else None,
+            persistent_workers=num_workers > 0,
+        )
+
+
+class LidarLightningModule(L.LightningModule):
+    """
+    LightningModule wrapping the F1Tenth LiDAR neural network architectures.
+    """
+
+    def __init__(
+        self,
+        arch_id: int,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initializes the lightning module.
+
+        Args:
+            arch_id: Unique identifier for the network architecture (1–7).
+            **kwargs: Hyperparameters passed to save_hyperparameters.
+        """
+        super().__init__()
+        self.save_hyperparameters()
+
+        self.model = get_architecture(arch_id)
+        self.criterion = nn.MSELoss()
+
+        self.example_input_array = torch.randn(1, 1, 1080)
+        self.train_step_count = 0
+
+    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
+        """
+        Performs a forward pass.
+
+        Args:
+            *args: Should contain the input LiDAR tensor at index 0.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Network output tensor.
+        """
+        x_in = args[0] if args else kwargs.get("x")
+        return self.model(x_in)
+
+    def training_step(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """
+        Executes a training step.
+
+        Args:
+            *args: Should contain (batch, batch_idx).
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Calculated loss for the step.
+        """
+        batch = args[0]
+        batch_idx = args[1]
+        _ = batch_idx
+        x_in, y_target = batch
+        y_hat = self(x_in)
+        loss = self.criterion(y_hat, y_target)
+
+        self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
+
+        opt = self.optimizers()
+        if isinstance(opt, list):
+            lr = opt[0].param_groups[0]["lr"]
+        else:
+            lr = opt.param_groups[0]["lr"]
+        self.log("train/lr", lr, on_step=True, prog_bar=False)
+
+        self.train_step_count += 1
+        return loss
+
+    def on_after_backward(self) -> None:
+        """Logs gradient norms to monitor training stability."""
+        total_norm = 0.0
+        for p in self.parameters():
+            if p.grad is not None:
+                param_norm = p.grad.detach().data.norm(2)
+                total_norm += param_norm.item() ** 2
+        total_norm = total_norm**0.5
+        self.log("train/grad_norm", total_norm, on_step=True, prog_bar=False)
+
+    def validation_step(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """
+        Executes a validation step.
+
+        Args:
+            *args: Should contain (batch, batch_idx).
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Calculated loss for the step.
+        """
+        batch = args[0]
+        batch_idx = args[1]
+        _ = batch_idx
+        x_in, y_target = batch
+        y_hat = self(x_in)
+        loss = self.criterion(y_hat, y_target)
+
+        self.log("val/loss", loss, prog_bar=True, on_epoch=True, sync_dist=False)
+
+        mae = torch.mean(torch.abs(y_hat - y_target))
+        self.log("val/mae", mae, prog_bar=False, on_epoch=True)
+
+        return loss
+
+    def on_train_batch_end(self, *args: Any, **kwargs: Any) -> None:
+        """Logs system metrics such as GPU memory usage."""
+        _ = args, kwargs
+        if torch.cuda.is_available():
+            mem = torch.cuda.memory_allocated() / 1e9
+            self.log("sys/gpu_mem_gb", mem, on_step=True, prog_bar=False)
+
+    def on_train_epoch_end(self) -> None:
+        """Logs weight histograms for architecture debugging."""
+        if self.logger and hasattr(self.logger, "experiment"):
+            tb_logger = self.logger.experiment
+            if hasattr(tb_logger, "add_histogram"):
+                for name, param in self.named_parameters():
+                    if param.requires_grad:
+                        tb_logger.add_histogram(
+                            f"weights/{name}", param, self.current_epoch
+                        )
+
+    def configure_optimizers(self) -> dict[str, Any]:
+        """Configures the optimizer and LR scheduler."""
+        opt_name = getattr(self.hparams, "optimizer", "adam")
+        if opt_name == "adamw":
+            optimizer = torch.optim.AdamW(
+                self.parameters(),
+                lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay,
+            )
+        else:
+            optimizer = torch.optim.Adam(
+                self.parameters(),
+                lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay,
+            )
+
+        sched_name = getattr(self.hparams, "scheduler", "reduce_on_plateau")
+        if sched_name == "cosine":
+            max_epochs = getattr(self.hparams, "max_epochs", 300)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=max_epochs, eta_min=1e-7
+            )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "interval": "epoch",
+                },
+            }
+
+        # Default: ReduceLROnPlateau (backward compatible)
+        factor = getattr(self.hparams, "lr_scheduler_factor", 0.1)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=factor, patience=self.hparams.lr_patience
+        )
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val/loss",
+            },
+        }
+
+
+def _init_weights(model: nn.Module) -> None:
+    """Apply Kaiming (conv) and Xavier (linear) initialization."""
+    for m in model.modules():
+        if isinstance(m, nn.Conv1d):
+            nn.init.kaiming_normal_(m.weight, nonlinearity="linear")
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.Linear):
+            nn.init.xavier_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.BatchNorm1d):
+            nn.init.ones_(m.weight)
+            nn.init.zeros_(m.bias)
+
+
+def _save_model(
+    model: nn.Module,
+    config: dict[str, Any],
+    model_name: str,
+    arch_id: int,
+) -> None:
+    """Save the model as a self-sufficient TorchScript ``.pt`` file.
+
+    All metadata (arch_id, target_col, training / data / quantization config)
+    is embedded inside the same file so that no external class definitions or
+    config files are needed at inference time.
+
+    For quantized models the FP32 computation graph is scripted *before*
+    ``quantize_()`` is applied (torchao ``AffineQuantizedTensor`` weights are
+    not TorchScript-serialisable).  The FP32 ``state_dict`` is also embedded
+    so that the quantized module can be faithfully reconstructed at load time.
+    """
+    out_path = Path("data/models")
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    is_quantized = config.get("quantization", {}).get("enabled", False)
+    metadata: dict[str, Any] = {
+        "arch_id": arch_id,
+        "target_col": config["data"]["target_col"],
+        "model_name": model_name,
+        "quantized": is_quantized,
+        "training": config.get("training", {}),
+        "data": config.get("data", {}),
+        "quantization": config.get("quantization", {}),
+    }
+
+    model.cpu().eval()
+
+    if is_quantized:
+        print(f"Applying INT8 dynamic quantization to {model_name}...")
+        # Apply quantisation first so the stored state_dict contains quantized
+        # tensors.  save_as_torchscript handles quantized models by scripting a
+        # fresh FP32 architecture for the computation graph while embedding the
+        # quantized state_dict as a binary extra file.  At load time the
+        # inference code rebuilds a fresh module, re-applies quantize_(), and
+        # then loads the quantized state_dict — no dequantisation required.
+        quantize_(model, Int8DynamicActivationInt8WeightConfig())
+        save_as_torchscript(model, out_path / f"{model_name}.pt", metadata)
+        print(f"Saved quantized model to data/models/{model_name}.pt")
+    else:
+        save_as_torchscript(model, out_path / f"{model_name}.pt", metadata)
+        print(f"Saved model to data/models/{model_name}.pt")
+
+
+def _find_last_checkpoint(model_name: str) -> Path | None:
+    """Return the path to last.ckpt if it exists, else None."""
+    last_ckpt = Path(f"data/models/checkpoints/{model_name}/last.ckpt")
+    return last_ckpt if last_ckpt.exists() else None
+
+
+def _load_weights_from_checkpoint(module: "LidarLightningModule", ckpt_path: Path) -> None:
+    """Load only model weights from a Lightning checkpoint, ignoring optimizer state.
+
+    This enables a warm restart: the network starts from a trained parameter
+    state but the optimizer/scheduler are freshly initialised, allowing a new
+    learning-rate schedule to take effect immediately.
+    """
+    ckpt = torch.load(ckpt_path, map_location="cpu")
+    # Lightning stores the full module state_dict under "state_dict".
+    # Keys are prefixed with "model." matching LidarLightningModule.model.
+    state = {
+        k.removeprefix("model."): v
+        for k, v in ckpt["state_dict"].items()
+        if k.startswith("model.")
+    }
+    missing, unexpected = module.model.load_state_dict(state, strict=True)
+    if missing or unexpected:
+        print(f"  Warning — missing keys: {missing}, unexpected keys: {unexpected}")
+    print(f"Warm-restart: loaded weights from {ckpt_path} (optimizer reset)")
+
+
+def run_single_training(config: dict[str, Any], arch_id: int) -> None:  # pylint: disable=too-many-locals
+    """Run a single training session for a specific architecture.
+
+    Checkpoint behaviour is controlled by two YAML flags:
+
+    resume: true/false          — whether to load model weights from the last
+                                   checkpoint.  When false, training always
+                                   starts from random initialisation and
+                                   resume_weights_only is irrelevant.
+    resume_weights_only: true   — when resume is also true, load only the model
+                                   weights and start the optimizer/scheduler
+                                   from scratch (useful after a cosine-schedule
+                                   run where the LR has decayed to ~0).
+                                   When false (default), full Lightning restore:
+                                   weights + optimizer + scheduler + epoch
+                                   counter are all restored.
+
+    Decision table
+    ──────────────
+    resume=false, resume_weights_only=any    →  random weights,    fresh optimizer
+    resume=true,  resume_weights_only=false  →  weights from ckpt, optimizer from ckpt
+    resume=true,  resume_weights_only=true   →  weights from ckpt, fresh optimizer"""
+    # Set matmul precision for better GPU utilisation and to suppress warnings
+    torch.set_float32_matmul_precision("high")
+
+    L.seed_everything(42)
+
+    training_cfg = config["training"]
+    do_resume = training_cfg.get("resume", True)
+    do_weights_only = training_cfg.get("resume_weights_only", False)
+
+    # Setup Model
+    module = LidarLightningModule(
+        arch_id=arch_id,
+        lr=float(training_cfg["lr"]),
+        weight_decay=float(training_cfg["weight_decay"]),
+        lr_patience=training_cfg["lr_patience"],
+        lr_scheduler_factor=float(training_cfg.get("lr_scheduler_factor", 0.1)),
+        optimizer=training_cfg.get("optimizer", "adam"),
+        scheduler=training_cfg.get("scheduler", "reduce_on_plateau"),
+        max_epochs=training_cfg["max_epochs"],
+    )
+
+    model_name = f"{config['data']['target_col']}_arch{arch_id}"
+    existing_ckpt = _find_last_checkpoint(model_name)
+
+    if not do_resume:
+        # resume=false → always random init; resume_weights_only is irrelevant.
+        if do_weights_only:
+            print(
+                "resume_weights_only ignored because resume=false "
+                "\u2014 starting from random initialisation"
+            )
+        _init_weights(module.model)
+        ckpt_path = None
+    elif existing_ckpt:
+        if do_weights_only:
+            # resume=true, resume_weights_only=true → weights only, fresh optimizer.
+            _load_weights_from_checkpoint(module, existing_ckpt)
+            ckpt_path = None
+        else:
+            # resume=true, resume_weights_only=false → full Lightning restore.
+            print(f"Full resume (weights + optimizer) from {existing_ckpt}")
+            ckpt_path = str(existing_ckpt)
+    else:
+        # resume=true but no checkpoint exists yet.
+        print("resume=true but no checkpoint found — starting from random initialisation")
+        _init_weights(module.model)
+        ckpt_path = None
+
+    # Logger
+    logger = TensorBoardLogger("data/models/lightning_logs", name=model_name)
+
+    # Callbacks
+    callbacks = [
+        ModelCheckpoint(
+            dirpath=f"data/models/checkpoints/{model_name}",
+            filename="best-{epoch:02d}",
+            monitor="val/loss",
+            mode="min",
+            save_top_k=1,
+            save_last=True,
+        ),
+        EarlyStopping(
+            monitor="val/loss",
+            patience=training_cfg["early_stopping_patience"],
+            mode="min",
+        ),
+        LearningRateMonitor(logging_interval="epoch"),
+    ]
+
+    # Trainer
+    trainer = L.Trainer(
+        max_epochs=training_cfg["max_epochs"],
+        accelerator="auto",
+        devices=1,
+        precision=training_cfg.get("precision", "32")
+        if torch.cuda.is_available()
+        else "32",
+        gradient_clip_val=training_cfg.get("gradient_clip_val", None),
+        logger=logger,
+        callbacks=callbacks,
+        profiler=training_cfg.get("profiler", None),
+    )
+
+    dm = LidarDataModule(config)
+
+    # Auto LR find: only when the optimizer is fresh (not a full resume).
+    if training_cfg.get("auto_lr_find", False) and ckpt_path is None:
+        tuner = Tuner(trainer)
+        lr_finder = tuner.lr_find(module, datamodule=dm)
+        if lr_finder:
+            suggested_lr = lr_finder.suggestion()
+            if suggested_lr:
+                print(f"Best LR found: {suggested_lr}")
+                module.hparams.lr = suggested_lr
+
+    # Training
+    trainer.fit(module, datamodule=dm, ckpt_path=ckpt_path)
+
+    # 4. Save final model
+    _save_model(module.model, config, model_name, arch_id)
+
+
+def main() -> None:
+    """Main entry point for the training script."""
+    parser = argparse.ArgumentParser(
+        description="Train a neural network model for F1TENTH planning.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--config", type=str,
+        default="packages/f110_scripts/src/f110_scripts/train/config_heading_7.yaml",
+        help="Path to the YAML training configuration file.",
+    )
+    args = parser.parse_args()
+
+    with open(args.config, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    # Hyperparameter Search across architectures if specified
+    arch_ids = config.get("model", {}).get("arch_ids", [config["model"]["arch_id"]])
+
+    for aid in arch_ids:
+        print(f"\n--- Starting training for Architecture {aid} ---")
+        run_single_training(config, aid)
+
+
+if __name__ == "__main__":
+    main()
