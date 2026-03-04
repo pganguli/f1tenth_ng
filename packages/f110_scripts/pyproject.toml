@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "f110-scripts"
 version = "0.1.0"
 authors = [
-  {name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com"},
-  {name = "Tingan Zhu", email = "tingan@cs.unc.edu"},
-  {name = "Cem Baykal", email = "cembay@cs.unc.edu"}
+  { name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com" },
+  { name = "Tingan Zhu", email = "tingan@cs.unc.edu" },
+  { name = "Cem Baykal", email = "cembay@cs.unc.edu" },
 ]
 description = "Scripts for F1TENTH gym and planners"
 requires-python = ">=3.10"
@@ -19,16 +19,15 @@ dependencies = [
   "tensorboard>=2.14.0",
   "torchao>=0.5.0",
   "stable-baselines3>=2.0.0",
+  "tqdm>=4.0.0",
+  "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
-test = [
-  "pytest",
-  "pytest-mock",
-]
+test = ["pytest", "pytest-mock"]
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
