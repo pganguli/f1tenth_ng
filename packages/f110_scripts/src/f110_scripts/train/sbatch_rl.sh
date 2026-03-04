@@ -71,24 +71,15 @@ if [[ -z "$EXTRA_ARGS" ]]; then
     EXTRA_ARGS="${EXTRA_INPUT:-}"
 fi
 
-# ── Build --export string ─────────────────────────────────────────────────────
-EXPORT_VARS="N_ENVS=${N_ENVS}"
-if [[ -n "$RESUME_PATH" ]]; then
-    EXPORT_VARS+=",RESUME=${RESUME_PATH}"
-fi
-if [[ -n "$EXTRA_ARGS" ]]; then
-    EXPORT_VARS+=",EXTRA_ARGS=${EXTRA_ARGS}"
-fi
+# ── Export vars into the environment (same pattern as sbatch_nn.sh) ──────────
+export N_ENVS="$N_ENVS"
+[[ -n "$RESUME_PATH" ]] && export RESUME="$RESUME_PATH"
+[[ -n "$EXTRA_ARGS"  ]] && export EXTRA_ARGS="$EXTRA_ARGS"
 
 # ── Submit ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Submitting with:"
 echo "  --partition=${PARTITION}"
-echo "  --export=${EXPORT_VARS}"
 [[ ${#SBATCH_EXTRA[@]} -gt 0 ]] && echo "  extra sbatch flags: ${SBATCH_EXTRA[*]}"
 
-sbatch \
-    --partition="$PARTITION" \
-    --export="$EXPORT_VARS" \
-    "${SBATCH_EXTRA[@]}" \
-    "$SLURM_SCRIPT"
+sbatch --partition="$PARTITION" "${SBATCH_EXTRA[@]}" "$SLURM_SCRIPT"
