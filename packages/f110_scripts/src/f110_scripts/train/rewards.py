@@ -36,6 +36,7 @@ Adding a custom reward that penalises calling any DNN::
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Any, Callable
 
 import numpy as np
@@ -120,6 +121,79 @@ def _cte_plus_no_call_penalty_factory(
     return _reward
 
 
+def _cte_plus_coverage_penalty_factory(
+    waypoints: np.ndarray,
+    window: int = 200,
+    penalty_scale: float = 0.5,
+    min_call_rate: float | None = None,
+    **_kwargs: Any,
+) -> Callable[[dict, list[bool]], float]:
+    """–CTE² – λ·Σ max(0, r* – rᵢ): per-slot rolling coverage penalty.
+
+    Unlike :func:`_cte_plus_no_call_penalty_factory` — which applies a
+    uniform step-level penalty regardless of *which* DNN is skipped — this
+    reward tracks each DNN slot's **call rate over a rolling window** and
+    penalises any slot whose rate falls below a minimum threshold ``r*``.
+
+    With ``top_k=2`` and ``m=3`` the aggregate uncalled fraction is constant
+    (1/3 per step), so a step-level penalty cannot distinguish an agent that
+    rotates skips evenly from one that permanently ignores slot 0
+    (left_wall).  The rolling coverage penalty *does* distinguish them:
+    chronically skipping a single slot drives that slot's rate toward 0,
+    accumulating a large shortfall penalty.
+
+    DNN slot order (matches ``SelectiveCloudSchedulerEnv.DNN_NAMES``):
+        0 → left_wall_dist
+        1 → track_width
+        2 → heading_error
+
+    Parameters
+    ----------
+    waypoints : np.ndarray
+        Reference waypoints for CTE computation.
+    window : int
+        Number of recent steps included in each slot's rolling call rate.
+        Larger values (e.g. 500) smooth out noise but react more slowly;
+        smaller values (e.g. 50) react faster but can be jittery.
+    penalty_scale : float
+        Scale factor λ applied to the total shortfall across all slots.
+    min_call_rate : float or None
+        Minimum acceptable call rate ``r*`` per slot.  Defaults to ``1/m``
+        (≈ 0.33), meaning every DNN should appear in at least one-third of
+        steps.  With ``top_k=2`` the fair-share rate is ``2/3``; setting
+        ``min_call_rate`` below that gives the agent room to prefer some
+        slots but still forces it to use every DNN occasionally.
+    """
+    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
+
+    wpts = waypoints.copy()
+    m = 3  # number of DNN slots
+    r_star = 1.0 / m if min_call_rate is None else min_call_rate
+
+    # Independent rolling history per slot, pre-filled with zeros so the
+    # penalty is applied from the very first episode.
+    histories: list[deque[int]] = [
+        deque([0] * window, maxlen=window) for _ in range(m)
+    ]
+
+    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        dist = crosstrack_error(pos, wpts)
+        cte_term = -float(dist ** 2)
+
+        # Update each slot's history with tonight's call decision.
+        for i, called in enumerate(call_mask):
+            histories[i].append(1 if called else 0)
+
+        # Penalise slots whose rolling rate is below the floor.
+        shortfall = sum(
+            max(0.0, r_star - sum(h) / window) for h in histories
+        )
+        return cte_term - penalty_scale * shortfall
+
+    return _reward
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -131,6 +205,7 @@ REGISTRY: dict[str, Callable[..., Callable[[dict, list[bool]], float]]] = {
     "cte_only": _cte_only_factory,
     "cte_plus_call_cost": _cte_plus_call_cost_factory,
     "cte_plus_no_call_penalty": _cte_plus_no_call_penalty_factory,
+    "cte_plus_coverage_penalty": _cte_plus_coverage_penalty_factory,
 }
 
 
