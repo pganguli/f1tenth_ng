@@ -1,0 +1,12 @@
+# Install all workspace packages in editable mode.
+# Works with both pip and uv:
+#
+#   pip install -r requirements-dev.txt
+#   uv pip install -r requirements-dev.txt
+#
+# Order matters for pip (no dependency resolver pre-pass):
+# f110-gym has no local deps, f110-planning depends on f110-gym,
+# f110-scripts depends on both.
+-e packages/f110_gym
+-e packages/f110_planning
+-e packages/f110_scripts
