@@ -83,6 +83,43 @@ def _cte_plus_call_cost_factory(
     return _reward
 
 
+def _cte_plus_no_call_penalty_factory(
+    waypoints: np.ndarray,
+    penalty_per_no_call: float = 0.05,
+    **_kwargs: Any,
+) -> Callable[[dict, list[bool]], float]:
+    """–CTE² – λ·(non-calls/m): penalise skipping DNN calls.
+
+    The complement of :func:`_cte_plus_call_cost_factory`.  Where that
+    function discourages calling DNNs, this one discourages *not* calling
+    them.  An agent that never triggers a particular DNN slot will receive an
+    extra penalty proportional to the fraction of slots left uncalled each
+    step, nudging it to distribute cloud calls across all *m* DNNs.
+
+    Parameters
+    ----------
+    waypoints : np.ndarray
+        Reference waypoints for CTE computation.
+    penalty_per_no_call : float
+        Scale factor λ applied to the uncalled fraction.  A value of 0.05
+        means up to –0.05 is added when no DNNs are called at all.
+    """
+    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
+
+    wpts = waypoints.copy()
+    m = 3  # number of DNN slots
+
+    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        dist = crosstrack_error(pos, wpts)
+        cte_term = -float(dist ** 2)
+        no_call_fraction = (m - sum(call_mask)) / m
+        penalty_term = -penalty_per_no_call * no_call_fraction
+        return cte_term + penalty_term
+
+    return _reward
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -93,6 +130,7 @@ def _cte_plus_call_cost_factory(
 REGISTRY: dict[str, Callable[..., Callable[[dict, list[bool]], float]]] = {
     "cte_only": _cte_only_factory,
     "cte_plus_call_cost": _cte_plus_call_cost_factory,
+    "cte_plus_no_call_penalty": _cte_plus_no_call_penalty_factory,
 }
 
 
