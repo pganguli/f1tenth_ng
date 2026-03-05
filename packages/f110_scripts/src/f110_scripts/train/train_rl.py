@@ -420,8 +420,10 @@ def main() -> None:
     ]
 
     if args.eval_freq > 0:
-        # Build a separate single eval env on the first map
-        eval_env = DummyVecEnv([lambda: _make_single_env(  # type: ignore[misc]
+        # Build a separate single eval env on the first map.
+        # Use SubprocVecEnv to match the training vec env type and silence SB3's
+        # "Training and eval env are not of the same type" warning.
+        _eval_factory = [lambda: _make_single_env(  # type: ignore[misc]
             map_path=args.map[0],
             waypoints=all_waypoints[0],
             reward_name=args.reward,
@@ -436,7 +438,8 @@ def main() -> None:
             cloud_left_wall_model=args.cloud_left_wall_model,
             cloud_track_width_model=args.cloud_track_width_model,
             cloud_heading_model=args.cloud_heading_model,
-        )])
+        )]
+        eval_env = SubprocVecEnv(_eval_factory) if args.n_envs > 1 else DummyVecEnv(_eval_factory)
         callbacks.append(
             EvalCallback(
                 eval_env,
