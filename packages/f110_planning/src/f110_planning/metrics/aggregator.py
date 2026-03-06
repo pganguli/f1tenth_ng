@@ -10,6 +10,7 @@ import numpy as np
 from f110_planning.base import Action
 
 from .base import BaseMetric
+from .cloud_call_count import CloudCallCountMetric
 from .cross_track_error import CrossTrackErrorMetric
 from .heading_error import HeadingErrorMetric
 from .lap_time import LapTimeMetric
@@ -51,15 +52,22 @@ class MetricAggregator:
     def create_default(
         cls,
         waypoints: np.ndarray | None = None,
+        selective_planner: Any | None = None,
     ) -> "MetricAggregator":
         """
         Build an aggregator with all available metrics.
 
         Waypoint-dependent metrics (cross-track error, heading error) are
         included only when *waypoints* is provided and non-empty.
+        When *selective_planner* exposes a ``last_call_mask`` property a
+        :class:`CloudCallCountMetric` is appended automatically.
 
         Args:
             waypoints: Reference path ``(N, 2+)``, or ``None``.
+            selective_planner: A planner instance with a ``last_call_mask``
+                property (e.g. ``SelectiveEdgeCloudPlanner`` or
+                ``SelectivePolicyPlanner``).  Pass ``None`` for planners that
+                do not perform selective cloud DNN scheduling.
 
         Returns:
             A fully-configured :class:`MetricAggregator`.
@@ -75,6 +83,9 @@ class MetricAggregator:
         if has_waypoints:
             callbacks.insert(1, CrossTrackErrorMetric())
             callbacks.insert(2, HeadingErrorMetric())
+
+        if selective_planner is not None and hasattr(selective_planner, "last_call_mask"):
+            callbacks.append(CloudCallCountMetric(selective_planner))
 
         return cls(callbacks)
 
