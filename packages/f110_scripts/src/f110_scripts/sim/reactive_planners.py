@@ -248,6 +248,13 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--cloud-dot-history",
+        type=int,
+        default=10000,
+        help="Maximum number of cloud-call dots retained on the plot before oldest are removed.",
+    )
+
+    parser.add_argument(
         "--left-wall-model",
         type=str,
         default="data/models/left_wall_dist_arch6.pt",
@@ -506,15 +513,16 @@ def _setup_rendering(
         )
     # when using the edge-cloud planner we can also visualize the cloud calls
     if args.planner == "edge_cloud":
+        max_pts = getattr(args, "cloud_dot_history", 10000)
         if hasattr(planner, "last_call_mask"):
             # SelectiveEdgeCloudPlanner: colour-coded per-DNN dots
             env.unwrapped.add_render_callback(
-                create_selective_cloud_call_renderer(planner, agent_idx=0)
+                create_selective_cloud_call_renderer(planner, agent_idx=0, max_points=max_pts)
             )
         else:
             # EdgeCloudPlanner: single orange dot on any cloud call
             env.unwrapped.add_render_callback(
-                create_cloud_call_renderer(planner, agent_idx=0)
+                create_cloud_call_renderer(planner, agent_idx=0, max_points=max_pts)
             )
 
 
@@ -527,7 +535,7 @@ def _run_reactive_sim(
 ) -> tuple[float, dict[str, float]]:
     """Executes the reactive simulation loop with metric collection."""
     wpts = waypoints if waypoints.size > 0 else None
-    metrics = MetricAggregator.create_default(waypoints=wpts)
+    metrics = MetricAggregator.create_default(waypoints=wpts, selective_planner=planner)
     metrics.on_reset(obs, waypoints=wpts)
 
     laptime, done = 0.0, False

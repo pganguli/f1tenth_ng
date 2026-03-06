@@ -8,6 +8,7 @@ functions they delegate to.
 
 from .aggregator import MetricAggregator
 from .base import BaseMetric
+from .cloud_call_count import CloudCallCountMetric
 from .cross_track_error import CrossTrackErrorMetric, crosstrack_error
 from .heading_error import HeadingErrorMetric, heading_error_rad
 from .lap_time import LapTimeMetric, has_collision
@@ -25,6 +26,7 @@ __all__ = [
     "WallProximityMetric",
     "SmoothnessMetric",
     "SpeedMetric",
+    "CloudCallCountMetric",
     # Pure functions
     "crosstrack_error",
     "heading_error_rad",
