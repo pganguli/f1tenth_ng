@@ -282,10 +282,19 @@ def parse_args() -> argparse.Namespace:
         "--anneal-steps", type=int, default=None,
         help=(
             "Number of environment steps over which the call-bonus is annealed "
-            "to zero in cte_sensitivity_annealed.  Defaults to the reward "
-            "factory default (1_000_000).  Scale this to ~10-20%% of "
-            "--timesteps so the headstart phase occupies a sensible fraction "
-            "of training (e.g. --anneal-steps 3000000 for --timesteps 20000000)."
+            "to zero in cte_sensitivity_annealed / cte_sensitivity_staleness.  "
+            "Defaults to the reward factory default (1_000_000).  Scale this "
+            "to ~10-20%% of --timesteps (e.g. --anneal-steps 3000000 for "
+            "--timesteps 20000000)."
+        ),
+    )
+    parser.add_argument(
+        "--age-scale-steps", type=int, default=None,
+        help=(
+            "Staleness saturation threshold for cte_sensitivity_staleness: "
+            "age at which a slot's staleness factor reaches 1.0 (full bonus). "
+            "Defaults to the reward factory default (20 steps).  A good "
+            "starting point is ~2× cloud_latency."
         ),
     )
     parser.add_argument(
@@ -450,6 +459,8 @@ def _collect_reward_kwargs(args: argparse.Namespace) -> dict[str, Any]:
         kwargs["target_call_rates"] = list(args.target_call_rates)
     if args.anneal_steps is not None:
         kwargs["anneal_steps"] = args.anneal_steps
+    if args.age_scale_steps is not None:
+        kwargs["age_scale_steps"] = args.age_scale_steps
     return kwargs
 
 
