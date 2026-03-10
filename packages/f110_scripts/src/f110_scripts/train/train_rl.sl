@@ -10,6 +10,9 @@
 #   RESUME            Path to a .zip checkpoint to resume from (default: "").
 #   MAP               Space-separated map paths (default: Oschersleben).
 #   WAYPOINTS         Space-separated waypoint TSV paths (default: Oschersleben).
+#   EVAL_MAP          Space-separated map path(s) for EvalCallback (held-out). If
+#                     unset, falls back to the first MAP entry (train-map eval).
+#   EVAL_WAYPOINTS    Space-separated waypoint TSV path(s) matching EVAL_MAP.
 #   REWARD            Reward function name: cte | cte_sensitivity_reg |
 #                     cte_sensitivity_annealed  (default: cte).
 #   CALL_WEIGHTS      Space-separated sensitivity weights for
@@ -25,19 +28,21 @@
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=8g
-#SBATCH --time=4:00:00
+#SBATCH --mem=16g
+#SBATCH --time=16:00:00
 #SBATCH --output=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%j.out
 #SBATCH --error=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=pganguli@unc.edu
 
 # ── Defaults (all overridable via --export) ──────────────────────────────────
-: "${N_ENVS:=4}"
-: "${TIMESTEPS:=5000000}"
+: "${N_ENVS:=6}"
+: "${TIMESTEPS:=20000000}"
 : "${RESUME:=}"
 : "${MAP:=data/maps/F1/Oschersleben/Oschersleben_map}"
 : "${WAYPOINTS:=data/maps/F1/Oschersleben/Oschersleben_centerline.tsv}"
+: "${EVAL_MAP:=}"
+: "${EVAL_WAYPOINTS:=}"
 : "${REWARD:=cte}"
 : "${CALL_WEIGHTS:=}"
 : "${TARGET_CALL_RATES:=}"
@@ -51,6 +56,7 @@ echo "  N_ENVS      : ${N_ENVS}"
 echo "  TIMESTEPS   : ${TIMESTEPS}"
 echo "  RESUME      : ${RESUME:-<none>}"
 echo "  MAP(s)      : ${MAP}"
+echo "  EVAL_MAP(s) : ${EVAL_MAP:-<same as MAP[0]>}"
 echo "  REWARD      : ${REWARD}"
 echo "  CALL_WEIGHTS: ${CALL_WEIGHTS:-<default>}"
 echo "  TGT_RATES   : ${TARGET_CALL_RATES:-<default>}"
@@ -83,8 +89,8 @@ CMD=(
     --device   auto
     --timesteps "$TIMESTEPS"
     --reward   "$REWARD"
-    --checkpoint-freq 200000
-    --eval-freq 500000
+    --checkpoint-freq 500000
+    --eval-freq 1000000
     --eval-episodes 5
     --progress-bar
 )
@@ -101,6 +107,16 @@ fi
 
 if [[ -n "$RESUME" && -f "$RESUME" ]]; then
     CMD+=(--resume "$RESUME")
+fi
+
+if [[ -n "$EVAL_MAP" ]]; then
+    read -ra EVAL_MAP_ARGS <<< "$EVAL_MAP"
+    CMD+=(--eval-map "${EVAL_MAP_ARGS[@]}")
+fi
+
+if [[ -n "$EVAL_WAYPOINTS" ]]; then
+    read -ra EVAL_WP_ARGS <<< "$EVAL_WAYPOINTS"
+    CMD+=(--eval-waypoints "${EVAL_WP_ARGS[@]}")
 fi
 
 # Append any caller-supplied extra flags

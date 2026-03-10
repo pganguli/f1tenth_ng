@@ -19,8 +19,13 @@ The observation extends the base F110 observation with:
 * ``cloud_heading_error`` — held/resolved cloud heading-error value (rad)
 * ``last_steer``          — steering command applied on the previous step (rad)
 * ``last_speed``          — speed command applied on the previous step (m/s)
-* ``crosstrack_dist``     — distance from ego to nearest waypoint (m)
 * ``cloud_calls_mask``    — MultiBinary(m) indicating which DNNs were called
+
+The following base-env keys are intentionally **excluded** from the agent
+observation because they are either map-absolute (``poses_x``, ``poses_y``,
+``poses_theta``) or very high-dimensional (``scans``):
+
+    ``scans``, ``poses_x``, ``poses_y``, ``poses_theta``
 """
 
 from __future__ import annotations
@@ -69,6 +74,21 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
     #: softmax is shift-invariant so expressiveness is not reduced.
     ACTION_LOW: float = -10.0
     ACTION_HIGH: float = 10.0
+
+    #: Base-env keys excluded from the agent observation.
+    #: Kept: linear_vels_x, linear_vels_y, steering_angles
+    #: - scans         : raw 1080-beam LiDAR (high-dim; agent uses DNN outputs instead)
+    #: - poses_x/y     : absolute map-frame position (not transferable across maps)
+    #: - poses_theta   : absolute map-frame heading (same reason)
+    #: - ang_vels_z    : yaw rate (redundant given steering_angles + vels)
+    #: - ego_idx       : always 0 in single-agent training
+    #: - collisions    : episode termination signal, not a decision input
+    #: - lap_times     : wall-clock; not relevant to DNN scheduling decisions
+    #: - lap_counts    : same
+    _OBS_EXCLUDED_KEYS: frozenset = frozenset({
+        "scans", "poses_x", "poses_y", "poses_theta",
+        "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
+    })
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-locals, redefined-builtin
         self,
@@ -135,6 +155,7 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
 
         pi = float(np.pi)
         extra: dict[str, spaces.Space] = {
+
             "edge_left_dist": spaces.Box(0.0, np.inf, shape=(1,), dtype=np.float32),
             "edge_track_width": spaces.Box(0.0, np.inf, shape=(1,), dtype=np.float32),
             "edge_heading_error": spaces.Box(-pi, pi, shape=(1,), dtype=np.float32),
@@ -145,10 +166,13 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
                 -float(F110_MAX_STEER), float(F110_MAX_STEER), shape=(1,), dtype=np.float32
             ),
             "last_speed": spaces.Box(0.0, 20.0, shape=(1,), dtype=np.float32),
-            "crosstrack_dist": spaces.Box(0.0, np.inf, shape=(1,), dtype=np.float32),
             "cloud_calls_mask": spaces.MultiBinary(m),
         }
-        self.observation_space = spaces.Dict({**base_obs_space.spaces, **extra})
+        filtered_base = {
+            k: v for k, v in base_obs_space.spaces.items()
+            if k not in self._OBS_EXCLUDED_KEYS
+        }
+        self.observation_space = spaces.Dict({**filtered_base, **extra})
 
         self._step: int = 0
         self._last_obs: Optional[dict[str, Any]] = None
@@ -218,7 +242,7 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
         return mask
 
     def _augment_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
-        out = {**obs}
+        out = {k: v for k, v in obs.items() if k not in self._OBS_EXCLUDED_KEYS}
         p = self._planner
         out["edge_left_dist"] = np.array([p.last_edge_left], dtype=np.float32)
         out["edge_track_width"] = np.array([p.last_edge_track], dtype=np.float32)
@@ -229,10 +253,6 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
         last = p.last_action
         out["last_steer"] = np.array([last.steer if last is not None else 0.0], dtype=np.float32)
         out["last_speed"] = np.array([last.speed if last is not None else 0.0], dtype=np.float32)
-        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
-        out["crosstrack_dist"] = np.array(
-            [float(crosstrack_error(pos, self._waypoints))], dtype=np.float32
-        )
         out["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
         return out
 

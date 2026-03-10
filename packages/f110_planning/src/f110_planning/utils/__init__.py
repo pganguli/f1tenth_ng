@@ -17,7 +17,7 @@ from .lidar_utils import get_heading_error, get_side_distances, index_to_angle
 from .lqr_utils import solve_lqr, update_matrix
 from .pure_pursuit_utils import get_actuation, intersect_point, nearest_point
 from .reactive_utils import get_reactive_action, get_reactive_actuation
-from .sim_utils import add_common_sim_args, setup_env
+from .sim_utils import add_common_sim_args, resolve_start_pose, setup_env
 from .tracking_utils import calculate_tracking_errors, get_vehicle_state
 from .waypoint_utils import load_waypoints
 
@@ -45,5 +45,6 @@ __all__ = [
     "get_reactive_action",
     "get_reactive_actuation",
     "add_common_sim_args",
+    "resolve_start_pose",
     "setup_env",
 ]

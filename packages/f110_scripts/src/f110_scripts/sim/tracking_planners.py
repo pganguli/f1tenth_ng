@@ -20,7 +20,7 @@ from f110_planning.render_callbacks import (
     render_side_distances,
 )
 from f110_planning.tracking import PurePursuitPlanner
-from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
+from f110_planning.utils import add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
 
 # Predefined color palette for agent traces
 COLOR_PALETTE = {
@@ -184,8 +184,9 @@ def main() -> None:
 
     # Initial reset and rendering setup
     poses = np.zeros((num_agents, 3))
+    sx, sy, st = resolve_start_pose(args)
     for i in range(num_agents):
-        poses[i] = [args.start_x, args.start_y + (i * 0.4), args.start_theta]
+        poses[i] = [sx, sy + (i * 0.4), st]
 
     obs, _ = env.reset(options={"poses": poses})
     if r_mode:

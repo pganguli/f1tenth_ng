@@ -84,7 +84,6 @@ def test_observation_space_has_extra_keys() -> None:
         "cloud_heading_error",
         "last_steer",
         "last_speed",
-        "crosstrack_dist",
         "cloud_calls_mask",
     )
     env = _make_env()
@@ -94,10 +93,16 @@ def test_observation_space_has_extra_keys() -> None:
     env.close()
 
 
-def test_crosstrack_dist_non_negative_after_reset() -> None:
+def test_observation_excludes_map_absolute_keys() -> None:
+    """Non-decision keys must not reach the RL agent."""
+    excluded = (
+        "scans", "poses_x", "poses_y", "poses_theta",
+        "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
+    )
     env = _make_env()
     obs, _ = env.reset()
-    assert obs["crosstrack_dist"][0] >= 0.0
+    for key in excluded:
+        assert key not in obs, f"Key '{key}' should be excluded from agent obs"
     env.close()
 
 

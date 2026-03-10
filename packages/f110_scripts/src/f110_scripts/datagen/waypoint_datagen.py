@@ -25,6 +25,7 @@ from f110_planning.utils import (
     get_heading_error,
     get_side_distances,
     load_waypoints,
+    resolve_start_pose,
     setup_env,
 )
 
@@ -209,7 +210,7 @@ def _run_simulation(
 ) -> int:
     """Runs the simulation loop and populates the history dictionary."""
     obs, _ = env.reset(
-        options={"poses": np.array([[args.start_x, args.start_y, args.start_theta]])}
+        options={"poses": np.array([list(resolve_start_pose(args))])}
     )
 
     if args.render_mode in ["human", "human_fast"]:

@@ -5,3 +5,4 @@ negate: 0
 occupied_thresh: 0.45
 free_thresh: 0.196
 track_width: 2.2
+start_pose: [0.0, 0.0, 2.374828]
