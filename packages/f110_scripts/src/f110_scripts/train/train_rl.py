@@ -11,7 +11,7 @@ Usage example (single map, single CPU)::
     python train_rl.py \\
         --map data/maps/F1/Oschersleben/Oschersleben_map \\
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \\
-        --agent ppo --reward cte_only --top-k 1 \\
+        --agent ppo --reward cte --top-k 1 \\
         --alpha-steer 0.5 --alpha-speed 0.1 \\
         --timesteps 5000000
 
@@ -50,6 +50,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from f110_planning.utils import load_waypoints
 from f110_scripts.train.agents import make_agent
+from f110_scripts.train.callbacks import CteRmseCallback
 from f110_scripts.train.rewards import make_reward
 
 
@@ -61,6 +62,7 @@ def _make_single_env(
     map_path: str,
     waypoints: np.ndarray,
     reward_name: str,
+    reward_kwargs: dict,
     cloud_latency: int,
     alpha_steer: float,
     alpha_speed: float,
@@ -82,7 +84,7 @@ def _make_single_env(
     import f110_gym as _  # noqa: F401
     from f110_scripts.train.rewards import make_reward as _make_reward
 
-    reward_fn = _make_reward(reward_name, waypoints=waypoints)
+    reward_fn = _make_reward(reward_name, waypoints=waypoints, **reward_kwargs)
     env = gym.make(
         "f110_gym:f110-selective-cloud-scheduler-v0",
         map=map_path,
@@ -187,8 +189,30 @@ def parse_args() -> argparse.Namespace:
         help="RL algorithm: ppo | sac | td3 | a2c (or any key in agents.REGISTRY)",
     )
     parser.add_argument(
-        "--reward", type=str, default="cte_only",
+        "--reward", type=str, default="cte",
         help="Reward function name (see rewards.REGISTRY)",
+    )
+    parser.add_argument(
+        "--call-weights", type=float, nargs=3,
+        metavar=("LEFT_WALL", "TRACK_WIDTH", "HEADING"),
+        default=None,
+        help=(
+            "Sensitivity weights for cte_sensitivity_annealed: raw importance "
+            "scores for [left_wall_dist, track_width, heading_error], normalised "
+            "internally.  Example (from offline sensitivity analysis): "
+            "--call-weights 0.36876279 0.36876279 0.26247441"
+        ),
+    )
+    parser.add_argument(
+        "--target-call-rates", type=float, nargs=3,
+        metavar=("LEFT_WALL", "TRACK_WIDTH", "HEADING"),
+        default=None,
+        help=(
+            "Sensitivity weights for cte_sensitivity_reg: per-slot target call "
+            "rates for [left_wall_dist, track_width, heading_error], normalised "
+            "internally.  Example (from offline sensitivity analysis): "
+            "--target-call-rates 0.36876279 0.36876279 0.26247441"
+        ),
     )
 
     # ----- hardware -----
@@ -216,8 +240,12 @@ def parse_args() -> argparse.Namespace:
         help="Total training timesteps.",
     )
     parser.add_argument(
-        "--save-path", type=str, default="data/models/cloud_scheduler.zip",
-        help="Destination for the final trained policy",
+        "--save-path", type=str, default=None,
+        help=(
+            "Destination for the final trained policy.  Defaults to "
+            "data/models/<run_tag>.zip where <run_tag> encodes the agent, "
+            "reward, top-k and alpha values."
+        ),
     )
     parser.add_argument(
         "--checkpoint-freq", type=int, default=100_000,
@@ -311,6 +339,32 @@ def parse_args() -> argparse.Namespace:
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _run_tag(args: argparse.Namespace) -> str:
+    """Build a descriptive run tag from key training parameters.
+
+    Format: ``{agent}_{reward}_k{top_k}_as{alpha_steer}_asp{alpha_speed}``
+
+    Example: ``ppo_cte_k1_as0.5_asp0.1``
+    """
+    return (
+        f"{args.agent.lower()}"
+        f"_{args.reward}"
+        f"_k{args.top_k}"
+        f"_as{args.alpha_steer:g}"
+        f"_asp{args.alpha_speed:g}"
+    )
+
+
+def _collect_reward_kwargs(args: argparse.Namespace) -> dict[str, Any]:
+    """Build the reward-function kwargs dict from CLI flags."""
+    kwargs: dict[str, Any] = {}
+    if args.call_weights is not None:
+        kwargs["call_weights"] = list(args.call_weights)
+    if args.target_call_rates is not None:
+        kwargs["target_call_rates"] = list(args.target_call_rates)
+    return kwargs
+
+
 def _collect_agent_kwargs(args: argparse.Namespace) -> dict[str, Any]:
     """Return only the hyperparameter kwargs that were explicitly set."""
     mapping = {
@@ -326,7 +380,7 @@ def _collect_agent_kwargs(args: argparse.Namespace) -> dict[str, Any]:
     return {k: v for k, v in mapping.items() if v is not None}
 
 
-def _build_vec_env(args: argparse.Namespace) -> tuple[Any, list[np.ndarray]]:
+def _build_vec_env(args: argparse.Namespace, reward_kwargs: dict[str, Any]) -> tuple[Any, list[np.ndarray]]:
     """Construct a (Sub)ProcVecEnv across all maps, returning (vec_env, all_waypoints)."""
     maps = args.map
     wpt_files = args.waypoints
@@ -350,6 +404,7 @@ def _build_vec_env(args: argparse.Namespace) -> tuple[Any, list[np.ndarray]]:
             map_path=map_path,
             waypoints=waypoints,
             reward_name=args.reward,
+            reward_kwargs=reward_kwargs,
             cloud_latency=args.cloud_latency,
             alpha_steer=args.alpha_steer,
             alpha_speed=args.alpha_speed,
@@ -376,7 +431,13 @@ def main() -> None:
     """Entry point: parse args, build environments, train, and save policy."""
     args = parse_args()
 
-    vec_env, all_waypoints = _build_vec_env(args)
+    reward_kwargs = _collect_reward_kwargs(args)
+    run_tag = _run_tag(args)
+    save_path = args.save_path or f"data/models/{run_tag}.zip"
+    checkpoint_dir = f"data/models/{run_tag}"
+    tensorboard_log = f"data/models/sb3_logs/{run_tag}"
+
+    vec_env, all_waypoints = _build_vec_env(args, reward_kwargs)
 
     agent_kwargs = _collect_agent_kwargs(args)
 
@@ -402,21 +463,22 @@ def main() -> None:
             vec_env,
             device=args.device,
             verbose=args.verbose,
+            tensorboard_log=tensorboard_log,
             **agent_kwargs,
         )
         reset_num_timesteps = True
 
     # ----- callbacks -----
-    checkpoint_dir = str(Path(args.save_path).parent)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     callbacks: list[Any] = [
         CheckpointCallback(
             save_freq=max(args.checkpoint_freq // args.n_envs, 1),
             save_path=checkpoint_dir,
-            name_prefix="rl_cloud_scheduler",
+            name_prefix=run_tag,
             verbose=1,
-        )
+        ),
+        CteRmseCallback(verbose=0),
     ]
 
     if args.eval_freq > 0:
@@ -427,6 +489,7 @@ def main() -> None:
             map_path=args.map[0],
             waypoints=all_waypoints[0],
             reward_name=args.reward,
+            reward_kwargs=reward_kwargs,
             cloud_latency=args.cloud_latency,
             alpha_steer=args.alpha_steer,
             alpha_speed=args.alpha_speed,
@@ -460,8 +523,8 @@ def main() -> None:
         progress_bar=args.progress_bar,
     )
 
-    model.save(args.save_path)
-    print(f"Saved policy to {args.save_path}")
+    model.save(save_path)
+    print(f"Saved policy to {save_path}")
 
     vec_env.close()
 
