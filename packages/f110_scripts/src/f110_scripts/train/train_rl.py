@@ -107,6 +107,62 @@ def _make_single_env(
     return env
 
 
+def _make_multi_map_env(
+    map_paths: list[str],
+    all_waypoints: list[np.ndarray],
+    reward_name: str,
+    reward_kwargs: dict,
+    cloud_latency: int,
+    alpha_steer: float,
+    alpha_speed: float,
+    top_k: int,
+    max_episode_steps: int,
+    edge_left_wall_model: str,
+    edge_track_width_model: str,
+    edge_heading_model: str,
+    cloud_left_wall_model: str,
+    cloud_track_width_model: str,
+    cloud_heading_model: str,
+) -> gym.Env:
+    """Build a MultiMapEnv that randomises the map at each episode reset.
+
+    Kept as a module-level function (not a lambda or closure) so it can be
+    pickled by :class:`~stable_baselines3.common.vec_env.SubprocVecEnv`.
+    Each inner env is a bare ``SelectiveCloudSchedulerEnv``; TimeLimit and
+    RecordEpisodeStatistics are applied once on the outer ``MultiMapEnv``.
+    """
+    import f110_gym as _  # noqa: F401
+    from f110_gym.envs import MultiMapEnv
+    from f110_scripts.train.rewards import make_reward as _make_reward
+
+    inner_envs = []
+    for map_path, waypoints in zip(map_paths, all_waypoints):
+        reward_fn = _make_reward(reward_name, waypoints=waypoints, **reward_kwargs)
+        inner_env = gym.make(
+            "f110_gym:f110-selective-cloud-scheduler-v0",
+            map=map_path,
+            waypoints=waypoints,
+            cloud_latency=cloud_latency,
+            alpha_steer=alpha_steer,
+            alpha_speed=alpha_speed,
+            top_k=top_k,
+            edge_left_wall_model_path=edge_left_wall_model,
+            edge_track_width_model_path=edge_track_width_model,
+            edge_heading_model_path=edge_heading_model,
+            cloud_left_wall_model_path=cloud_left_wall_model,
+            cloud_track_width_model_path=cloud_track_width_model,
+            cloud_heading_model_path=cloud_heading_model,
+            reward_fn=reward_fn,
+            render_mode=None,
+        )
+        inner_envs.append(inner_env)
+
+    env: gym.Env = MultiMapEnv(inner_envs)
+    env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps)
+    env = gym.wrappers.RecordEpisodeStatistics(env)
+    return env
+
+
 # ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
@@ -134,6 +190,25 @@ def parse_args() -> argparse.Namespace:
         metavar="WAYPOINTS",
         default=["data/maps/F1/Oschersleben/Oschersleben_centerline.tsv"],
         help="Waypoint TSV file(s) matching each --map entry.",
+    )
+    parser.add_argument(
+        "--eval-map", type=str, nargs="+",
+        metavar="MAP",
+        default=None,
+        help=(
+            "Validation map YAML path(s) without extension, used exclusively "
+            "by EvalCallback during training (never mixed into the training "
+            "env).  Multiple maps → each eval episode samples one at random "
+            "(MultiMapEnv).  Test maps should NOT be passed here; evaluate "
+            "them manually post-training.  Defaults to the first --map entry "
+            "if omitted."
+        ),
+    )
+    parser.add_argument(
+        "--eval-waypoints", type=str, nargs="+",
+        metavar="WAYPOINTS",
+        default=None,
+        help="Waypoint TSV file(s) matching each --eval-map entry.",
     )
     parser.add_argument(
         "--cloud-latency", type=int, default=10,
@@ -201,6 +276,16 @@ def parse_args() -> argparse.Namespace:
             "scores for [left_wall_dist, track_width, heading_error], normalised "
             "internally.  Example (from offline sensitivity analysis): "
             "--call-weights 0.36876279 0.36876279 0.26247441"
+        ),
+    )
+    parser.add_argument(
+        "--anneal-steps", type=int, default=None,
+        help=(
+            "Number of environment steps over which the call-bonus is annealed "
+            "to zero in cte_sensitivity_annealed.  Defaults to the reward "
+            "factory default (1_000_000).  Scale this to ~10-20%% of "
+            "--timesteps so the headstart phase occupies a sensible fraction "
+            "of training (e.g. --anneal-steps 3000000 for --timesteps 20000000)."
         ),
     )
     parser.add_argument(
@@ -363,6 +448,8 @@ def _collect_reward_kwargs(args: argparse.Namespace) -> dict[str, Any]:
         kwargs["call_weights"] = list(args.call_weights)
     if args.target_call_rates is not None:
         kwargs["target_call_rates"] = list(args.target_call_rates)
+    if args.anneal_steps is not None:
+        kwargs["anneal_steps"] = args.anneal_steps
     return kwargs
 
 
@@ -382,7 +469,12 @@ def _collect_agent_kwargs(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _build_vec_env(args: argparse.Namespace, reward_kwargs: dict[str, Any]) -> tuple[Any, list[np.ndarray]]:
-    """Construct a (Sub)ProcVecEnv across all maps, returning (vec_env, all_waypoints)."""
+    """Construct a (Sub)ProcVecEnv across all maps, returning (vec_env, all_waypoints).
+
+    Single map  → each worker is pinned to that map (existing behaviour).
+    Multiple maps → each worker gets a MultiMapEnv that randomises the map on
+                    every episode reset, giving full map-distribution coverage.
+    """
     maps = args.map
     wpt_files = args.waypoints
 
@@ -395,31 +487,45 @@ def _build_vec_env(args: argparse.Namespace, reward_kwargs: dict[str, Any]) -> t
     all_waypoints = [load_waypoints(f) for f in wpt_files]
     n_envs = args.n_envs
 
-    # Distribute envs across maps round-robin
-    def _factory(idx: int):
-        map_idx = idx % len(maps)
-        waypoints = all_waypoints[map_idx]
-        map_path = maps[map_idx]
-        # Capture everything by value (not args reference) for clean pickling
-        return lambda: _make_single_env(
-            map_path=map_path,
-            waypoints=waypoints,
-            reward_name=args.reward,
-            reward_kwargs=reward_kwargs,
-            cloud_latency=args.cloud_latency,
-            alpha_steer=args.alpha_steer,
-            alpha_speed=args.alpha_speed,
-            top_k=args.top_k,
-            max_episode_steps=args.max_episode_steps,
-            edge_left_wall_model=args.edge_left_wall_model,
-            edge_track_width_model=args.edge_track_width_model,
-            edge_heading_model=args.edge_heading_model,
-            cloud_left_wall_model=args.cloud_left_wall_model,
-            cloud_track_width_model=args.cloud_track_width_model,
-            cloud_heading_model=args.cloud_heading_model,
-        )
+    # Shared kwargs forwarded to both factory helpers
+    _shared = dict(
+        reward_name=args.reward,
+        reward_kwargs=reward_kwargs,
+        cloud_latency=args.cloud_latency,
+        alpha_steer=args.alpha_steer,
+        alpha_speed=args.alpha_speed,
+        top_k=args.top_k,
+        max_episode_steps=args.max_episode_steps,
+        edge_left_wall_model=args.edge_left_wall_model,
+        edge_track_width_model=args.edge_track_width_model,
+        edge_heading_model=args.edge_heading_model,
+        cloud_left_wall_model=args.cloud_left_wall_model,
+        cloud_track_width_model=args.cloud_track_width_model,
+        cloud_heading_model=args.cloud_heading_model,
+    )
 
-    factories = [_factory(i) for i in range(n_envs)]
+    if len(maps) == 1:
+        # Single map: pin every worker to it (original behaviour)
+        def _factory_single(_idx: int):
+            return lambda: _make_single_env(
+                map_path=maps[0],
+                waypoints=all_waypoints[0],
+                **_shared,
+            )
+        factories = [_factory_single(i) for i in range(n_envs)]
+    else:
+        # Multiple maps: every worker randomises map per episode
+        _map_paths = list(maps)
+        _wpts = list(all_waypoints)
+
+        def _factory_multi(_idx: int):
+            return lambda: _make_multi_map_env(
+                map_paths=_map_paths,
+                all_waypoints=_wpts,
+                **_shared,
+            )
+        factories = [_factory_multi(i) for i in range(n_envs)]
+
     vec_env = SubprocVecEnv(factories) if n_envs > 1 else DummyVecEnv(factories)
     return vec_env, all_waypoints
 
@@ -483,12 +589,18 @@ def main() -> None:
     ]
 
     if args.eval_freq > 0:
-        # Build a separate single eval env on the first map.
-        # Use SubprocVecEnv to match the training vec env type and silence SB3's
-        # "Training and eval env are not of the same type" warning.
-        _eval_factory = [lambda: _make_single_env(  # type: ignore[misc]
-            map_path=args.map[0],
-            waypoints=all_waypoints[0],
+        # Build a separate eval env using the validation maps (--eval-map /
+        # --eval-waypoints).  These maps are NEVER used during training; they
+        # serve only for EvalCallback (generalization monitoring + best_model save).
+        # If --eval-map is not given, fall back to the first training map.
+        # Multiple eval maps → MultiMapEnv (each eval episode picks a random one).
+        # Single eval map   → plain single env.
+        # Test maps are not passed here at all; they are evaluated post-training.
+        eval_maps = args.eval_map or [args.map[0]]
+        eval_wpt_files = args.eval_waypoints or [args.waypoints[0]]
+        eval_waypoints = [load_waypoints(f) for f in eval_wpt_files]
+
+        _eval_shared = dict(
             reward_name=args.reward,
             reward_kwargs=reward_kwargs,
             cloud_latency=args.cloud_latency,
@@ -502,7 +614,19 @@ def main() -> None:
             cloud_left_wall_model=args.cloud_left_wall_model,
             cloud_track_width_model=args.cloud_track_width_model,
             cloud_heading_model=args.cloud_heading_model,
-        )]
+        )
+        if len(eval_maps) == 1:
+            _eval_factory = [lambda: _make_single_env(  # type: ignore[misc]
+                map_path=eval_maps[0],
+                waypoints=eval_waypoints[0],
+                **_eval_shared,
+            )]
+        else:
+            _eval_factory = [lambda: _make_multi_map_env(  # type: ignore[misc]
+                map_paths=eval_maps,
+                all_waypoints=eval_waypoints,
+                **_eval_shared,
+            )]
         eval_env = SubprocVecEnv(_eval_factory) if args.n_envs > 1 else DummyVecEnv(_eval_factory)
         callbacks.append(
             EvalCallback(

@@ -11,7 +11,6 @@ from typing import Any
 
 import numpy as np
 from f110_planning.metrics import MetricAggregator
-from f110_planning.metrics import crosstrack_error
 from f110_planning.reactive import (
     BubblePlanner,
     DisparityExtenderPlanner,
@@ -34,7 +33,7 @@ from f110_planning.render_callbacks import (
 )
 from f110_planning.base import CloudScheduler
 from f110_planning.schedulers import FixedIntervalScheduler
-from f110_planning.utils import add_common_sim_args, load_waypoints, setup_env
+from f110_planning.utils import add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
 from stable_baselines3 import PPO
 import gymnasium.spaces as _gym_spaces
 
@@ -85,7 +84,6 @@ class PolicyScheduler(CloudScheduler):
         obs_rl = {**obs}
         obs_rl.setdefault("cloud_request_pending", 0)
         obs_rl.setdefault("latest_cloud_action", np.array([0.0, 0.0]))
-        obs_rl.setdefault("crosstrack_dist", np.array([0.0]))
         action, _ = self._model.predict(obs_rl, deterministic=True)
         return bool(action)
 
@@ -142,12 +140,16 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    # Keys that SelectiveCloudSchedulerEnv strips from the agent observation.
+    _OBS_EXCLUDED_KEYS: frozenset[str] = frozenset(
+        {"scans", "poses_x", "poses_y", "poses_theta"}
+    )
+
     def _build_rl_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
         """Reconstruct the augmented observation expected by the trained policy."""
         p = self._planner
-        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
         last = p.last_action
-        rl_obs = {**obs}
+        rl_obs = {k: v for k, v in obs.items() if k not in self._OBS_EXCLUDED_KEYS}
         rl_obs["edge_left_dist"] = np.array([p.last_edge_left], dtype=np.float32)
         rl_obs["edge_track_width"] = np.array([p.last_edge_track], dtype=np.float32)
         rl_obs["edge_heading_error"] = np.array([p.last_edge_heading], dtype=np.float32)
@@ -159,9 +161,6 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
         )
         rl_obs["last_speed"] = np.array(
             [last.speed if last is not None else 0.0], dtype=np.float32
-        )
-        rl_obs["crosstrack_dist"] = np.array(
-            [float(crosstrack_error(pos, self._waypoints))], dtype=np.float32
         )
         rl_obs["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
         return rl_obs
@@ -575,7 +574,7 @@ def main() -> None:
         _setup_rendering(env, args, waypoints, planner)
 
     # Initial reset
-    pose = np.array([[args.start_x, args.start_y, args.start_theta]])
+    pose = np.array([list(resolve_start_pose(args))])
     obs, _ = env.reset(options={"poses": pose})
     if r_mode:
         env.render()

@@ -29,6 +29,10 @@ EXTRA_ARGS=""
 REWARD=""
 CLI_CALL_WEIGHTS=""      # --call-weights value passed on cli
 CLI_TARGET_CALL_RATES="" # --target-call-rates value passed on cli
+CLI_MAP_STR=""           # --map-str: space-separated train map YAML paths
+CLI_WAYPOINTS_STR=""     # --waypoints-str: space-separated train waypoint TSVs
+CLI_EVAL_MAP_STR=""      # --eval-map-str: space-separated eval map YAML paths
+CLI_EVAL_WAYPOINTS_STR="" # --eval-waypoints-str: space-separated eval waypoint TSVs
 SBATCH_EXTRA=()
 
 while [[ $# -gt 0 ]]; do
@@ -44,6 +48,15 @@ while [[ $# -gt 0 ]]; do
             CLI_CALL_WEIGHTS="$2"; shift 2 ;;
         --target-call-rates-str)
             CLI_TARGET_CALL_RATES="$2"; shift 2 ;;
+        # map / waypoints
+        --map-str)
+            CLI_MAP_STR="$2"; shift 2 ;;
+        --waypoints-str)
+            CLI_WAYPOINTS_STR="$2"; shift 2 ;;
+        --eval-map-str)
+            CLI_EVAL_MAP_STR="$2"; shift 2 ;;
+        --eval-waypoints-str)
+            CLI_EVAL_WAYPOINTS_STR="$2"; shift 2 ;;
         *)
             SBATCH_EXTRA+=("$1"); shift ;;
     esac
@@ -147,6 +160,10 @@ export REWARD="$REWARD"
 [[ -n "$RESUME_PATH"            ]] && export RESUME="$RESUME_PATH"
 [[ -n "$CALL_WEIGHTS_EXPORT"    ]] && export CALL_WEIGHTS="$CALL_WEIGHTS_EXPORT"
 [[ -n "$TARGET_CALL_RATES_EXPORT" ]] && export TARGET_CALL_RATES="$TARGET_CALL_RATES_EXPORT"
+[[ -n "$CLI_MAP_STR"            ]] && export MAP="$CLI_MAP_STR"
+[[ -n "$CLI_WAYPOINTS_STR"      ]] && export WAYPOINTS="$CLI_WAYPOINTS_STR"
+[[ -n "$CLI_EVAL_MAP_STR"       ]] && export EVAL_MAP="$CLI_EVAL_MAP_STR"
+[[ -n "$CLI_EVAL_WAYPOINTS_STR" ]] && export EVAL_WAYPOINTS="$CLI_EVAL_WAYPOINTS_STR"
 [[ -n "$EXTRA_ARGS"             ]] && export EXTRA_ARGS="$EXTRA_ARGS"
 
 # ── Submit ────────────────────────────────────────────────────────────────────

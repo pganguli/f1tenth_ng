@@ -27,7 +27,7 @@ from tune_utils import coarse_to_fine_search
 # import first-party modules after third-party/local ones to satisfy
 # pylint's import-order checks
 import f110_gym  # noqa: F401 pylint: disable=unused-import
-from f110_planning.utils import load_waypoints, setup_env
+from f110_planning.utils import load_waypoints, resolve_start_pose, setup_env
 
 
 def _parse_args() -> argparse.Namespace:
@@ -148,7 +148,7 @@ def main() -> None:
         args.planner = "edge_cloud"
 
     waypoints = load_waypoints(args.waypoints)
-    start_pose = np.array([[args.start_x, args.start_y, args.start_theta]])
+    start_pose = np.array([list(resolve_start_pose(args))])
 
     render_override = None if args.render_mode == "None" else args.render_mode
     print("rendering:", render_override or "off")

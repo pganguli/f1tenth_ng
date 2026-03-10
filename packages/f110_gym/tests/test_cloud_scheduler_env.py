@@ -31,10 +31,6 @@ def test_spaces():
     assert "latest_cloud_action" in obs
     assert obs["latest_cloud_action"].shape == (2,)
     assert "cloud_request_pending" in obs
-    assert "crosstrack_dist" in obs
-    assert obs["crosstrack_dist"].shape == (1,)
-    # should be nonnegative
-    assert obs["crosstrack_dist"][0] >= 0.0
     env.close()
 
 
