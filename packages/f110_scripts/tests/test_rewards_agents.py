@@ -32,47 +32,24 @@ OBS_ON_PATH: dict[str, Any] = {
 # Reward factory
 # ---------------------------------------------------------------------------
 
-def test_make_reward_cte_only_returns_callable() -> None:
-    fn = make_reward("cte_only", WPTS)
+def test_make_reward_cte_returns_callable() -> None:
+    fn = make_reward("cte", WPTS)
     assert callable(fn)
 
 
-def test_cte_only_reward_is_non_positive() -> None:
-    fn = make_reward("cte_only", WPTS)
+def test_cte_reward_is_non_positive() -> None:
+    fn = make_reward("cte", WPTS)
     r = fn(OBS_ON_PATH, [False, False, False])
     assert isinstance(r, float)
     assert r <= 0.0
 
 
-def test_cte_only_ignores_call_mask() -> None:
-    """cte_only reward must not change based on how many DNNs are called."""
-    fn = make_reward("cte_only", WPTS)
+def test_cte_ignores_call_mask() -> None:
+    """cte reward must not change based on how many DNNs are called."""
+    fn = make_reward("cte", WPTS)
     r_no_call = fn(OBS_ON_PATH, [False, False, False])
     r_all_call = fn(OBS_ON_PATH, [True, True, True])
     assert r_no_call == pytest.approx(r_all_call)
-
-
-def test_cte_plus_call_cost_penalizes_more_calls() -> None:
-    """More cloud calls should yield a lower (more negative) reward."""
-    fn = make_reward("cte_plus_call_cost", WPTS)
-    r_no_call = fn(OBS_ON_PATH, [False, False, False])
-    r_all_call = fn(OBS_ON_PATH, [True, True, True])
-    assert r_all_call < r_no_call
-
-
-def test_cte_plus_call_cost_on_path_no_call() -> None:
-    """On-path observation with no cloud calls: CTE term dominates, reward ≤ 0."""
-    fn = make_reward("cte_plus_call_cost", WPTS)
-    r = fn(OBS_ON_PATH, [False, False, False])
-    assert r <= 0.0
-
-
-def test_make_reward_custom_cost_per_call() -> None:
-    """cost_per_call kwarg must be forwarded to the factory."""
-    fn_low = make_reward("cte_plus_call_cost", WPTS, cost_per_call=0.0)
-    fn_high = make_reward("cte_plus_call_cost", WPTS, cost_per_call=1.0)
-    mask = [True, True, True]
-    assert fn_high(OBS_ON_PATH, mask) < fn_low(OBS_ON_PATH, mask)
 
 
 def test_make_reward_unknown_name_raises_key_error() -> None:

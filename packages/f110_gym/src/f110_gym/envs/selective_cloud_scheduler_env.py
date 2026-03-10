@@ -191,7 +191,9 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
         reward = self._reward_fn(obs, call_mask)
         self._step += 1
 
-        new_info = {**info, "call_mask": call_mask, "step": self._step}
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        cte = float(crosstrack_error(pos, self._waypoints))
+        new_info = {**info, "call_mask": call_mask, "step": self._step, "cte": cte}
         return self._augment_obs(obs), reward, terminated, truncated, new_info
 
     def render(self) -> None:

@@ -17,21 +17,20 @@ where
 
 Examples
 --------
-Adding a custom reward that penalises calling any DNN::
+Adding a custom reward that blends CTE with a flat call bonus::
 
     from f110_scripts.train.rewards import REGISTRY
 
-    def _my_factory(waypoints, cost=0.05, **_):
+    def _my_factory(waypoints, bonus=0.02, **_):
         from f110_planning.metrics import crosstrack_error
         import numpy as np
         def _fn(obs, call_mask):
             pos = np.array([obs["poses_x"][0], obs["poses_y"][0]])
             dist = crosstrack_error(pos, waypoints)
-            n_calls = sum(call_mask)
-            return -float(dist**2) - cost * n_calls
+            return -float(dist**2) + bonus * sum(call_mask)
         return _fn
 
-    REGISTRY["cte_plus_cost"] = _my_factory
+    REGISTRY["cte_plus_flat_bonus"] = _my_factory
 """
 
 from __future__ import annotations
@@ -46,11 +45,20 @@ import numpy as np
 # Built-in reward factories
 # ---------------------------------------------------------------------------
 
-def _cte_only_factory(
+def _cte_factory(
     waypoints: np.ndarray,
     **_kwargs: Any,
 ) -> Callable[[dict, list[bool]], float]:
-    """–CTE²: minimise cross-track RMSE; no cloud-cost term."""
+    """Pure CTE baseline: reward = –(distance to nearest waypoint)².
+
+    The call_mask is entirely ignored — this reward contains no signal
+    whatsoever about which DNNs to call or how often.  It is the simplest
+    possible reward and serves as a reference point against which all other
+    rewards are compared.  An agent trained with ``cte`` will minimise
+    cross-track error but is given complete freedom over its cloud-calling
+    strategy; any structure it discovers there is driven purely by the
+    environment dynamics rather than a reward shaping signal.
+    """
     from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
 
     wpts = waypoints.copy()
@@ -63,84 +71,36 @@ def _cte_only_factory(
     return _reward
 
 
-def _cte_plus_call_cost_factory(
-    waypoints: np.ndarray,
-    cost_per_call: float = 0.05,
-    **_kwargs: Any,
-) -> Callable[[dict, list[bool]], float]:
-    """–CTE² – λ·(calls/m): flat penalty proportional to fraction of DNNs called."""
-    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
-
-    wpts = waypoints.copy()
-    m = 3  # number of DNN slots
-
-    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
-        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
-        dist = crosstrack_error(pos, wpts)
-        cte_term = -float(dist ** 2)
-        cost_term = -cost_per_call * (sum(call_mask) / m)
-        return cte_term + cost_term
-
-    return _reward
-
-
-def _cte_plus_no_call_penalty_factory(
-    waypoints: np.ndarray,
-    penalty_per_no_call: float = 0.05,
-    **_kwargs: Any,
-) -> Callable[[dict, list[bool]], float]:
-    """–CTE² – λ·(non-calls/m): penalise skipping DNN calls.
-
-    The complement of :func:`_cte_plus_call_cost_factory`.  Where that
-    function discourages calling DNNs, this one discourages *not* calling
-    them.  An agent that never triggers a particular DNN slot will receive an
-    extra penalty proportional to the fraction of slots left uncalled each
-    step, nudging it to distribute cloud calls across all *m* DNNs.
-
-    Parameters
-    ----------
-    waypoints : np.ndarray
-        Reference waypoints for CTE computation.
-    penalty_per_no_call : float
-        Scale factor λ applied to the uncalled fraction.  A value of 0.05
-        means up to –0.05 is added when no DNNs are called at all.
-    """
-    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
-
-    wpts = waypoints.copy()
-    m = 3  # number of DNN slots
-
-    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
-        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
-        dist = crosstrack_error(pos, wpts)
-        cte_term = -float(dist ** 2)
-        no_call_fraction = (m - sum(call_mask)) / m
-        penalty_term = -penalty_per_no_call * no_call_fraction
-        return cte_term + penalty_term
-
-    return _reward
-
-
-def _cte_plus_coverage_penalty_factory(
+def _cte_sensitivity_reg_factory(
     waypoints: np.ndarray,
     window: int = 200,
     penalty_scale: float = 0.5,
-    min_call_rate: float | None = None,
+    target_call_rates: float | list[float] | None = None,
     **_kwargs: Any,
 ) -> Callable[[dict, list[bool]], float]:
-    """–CTE² – λ·Σ max(0, r* – rᵢ): per-slot rolling coverage penalty.
+    """–CTE² – λ·Σ (r̂ᵢ – r*ᵢ)²: permanent sensitivity-prior regularisation.
 
-    Unlike :func:`_cte_plus_no_call_penalty_factory` — which applies a
-    uniform step-level penalty regardless of *which* DNN is skipped — this
-    reward tracks each DNN slot's **call rate over a rolling window** and
-    penalises any slot whose rate falls below a minimum threshold ``r*``.
+    This reward encodes the results of an **offline sensitivity analysis** as
+    a set of per-slot target call rates ``r*ᵢ``, then permanently penalises
+    the agent whenever its *learned* rolling call distribution deviates from
+    those targets.
 
-    With ``top_k=2`` and ``m=3`` the aggregate uncalled fraction is constant
-    (1/3 per step), so a step-level penalty cannot distinguish an agent that
-    rotates skips evenly from one that permanently ignores slot 0
-    (left_wall).  The rolling coverage penalty *does* distinguish them:
-    chronically skipping a single slot drives that slot's rate toward 0,
-    accumulating a large shortfall penalty.
+    **Design intent** (smoke-test / sanity check):
+    If the RL agent's discovered calling strategy is wildly inconsistent with
+    what a sensitivity analysis says should matter (e.g. it almost never calls
+    ``track_width`` despite that DNN having the highest offline sensitivity),
+    this reward applies quadratic pressure to correct that.  The penalty is
+    two-sided: both undercalling *and* overcalling a slot relative to its
+    target are penalised, so the agent converges toward — but not beyond —
+    the prior distribution.
+
+    **Important distinction from** ``cte_sensitivity_annealed``:
+    The regularisation term is **permanent** — it is present for the entire
+    training run and is never annealed away.  The final converged policy is
+    therefore *not* equivalent to plain ``cte``; it will always reflect a
+    compromise between CTE minimisation and fidelity to the sensitivity prior.
+    Use this reward when you trust the prior and want it enforced throughout;
+    use ``cte_sensitivity_annealed`` when you only want a headstart.
 
     DNN slot order (matches ``SelectiveCloudSchedulerEnv.DNN_NAMES``):
         0 → left_wall_dist
@@ -152,23 +112,44 @@ def _cte_plus_coverage_penalty_factory(
     waypoints : np.ndarray
         Reference waypoints for CTE computation.
     window : int
-        Number of recent steps included in each slot's rolling call rate.
-        Larger values (e.g. 500) smooth out noise but react more slowly;
-        smaller values (e.g. 50) react faster but can be jittery.
+        Length of the rolling history (in steps) used to estimate each
+        slot's call rate.  Larger values (e.g. 500) react more slowly but
+        give a smoother estimate; smaller values (e.g. 50) react quickly
+        but can be jittery.
     penalty_scale : float
-        Scale factor λ applied to the total shortfall across all slots.
-    min_call_rate : float or None
-        Minimum acceptable call rate ``r*`` per slot.  Defaults to ``1/m``
-        (≈ 0.33), meaning every DNN should appear in at least one-third of
-        steps.  With ``top_k=2`` the fair-share rate is ``2/3``; setting
-        ``min_call_rate`` below that gives the agent room to prefer some
-        slots but still forces it to use every DNN occasionally.
+        Scale factor λ applied to the total squared deviation across all
+        slots.  Tune this relative to typical CTE² magnitudes so neither
+        term dominates entirely.
+    target_call_rates : float, list[float], or None
+        Per-slot target call rate ``r*ᵢ`` from the offline sensitivity
+        analysis.  Raw importance weights are accepted and normalised
+        internally to sum to 1, so you can pass the same values as
+        ``cte_sensitivity_annealed``'s ``call_weights``.
+
+        * ``None`` — uniform target ``1/m`` (≈ 0.33) for every slot.
+        * ``float`` — the same target applied to all three slots.
+        * ``list[float]`` of length 3 — individual targets for
+          [left_wall_dist, track_width, heading_error] respectively.
+          Example for the known F1 importance order
+          (track_width > left_wall > heading): ``[0.3, 0.5, 0.2]``.
     """
     from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
 
     wpts = waypoints.copy()
     m = 3  # number of DNN slots
-    r_star = 1.0 / m if min_call_rate is None else min_call_rate
+
+    if target_call_rates is None:
+        r_stars = [1.0 / m] * m
+    elif isinstance(target_call_rates, (int, float)):
+        r_stars = [float(target_call_rates)] * m
+    else:
+        if len(target_call_rates) != m:
+            raise ValueError(
+                f"target_call_rates list must have exactly {m} entries "
+                f"(one per DNN slot), got {len(target_call_rates)}."
+            )
+        total = sum(target_call_rates)
+        r_stars = [float(r) / total for r in target_call_rates]
 
     # Independent rolling history per slot, pre-filled with zeros so the
     # penalty is applied from the very first episode.
@@ -181,15 +162,112 @@ def _cte_plus_coverage_penalty_factory(
         dist = crosstrack_error(pos, wpts)
         cte_term = -float(dist ** 2)
 
-        # Update each slot's history with tonight's call decision.
+        # Update each slot's history with this step's call decision.
         for i, called in enumerate(call_mask):
             histories[i].append(1 if called else 0)
 
-        # Penalise slots whose rolling rate is below the floor.
-        shortfall = sum(
-            max(0.0, r_star - sum(h) / window) for h in histories
+        # Penalise squared deviation of each slot's rolling rate from its target.
+        deviation = sum(
+            (sum(h) / window - r_stars[i]) ** 2
+            for i, h in enumerate(histories)
         )
-        return cte_term - penalty_scale * shortfall
+        return cte_term - penalty_scale * deviation
+
+    return _reward
+
+
+def _cte_sensitivity_annealed_factory(
+    waypoints: np.ndarray,
+    call_weights: list[float] | None = None,
+    bonus_scale: float = 0.1,
+    anneal_steps: int = 1_000_000,
+    **_kwargs: Any,
+) -> Callable[[dict, list[bool]], float]:
+    """–CTE² + β(t)·Σ ŵᵢ·𝟙[DNNᵢ called]: annealed sensitivity-prior bootstrap.
+
+    This reward gives training a **headstart** by temporarily rewarding the
+    agent for calling DNNs in proportion to their known importance from an
+    offline sensitivity analysis.  The per-step bonus decays **linearly to
+    zero** over ``anneal_steps`` environment steps, after which the reward is
+    identical to plain ``cte`` (pure CTE minimisation).
+
+    **Design intent** (faster convergence toward a good calling strategy):
+    Early in training the agent has no idea which DNNs matter most, so it
+    may waste many episodes on calling strategies that sensitivity analysis
+    already rules out as poor.  The bonus injects that prior knowledge
+    directly into the reward signal, steering early exploration toward
+    high-value calling patterns.  Once the agent has had enough steps to
+    learn the true CTE-driven optimum, the bonus has fully annealed away and
+    the policy is driven entirely by CTE — the prior leaves no permanent bias.
+
+    **Important distinction from** ``cte_sensitivity_reg``:
+    The bonus is **temporary** — it fully vanishes at ``anneal_steps``.  The
+    final converged policy *is* equivalent to plain ``cte``.  Use this reward
+    for faster convergence without permanently constraining the policy; use
+    ``cte_sensitivity_reg`` when you want the sensitivity prior enforced
+    throughout training.
+
+    The bonus at step ``t`` is:
+        β(t) = bonus_scale · max(0, 1 – t / anneal_steps)
+    and the per-step contribution is:
+        bonus = β(t) · Σ_{i: called} ŵᵢ
+    where ŵᵢ are the sensitivity weights normalised to sum to 1.
+
+    DNN slot order (matches ``SelectiveCloudSchedulerEnv.DNN_NAMES``):
+        0 → left_wall_dist
+        1 → track_width
+        2 → heading_error
+
+    Parameters
+    ----------
+    waypoints : np.ndarray
+        Reference waypoints for CTE computation.
+    call_weights : list[float] of length 3, or None
+        Raw importance weights from offline sensitivity analysis for each
+        DNN slot [left_wall_dist, track_width, heading_error].  Normalised
+        to sum to 1 internally, so only relative magnitudes matter.
+        Defaults to uniform ``[1/3, 1/3, 1/3]``, which makes this reward
+        equivalent to ``cte`` with a small, decaying uniform bonus.
+        Example for the known F1 importance order
+        (track_width > left_wall > heading): ``[0.3, 0.5, 0.2]``.
+    bonus_scale : float
+        Initial magnitude β₀ of the call bonus.  Should be small relative
+        to typical CTE² values so the CTE signal always dominates;
+        0.05–0.2 is a reasonable range.
+    anneal_steps : int
+        Number of environment steps over which β(t) decays from
+        ``bonus_scale`` to 0.  After this point the reward is identical
+        to ``cte``.  Should be a fraction of total training timesteps
+        (e.g. 20–40 %) to allow ample time for CTE-driven fine-tuning.
+    """
+    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
+
+    wpts = waypoints.copy()
+    m = 3  # number of DNN slots
+
+    raw_weights = [1.0 / m] * m if call_weights is None else list(call_weights)
+    if len(raw_weights) != m:
+        raise ValueError(
+            f"call_weights must have exactly {m} entries, got {len(raw_weights)}."
+        )
+    total = sum(raw_weights)
+    norm_weights = [w / total for w in raw_weights]
+
+    # Mutable step counter shared across calls.
+    state = {"steps": 0}
+
+    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        dist = crosstrack_error(pos, wpts)
+        cte_term = -float(dist ** 2)
+
+        beta = bonus_scale * max(0.0, 1.0 - state["steps"] / anneal_steps)
+        bonus = beta * sum(
+            norm_weights[i] for i, called in enumerate(call_mask) if called
+        )
+
+        state["steps"] += 1
+        return cte_term + bonus
 
     return _reward
 
@@ -202,10 +280,9 @@ def _cte_plus_coverage_penalty_factory(
 #: Each factory receives ``waypoints`` as a keyword argument plus any
 #: additional keyword arguments passed by the caller.
 REGISTRY: dict[str, Callable[..., Callable[[dict, list[bool]], float]]] = {
-    "cte_only": _cte_only_factory,
-    "cte_plus_call_cost": _cte_plus_call_cost_factory,
-    "cte_plus_no_call_penalty": _cte_plus_no_call_penalty_factory,
-    "cte_plus_coverage_penalty": _cte_plus_coverage_penalty_factory,
+    "cte": _cte_factory,
+    "cte_sensitivity_reg": _cte_sensitivity_reg_factory,
+    "cte_sensitivity_annealed": _cte_sensitivity_annealed_factory,
 }
 
 

@@ -4,14 +4,21 @@
 # Key environment variables (override via `sbatch --export=VAR=val,... train_rl.sl`
 # or set in sbatch_rl.sh before calling sbatch):
 #
-#   N_ENVS        Number of parallel SubprocVecEnv workers (default: 8).
-#                 Set this to roughly half the allocated CPUs.
-#   TIMESTEPS     Total training timesteps (default: 5_000_000).
-#   RESUME        Path to a .zip checkpoint to resume from (default: "").
-#   MAP           Space-separated map paths (default: Oschersleben).
-#   WAYPOINTS     Space-separated waypoint TSV paths (default: Oschersleben).
-#   SAVE_PATH     Output .zip path for the final policy (default below).
-#   EXTRA_ARGS    Any additional flags forwarded verbatim to train_rl.py.
+#   N_ENVS            Number of parallel SubprocVecEnv workers (default: 4).
+#                     Set this to roughly half the allocated CPUs.
+#   TIMESTEPS         Total training timesteps (default: 5_000_000).
+#   RESUME            Path to a .zip checkpoint to resume from (default: "").
+#   MAP               Space-separated map paths (default: Oschersleben).
+#   WAYPOINTS         Space-separated waypoint TSV paths (default: Oschersleben).
+#   REWARD            Reward function name: cte | cte_sensitivity_reg |
+#                     cte_sensitivity_annealed  (default: cte).
+#   CALL_WEIGHTS      Space-separated sensitivity weights for
+#                     cte_sensitivity_annealed [left_wall track_width heading].
+#                     Example: "0.36876279 0.36876279 0.26247441"
+#   TARGET_CALL_RATES Space-separated sensitivity weights for
+#                     cte_sensitivity_reg [left_wall track_width heading].
+#                     Example: "0.36876279 0.36876279 0.26247441"
+#   EXTRA_ARGS        Any additional flags forwarded verbatim to train_rl.py.
 
 #SBATCH --job-name=f1tenth_rl
 #SBATCH --qos=gpu_access
@@ -31,7 +38,9 @@
 : "${RESUME:=}"
 : "${MAP:=data/maps/F1/Oschersleben/Oschersleben_map}"
 : "${WAYPOINTS:=data/maps/F1/Oschersleben/Oschersleben_centerline.tsv}"
-: "${SAVE_PATH:=data/models/cloud_scheduler.zip}"
+: "${REWARD:=cte}"
+: "${CALL_WEIGHTS:=}"
+: "${TARGET_CALL_RATES:=}"
 : "${EXTRA_ARGS:=}"
 
 echo "=== f1tenth RL training ==="
@@ -42,7 +51,9 @@ echo "  N_ENVS      : ${N_ENVS}"
 echo "  TIMESTEPS   : ${TIMESTEPS}"
 echo "  RESUME      : ${RESUME:-<none>}"
 echo "  MAP(s)      : ${MAP}"
-echo "  SAVE_PATH   : ${SAVE_PATH}"
+echo "  REWARD      : ${REWARD}"
+echo "  CALL_WEIGHTS: ${CALL_WEIGHTS:-<default>}"
+echo "  TGT_RATES   : ${TARGET_CALL_RATES:-<default>}"
 echo "==========================="
 
 # ── Environment setup ────────────────────────────────────────────────────────
@@ -57,7 +68,6 @@ source .venv/bin/activate
 
 # Ensure log and output directories exist
 mkdir -p packages/f110_scripts/src/f110_scripts/train/slurm_logs
-mkdir -p "$(dirname "$SAVE_PATH")"
 
 # ── Build command ─────────────────────────────────────────────────────────────
 # MAP and WAYPOINTS may contain multiple space-separated paths; shell-split them
@@ -72,12 +82,22 @@ CMD=(
     --n-envs   "$N_ENVS"
     --device   auto
     --timesteps "$TIMESTEPS"
-    --save-path "$SAVE_PATH"
+    --reward   "$REWARD"
     --checkpoint-freq 200000
     --eval-freq 500000
     --eval-episodes 5
     --progress-bar
 )
+
+if [[ -n "$CALL_WEIGHTS" ]]; then
+    read -ra CW_ARRAY <<< "$CALL_WEIGHTS"
+    CMD+=(--call-weights "${CW_ARRAY[@]}")
+fi
+
+if [[ -n "$TARGET_CALL_RATES" ]]; then
+    read -ra TCR_ARRAY <<< "$TARGET_CALL_RATES"
+    CMD+=(--target-call-rates "${TCR_ARRAY[@]}")
+fi
 
 if [[ -n "$RESUME" && -f "$RESUME" ]]; then
     CMD+=(--resume "$RESUME")
