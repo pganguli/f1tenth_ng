@@ -112,6 +112,8 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         ]
         # per-DNN held cloud results; None = no result yet → edge fallback
         self._cloud_cache: list[Optional[float]] = [None] * self.NUM_DNNS
+        # step at which each slot's cloud cache was last updated (-1 = never)
+        self._cloud_last_updated: list[int] = [-1] * self.NUM_DNNS
 
         # -------------------------------------------------------------------
         # Public attributes readable by the env for observation building
@@ -128,6 +130,9 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         self.last_action: Optional[Action] = None
         # Which DNNs were requested this step
         self.last_call_mask: list[bool] = [False] * self.NUM_DNNS
+        # Steps since each slot's cloud cache was last updated (0 = just refreshed)
+        # Large value (999) before the first cloud result ever arrives.
+        self.last_cloud_age: list[int] = [999] * self.NUM_DNNS
         # For render callbacks that expect last_target_point
         self.last_target_point = None
 
@@ -188,6 +193,15 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
                 result = self._cloud_loader.predict(self._cloud_models[i], stale_scan)
                 if result is not None:
                     self._cloud_cache[i] = float(result)
+                    self._cloud_last_updated[i] = step
+
+        # Update public cloud-age attribute
+        for i in range(self.NUM_DNNS):
+            self.last_cloud_age[i] = (
+                step - self._cloud_last_updated[i]
+                if self._cloud_last_updated[i] >= 0
+                else 999
+            )
 
         # 4. Resolve each slot:
         #    • Called DNNs   — use the most recently received cloud result if
@@ -259,8 +273,10 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         self._step = 0
         self._queues = [deque() for _ in range(self.NUM_DNNS)]
         self._cloud_cache = [None] * self.NUM_DNNS
+        self._cloud_last_updated = [-1] * self.NUM_DNNS
         self.last_action = None
         self.last_call_mask = [False] * self.NUM_DNNS
+        self.last_cloud_age = [999] * self.NUM_DNNS
         self.last_edge_left = 0.0
         self.last_edge_track = 0.0
         self.last_edge_heading = 0.0

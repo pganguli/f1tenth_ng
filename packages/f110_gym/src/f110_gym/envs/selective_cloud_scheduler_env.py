@@ -167,6 +167,9 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
             ),
             "last_speed": spaces.Box(0.0, 20.0, shape=(1,), dtype=np.float32),
             "cloud_calls_mask": spaces.MultiBinary(m),
+            # Steps since each slot's cloud cache was last updated.
+            # Clipped to [0, 999]; 999 signals "never refreshed yet".
+            "cloud_age": spaces.Box(0.0, 999.0, shape=(m,), dtype=np.float32),
         }
         filtered_base = {
             k: v for k, v in base_obs_space.spaces.items()
@@ -244,16 +247,28 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
     def _augment_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
         out = {k: v for k, v in obs.items() if k not in self._OBS_EXCLUDED_KEYS}
         p = self._planner
-        out["edge_left_dist"] = np.array([p.last_edge_left], dtype=np.float32)
-        out["edge_track_width"] = np.array([p.last_edge_track], dtype=np.float32)
-        out["edge_heading_error"] = np.array([p.last_edge_heading], dtype=np.float32)
-        out["cloud_left_dist"] = np.array([p.last_cloud_left], dtype=np.float32)
-        out["cloud_track_width"] = np.array([p.last_cloud_track], dtype=np.float32)
-        out["cloud_heading_error"] = np.array([p.last_cloud_heading], dtype=np.float32)
+        pi = float(np.pi)
+        # DNN regression outputs are unbounded; clip to match observation_space.
+        out["edge_left_dist"] = np.array([max(0.0, p.last_edge_left)], dtype=np.float32)
+        out["edge_track_width"] = np.array([max(0.0, p.last_edge_track)], dtype=np.float32)
+        out["edge_heading_error"] = np.array(
+            [float(np.clip(p.last_edge_heading, -pi, pi))], dtype=np.float32
+        )
+        out["cloud_left_dist"] = np.array([max(0.0, p.last_cloud_left)], dtype=np.float32)
+        out["cloud_track_width"] = np.array([max(0.0, p.last_cloud_track)], dtype=np.float32)
+        out["cloud_heading_error"] = np.array(
+            [float(np.clip(p.last_cloud_heading, -pi, pi))], dtype=np.float32
+        )
         last = p.last_action
         out["last_steer"] = np.array([last.steer if last is not None else 0.0], dtype=np.float32)
-        out["last_speed"] = np.array([last.speed if last is not None else 0.0], dtype=np.float32)
+        out["last_speed"] = np.array(
+            [float(np.clip(last.speed if last is not None else 0.0, 0.0, 20.0))],
+            dtype=np.float32,
+        )
         out["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
+        out["cloud_age"] = np.clip(
+            np.array(p.last_cloud_age, dtype=np.float32), 0.0, 999.0
+        )
         return out
 
     def _default_reward(self, obs: dict[str, Any], _call_mask: list[bool]) -> float:

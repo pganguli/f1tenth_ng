@@ -272,6 +272,97 @@ def _cte_sensitivity_annealed_factory(
     return _reward
 
 
+def _cte_sensitivity_staleness_factory(
+    waypoints: np.ndarray,
+    call_weights: list[float] | None = None,
+    bonus_scale: float = 0.1,
+    anneal_steps: int = 1_000_000,
+    age_scale_steps: int = 20,
+    **_kwargs: Any,
+) -> Callable[[dict, list[bool]], float]:
+    """–CTE² + β(t)·Σ ŵᵢ·(age_i / L)·𝟙[DNNᵢ called]: staleness-weighted bonus.
+
+    Extends ``cte_sensitivity_annealed`` by scaling each per-call bonus by
+    the current **cloud age** of that slot.  The intuition is:
+
+    * Calling a slot that was just refreshed gives almost no bonus — it is
+      already fresh.
+    * Calling a stale slot (large ``cloud_age[i]``) gives a large bonus,
+      proportional to both its accuracy sensitivity *and* how overdue a
+      refresh is.
+
+    Formally, the per-step bonus contribution for slot *i* is:
+
+    .. math::
+
+        \\beta(t)\\cdot\\hat{w}_i \\cdot \\min\\!\\left(\\frac{\\ell_i(t)}{L},\\, 1\\right)
+        \\cdot \\mathbf{1}[\\text{DNN}_i\\text{ called}]
+
+    where :math:`\\ell_i(t)` is ``cloud_age[i]`` from the observation, capped at
+    ``age_scale_steps`` *L* so a single step is always enough to earn the full
+    bonus once a slot is sufficiently overdue.  The outer envelope β(t) decays
+    linearly to zero over ``anneal_steps``, after which the reward is identical
+    to plain ``cte``.
+
+    This is structurally Markovian (uses current state, not a rolling rate
+    window) and creates no conflicting gradient: a call that is simultaneously
+    sensitivity-important *and* overdue is rewarded most; a redundant call on a
+    fresh high-sensitivity slot earns almost nothing.
+
+    Parameters
+    ----------
+    waypoints : np.ndarray
+        Reference waypoints for CTE computation.
+    call_weights : list[float] of length 3, or None
+        Raw accuracy-sensitivity weights [left_wall_dist, track_width,
+        heading_error].  Normalised to sum to 1.  Defaults to uniform.
+    bonus_scale : float
+        Initial bonus magnitude β₀.  Should be small relative to typical CTE².
+    anneal_steps : int
+        Steps over which β(t) decays to 0.
+    age_scale_steps : int
+        Age at which the staleness factor saturates to 1.0 (i.e. full bonus).
+        Set this near the expected crossover latency L* (~cloud_latency × 2
+        is a reasonable starting point).
+    """
+    from f110_planning.metrics import crosstrack_error  # pylint: disable=import-outside-toplevel
+
+    wpts = waypoints.copy()
+    m = 3
+
+    raw_weights = [1.0 / m] * m if call_weights is None else list(call_weights)
+    if len(raw_weights) != m:
+        raise ValueError(
+            f"call_weights must have exactly {m} entries, got {len(raw_weights)}."
+        )
+    total = sum(raw_weights)
+    norm_weights = [w / total for w in raw_weights]
+
+    L = float(age_scale_steps)
+    state = {"steps": 0}
+
+    def _reward(obs: dict[str, Any], call_mask: list[bool]) -> float:
+        pos = np.array([obs["poses_x"][0], obs["poses_y"][0]], dtype=np.float64)
+        dist = crosstrack_error(pos, wpts)
+        cte_term = -float(dist ** 2)
+
+        beta = bonus_scale * max(0.0, 1.0 - state["steps"] / anneal_steps)
+        if beta > 0.0:
+            cloud_age = obs.get("cloud_age", [0.0] * m)
+            bonus = beta * sum(
+                norm_weights[i] * min(float(cloud_age[i]) / L, 1.0)
+                for i, called in enumerate(call_mask)
+                if called
+            )
+        else:
+            bonus = 0.0
+
+        state["steps"] += 1
+        return cte_term + bonus
+
+    return _reward
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -283,6 +374,7 @@ REGISTRY: dict[str, Callable[..., Callable[[dict, list[bool]], float]]] = {
     "cte": _cte_factory,
     "cte_sensitivity_reg": _cte_sensitivity_reg_factory,
     "cte_sensitivity_annealed": _cte_sensitivity_annealed_factory,
+    "cte_sensitivity_staleness": _cte_sensitivity_staleness_factory,
 }
 
 
