@@ -342,9 +342,9 @@ def parse_args() -> argparse.Namespace:
 def _run_tag(args: argparse.Namespace) -> str:
     """Build a descriptive run tag from key training parameters.
 
-    Format: ``{agent}_{reward}_k{top_k}_as{alpha_steer}_asp{alpha_speed}``
+    Format: ``{agent}_{reward}_k{top_k}_as{alpha_steer}_asp{alpha_speed}_lat{cloud_latency}``
 
-    Example: ``ppo_cte_k1_as0.5_asp0.1``
+    Example: ``ppo_cte_k1_as0.5_asp0.1_lat10``
     """
     return (
         f"{args.agent.lower()}"
@@ -352,6 +352,7 @@ def _run_tag(args: argparse.Namespace) -> str:
         f"_k{args.top_k}"
         f"_as{args.alpha_steer:g}"
         f"_asp{args.alpha_speed:g}"
+        f"_lat{args.cloud_latency}"
     )
 
 
