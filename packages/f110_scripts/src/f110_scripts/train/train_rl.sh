@@ -14,12 +14,12 @@ SENS="0.36876279 0.36876279 0.26247441"
 COMMON=(--map-str "$MAP_STR" --waypoints-str "$WP_STR" --eval-map-str "$EVAL_MAP_STR" --eval-waypoints-str "$EVAL_WP_STR")
 
 # ── 6 runs: 3 rewards × 2 latencies ──────────────────────────────────────────
-# lat=0
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 0
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 0  --call-weights-str "$SENS"
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 0  --call-weights-str "$SENS"
+# lat=0  (alpha_steer=0.2, alpha_speed=0.3)
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 0  --alpha-steer 0.2 --alpha-speed 0.3
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 0  --alpha-steer 0.2 --alpha-speed 0.3 --call-weights-str "$SENS"
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 0  --alpha-steer 0.2 --alpha-speed 0.3 --call-weights-str "$SENS"
 
-# lat=10
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 10
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 10 --call-weights-str "$SENS"
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 10 --call-weights-str "$SENS"
+# lat=10  (alpha_steer=0.7, alpha_speed=0.2)
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 10 --alpha-steer 0.7 --alpha-speed 0.2
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 10 --alpha-steer 0.7 --alpha-speed 0.2 --call-weights-str "$SENS"
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 10 --alpha-steer 0.7 --alpha-speed 0.2 --call-weights-str "$SENS"

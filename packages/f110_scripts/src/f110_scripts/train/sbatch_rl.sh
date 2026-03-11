@@ -22,6 +22,8 @@ MAP_STR=""
 WAYPOINTS_STR=""
 EVAL_MAP_STR=""
 EVAL_WAYPOINTS_STR=""
+ALPHA_STEER=""
+ALPHA_SPEED=""
 EXTRA_ARGS=""
 SBATCH_EXTRA=()
 
@@ -36,6 +38,8 @@ while [[ $# -gt 0 ]]; do
         --eval-map-str)         EVAL_MAP_STR="$2";       shift 2 ;;
         --eval-waypoints-str)   EVAL_WAYPOINTS_STR="$2"; shift 2 ;;
         --cloud-latency)        CLOUD_LATENCY="$2";      shift 2 ;;
+        --alpha-steer)          ALPHA_STEER="$2";        shift 2 ;;
+        --alpha-speed)          ALPHA_SPEED="$2";        shift 2 ;;
         --extra)                EXTRA_ARGS="$2";         shift 2 ;;
         *)                      SBATCH_EXTRA+=("$1");    shift ;;
     esac
@@ -71,6 +75,8 @@ export REWARD="$REWARD"
 [[ -n "$EVAL_MAP_STR"     ]] && export EVAL_MAP="$EVAL_MAP_STR"
 [[ -n "$EVAL_WAYPOINTS_STR" ]] && export EVAL_WAYPOINTS="$EVAL_WAYPOINTS_STR"
 [[ -n "$CLOUD_LATENCY"    ]] && export CLOUD_LATENCY="$CLOUD_LATENCY"
+[[ -n "$ALPHA_STEER"      ]] && export ALPHA_STEER="$ALPHA_STEER"
+[[ -n "$ALPHA_SPEED"      ]] && export ALPHA_SPEED="$ALPHA_SPEED"
 [[ -n "$EXTRA_ARGS"       ]] && export EXTRA_ARGS="$EXTRA_ARGS"
 
 # ── Submit ────────────────────────────────────────────────────────────────────
