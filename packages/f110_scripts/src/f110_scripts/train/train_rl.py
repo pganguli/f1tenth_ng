@@ -235,7 +235,7 @@ def parse_args() -> argparse.Namespace:
     models = parser.add_argument_group("models", "TorchScript .pt model paths")
     models.add_argument(
         "--edge-left-wall-model", type=str,
-        default="data/models/left_wall_dist_arch1.pt",
+        default="data/models/left_wall_dist_arch2.pt",
     )
     models.add_argument(
         "--edge-track-width-model", type=str,
@@ -243,7 +243,7 @@ def parse_args() -> argparse.Namespace:
     )
     models.add_argument(
         "--edge-heading-model", type=str,
-        default="data/models/heading_error_arch1.pt",
+        default="data/models/heading_error_arch2.pt",
     )
     models.add_argument(
         "--cloud-left-wall-model", type=str,

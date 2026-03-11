@@ -1,7 +1,6 @@
 """
 LQR waypoint tracker
-Implementation inspired by
-https://github.com/AtsushiSakai/PythonRobotics/blob/master/PathTracking/lqr_steer_control/lqr_steer_control.py
+Implementation inspired by PythonRobotics lqr_steer_control.
 """
 
 from typing import Any, Optional

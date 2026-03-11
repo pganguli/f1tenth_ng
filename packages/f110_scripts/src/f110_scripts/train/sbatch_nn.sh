@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 # sbatch_nn.sh — interactive partition selector for train_nn.sl
-# Supports selecting multiple partitions (SLURM will use whichever has resources).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SLURM_SCRIPT="$SCRIPT_DIR/train_nn.sl"
 
-# Collect available (up) partitions
 mapfile -t PARTITIONS < <(sinfo -h -o "%P %a" | awk '$2=="up"{gsub(/\*$/,"",$1); print $1}' | sort -u)
 
 if [[ ${#PARTITIONS[@]} -eq 0 ]]; then
-    echo "No partitions currently available (sinfo returned nothing)." >&2
+    echo "No partitions available." >&2
     exit 1
 fi
 
@@ -18,21 +16,18 @@ echo "Available partitions:"
 for i in "${!PARTITIONS[@]}"; do
     printf "  [%d] %s\n" "$((i+1))" "${PARTITIONS[$i]}"
 done
-echo ""
-echo "Enter partition numbers separated by spaces to select multiple (e.g. 1 3)."
-read -rp "Select partition(s) (1-${#PARTITIONS[@]}): " -a CHOICES
 
-SELECTED=()
-for CHOICE in "${CHOICES[@]}"; do
-    if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] || (( CHOICE < 1 || CHOICE > ${#PARTITIONS[@]} )); then
-        echo "Invalid selection: $CHOICE" >&2
-        exit 1
-    fi
-    SELECTED+=("${PARTITIONS[$((CHOICE-1))]}")
-done
+read -rp "Select partition (1-${#PARTITIONS[@]}): " CHOICE
+if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] || (( CHOICE < 1 || CHOICE > ${#PARTITIONS[@]} )); then
+    echo "Invalid selection: $CHOICE" >&2
+    exit 1
+fi
 
-# Deduplicate and join with commas
-PARTITION=$(printf '%s\n' "${SELECTED[@]}" | sort -u | paste -sd ',')
+PARTITION="${PARTITIONS[$((CHOICE-1))]}"
 
-echo "Submitting with --partition=$PARTITION ..."
-sbatch --partition="$PARTITION" "$SLURM_SCRIPT" "$@"
+DOMAIN=$(hostname -d)
+[[ "$DOMAIN" == *.*.* ]] && DOMAIN="${DOMAIN#*.}"
+EMAIL="${USER}@${DOMAIN}"
+
+echo "Submitting with --partition=$PARTITION --mail-user=$EMAIL ..."
+sbatch --partition="$PARTITION" --mail-user="$EMAIL" "$SLURM_SCRIPT" "$@"

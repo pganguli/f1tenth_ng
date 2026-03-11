@@ -94,15 +94,16 @@ def test_observation_space_has_extra_keys() -> None:
 
 
 def test_observation_excludes_map_absolute_keys() -> None:
-    """Non-decision keys must not reach the RL agent."""
+    """Map-absolute keys must not reach the RL agent; scans are kept."""
     excluded = (
-        "scans", "poses_x", "poses_y", "poses_theta",
+        "poses_x", "poses_y", "poses_theta",
         "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
     )
     env = _make_env()
     obs, _ = env.reset()
     for key in excluded:
         assert key not in obs, f"Key '{key}' should be excluded from agent obs"
+    assert "scans" in obs, "scans should be present in agent obs"
     env.close()
 
 
