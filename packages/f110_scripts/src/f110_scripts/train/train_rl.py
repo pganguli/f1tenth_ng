@@ -12,7 +12,7 @@ Usage example (single map, single CPU)::
         --map data/maps/F1/Oschersleben/Oschersleben_map \\
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \\
         --agent ppo --reward cte --top-k 1 \\
-        --alpha-steer 0.5 --alpha-speed 0.1 \\
+        --alpha-steer 0.7 --alpha-speed 0.2 \\
         --timesteps 5000000
 
 Multi-map + multi-CPU (e.g. Slurm node with 32 cores and a GPU)::
@@ -219,11 +219,11 @@ def parse_args() -> argparse.Namespace:
         help="Number of cloud DNNs to call per step (out of m=3)",
     )
     parser.add_argument(
-        "--alpha-steer", type=float, default=0.5,
+        "--alpha-steer", type=float, default=0.7,
         help="Cloud blending weight for steering (0=edge only, 1=cloud only)",
     )
     parser.add_argument(
-        "--alpha-speed", type=float, default=0.1,
+        "--alpha-speed", type=float, default=0.2,
         help="Cloud blending weight for speed (0=edge only, 1=cloud only)",
     )
     parser.add_argument(

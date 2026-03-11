@@ -26,6 +26,8 @@
 : "${CALL_WEIGHTS:=}"
 : "${TARGET_CALL_RATES:=}"
 : "${CLOUD_LATENCY:=10}"
+: "${ALPHA_STEER:=0.7}"
+: "${ALPHA_SPEED:=0.2}"
 : "${EXTRA_ARGS:=}"
 
 echo "=== Task $SLURM_JOB_ID: REWARD=$REWARD CLOUD_LATENCY=$CLOUD_LATENCY N_ENVS=$N_ENVS TIMESTEPS=$TIMESTEPS ==="
@@ -53,6 +55,8 @@ CMD=(
     --timesteps "$TIMESTEPS"
     --reward    "$REWARD"
     --cloud-latency  "$CLOUD_LATENCY"
+    --alpha-steer    "$ALPHA_STEER"
+    --alpha-speed    "$ALPHA_SPEED"
     --checkpoint-freq 500000
     --eval-freq       1000000
     --eval-episodes   5
