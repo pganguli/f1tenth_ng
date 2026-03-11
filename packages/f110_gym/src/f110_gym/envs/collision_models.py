@@ -1,7 +1,6 @@
 """
 Prototype of Utility functions and GJK algorithm for Collision checks between vehicles
 Originally from https://github.com/kroitor/gjk.c
-Author: Hongrui Zheng
 """
 
 import numpy as np

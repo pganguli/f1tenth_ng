@@ -3,7 +3,6 @@ Prototype of vehicle dynamics functions and classes for simulating 2D Single
 Track dynamic model
 Following the implementation of commanroad's Single Track Dynamics model
 Original implementation: https://gitlab.lrz.de/tum-cps/commonroad-vehicle-models/
-Author: Hongrui Zheng
 """
 
 import numpy as np

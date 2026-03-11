@@ -1,6 +1,5 @@
 """
 Prototype of Utility functions and classes for simulating 2D LIDAR scans
-Author: Hongrui Zheng
 """
 
 import os

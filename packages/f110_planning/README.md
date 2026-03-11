@@ -53,7 +53,7 @@ We recommend installing the package in editable mode inside your virtual environ
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/pganguli/f1tenth_ng.git
+git clone <repo-url>
 cd f1tenth_ng
 
 # Install the package

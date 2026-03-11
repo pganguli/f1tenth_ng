@@ -1,7 +1,6 @@
 """
 Prototype of base classes
 Replacement of the old RaceCar, Simulator classes in C++
-Author: Hongrui Zheng
 """
 
 from .integrator import Integrator

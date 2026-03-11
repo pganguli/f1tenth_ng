@@ -17,7 +17,7 @@ We recommend using a virtual environment and installing both packages in editabl
 
 ```bash
 # Clone the repository
-git clone https://github.com/pganguli/f1tenth_ng.git
+git clone <repo-url>
 cd f1tenth_ng
 
 # Create and activate a virtual environment
