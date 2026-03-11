@@ -32,7 +32,7 @@ from f110_planning.render_callbacks import (
     render_side_distances,
 )
 from f110_planning.base import CloudScheduler
-from f110_planning.schedulers import FixedIntervalScheduler
+from f110_planning.schedulers import FixedIntervalScheduler, RoundRobinScheduler, SensitivityProportionalScheduler
 from f110_planning.utils import add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
 from stable_baselines3 import PPO
 import gymnasium.spaces as _gym_spaces
@@ -92,6 +92,42 @@ class PolicyScheduler(CloudScheduler):
 
 
 # ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# Thin wrapper: SelectiveEdgeCloudPlanner + any get_call_mask() scheduler
+# ------------------------------------------------------------------
+class _SelectiveDumbPlanner:  # pylint: disable=too-few-public-methods
+    """Wraps :class:`SelectiveEdgeCloudPlanner` with a deterministic mask scheduler.
+
+    The scheduler must expose ``get_call_mask() -> list[bool]`` and
+    ``reset()``.  Matches the public surface of
+    :class:`SelectivePolicyPlanner` so rendering callbacks work unchanged.
+    """
+
+    def __init__(
+        self,
+        inner_planner: SelectiveEdgeCloudPlanner,
+        scheduler: Any,
+    ) -> None:
+        self._planner = inner_planner
+        self._scheduler = scheduler
+
+    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Any:
+        call_mask = self._scheduler.get_call_mask()
+        return self._planner.plan(obs, call_mask=call_mask, ego_idx=ego_idx)
+
+    def reset(self) -> None:
+        self._planner.reset()
+        self._scheduler.reset()
+
+    @property
+    def last_call_mask(self) -> list[bool]:
+        return self._planner.last_call_mask
+
+    @property
+    def last_target_point(self) -> Any:
+        return self._planner.last_target_point
+
+
 # Selective-policy planner (Box(3) logit action, per-DNN scheduling)
 # ------------------------------------------------------------------
 class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
@@ -209,12 +245,25 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cloud-strategy",
         type=str,
-        choices=["always", "interval", "rl"],
+        choices=["always", "interval", "rl", "round_robin", "sensitivity"],
         default="rl",
         help=(
             "Cloud calling strategy: 'always' issues a request every step, "
-            "'interval' uses --cloud-interval spacing, and 'rl' loads a "
-            "policy specified by --rl-scheduler."
+            "'interval' uses --cloud-interval spacing, 'rl' loads a policy "
+            "specified by --rl-scheduler, 'round_robin' cycles through DNNs "
+            "sequentially (top-k per step), and 'sensitivity' calls DNNs "
+            "proportionally to --call-weights."
+        ),
+    )
+    parser.add_argument(
+        "--call-weights",
+        type=float,
+        nargs="+",
+        default=None,
+        metavar="W",
+        help=(
+            "Per-DNN sensitivity weights for the 'sensitivity' cloud strategy "
+            "(space-separated floats, one per DNN slot; normalised internally)."
         ),
     )
 
@@ -468,6 +517,25 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
             return EdgeCloudPlanner(
                 scheduler=FixedIntervalScheduler(interval=args.cloud_interval), **ec_kwargs
             )
+
+        if args.cloud_strategy == "round_robin":
+            top_k = getattr(args, "top_k", 1)
+            inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
+            scheduler = RoundRobinScheduler(
+                num_dnns=SelectiveEdgeCloudPlanner.NUM_DNNS, top_k=top_k
+            )
+            return _SelectiveDumbPlanner(inner, scheduler)
+
+        if args.cloud_strategy == "sensitivity":
+            top_k = getattr(args, "top_k", 1)
+            weights = getattr(args, "call_weights", None)
+            if not weights:
+                raise ValueError(
+                    "--call-weights must be provided for the 'sensitivity' cloud strategy."
+                )
+            inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
+            scheduler = SensitivityProportionalScheduler(weights=list(weights), top_k=top_k)
+            return _SelectiveDumbPlanner(inner, scheduler)
 
         # rl: auto-detect policy type from saved action space
         policy_path = args.rl_scheduler
