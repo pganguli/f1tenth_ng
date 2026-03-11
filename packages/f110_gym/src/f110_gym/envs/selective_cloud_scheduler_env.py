@@ -22,10 +22,10 @@ The observation extends the base F110 observation with:
 * ``cloud_calls_mask``    — MultiBinary(m) indicating which DNNs were called
 
 The following base-env keys are intentionally **excluded** from the agent
-observation because they are either map-absolute (``poses_x``, ``poses_y``,
-``poses_theta``) or very high-dimensional (``scans``):
+observation because they are map-absolute coordinates that would prevent
+transfer across maps:
 
-    ``scans``, ``poses_x``, ``poses_y``, ``poses_theta``
+    ``poses_x``, ``poses_y``, ``poses_theta``
 """
 
 from __future__ import annotations
@@ -76,8 +76,7 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
     ACTION_HIGH: float = 10.0
 
     #: Base-env keys excluded from the agent observation.
-    #: Kept: linear_vels_x, linear_vels_y, steering_angles
-    #: - scans         : raw 1080-beam LiDAR (high-dim; agent uses DNN outputs instead)
+    #: Kept: scans, linear_vels_x, linear_vels_y, steering_angles
     #: - poses_x/y     : absolute map-frame position (not transferable across maps)
     #: - poses_theta   : absolute map-frame heading (same reason)
     #: - ang_vels_z    : yaw rate (redundant given steering_angles + vels)
@@ -86,7 +85,7 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
     #: - lap_times     : wall-clock; not relevant to DNN scheduling decisions
     #: - lap_counts    : same
     _OBS_EXCLUDED_KEYS: frozenset = frozenset({
-        "scans", "poses_x", "poses_y", "poses_theta",
+        "poses_x", "poses_y", "poses_theta",
         "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
     })
 

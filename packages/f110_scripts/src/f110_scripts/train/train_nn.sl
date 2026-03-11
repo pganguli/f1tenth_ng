@@ -5,14 +5,13 @@
 #SBATCH --qos=gpu_access
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=8g
-#SBATCH --time=4:00:00
+#SBATCH --time=3:00:00
 #SBATCH --output=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%A_%a.out
 #SBATCH --error=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%A_%a.err
 #SBATCH --array=0-20
 #SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=pganguli@unc.edu
 
 # ── Config array: matches SLURM_ARRAY_TASK_ID 0-20 ──
 # Indices 0-6:  heading (arches 1-7)
@@ -56,12 +55,10 @@ echo "=== Node: $(hostname), GPU: $CUDA_VISIBLE_DEVICES ==="
 # ── Environment setup ──
 if command -v module &>/dev/null; then
     module purge
-    module load cuda  # adjust version to what's available: module avail cuda
+    module load cuda
 fi
 
-# Activate venv (edit path if cloned elsewhere)
 cd "$SLURM_SUBMIT_DIR" || exit 1
-# shellcheck source=/dev/null
 source .venv/bin/activate
 
 # ── Run training ──

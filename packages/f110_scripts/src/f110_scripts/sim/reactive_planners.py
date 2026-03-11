@@ -115,6 +115,13 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
         self._model = model
         self._waypoints = waypoints
         self._top_k = top_k
+        # Keys expected by this model's stored observation space — used to
+        # gracefully handle models trained before cloud_age was added.
+        self._model_obs_keys: frozenset[str] = frozenset(
+            getattr(model, "observation_space", {}).spaces.keys()
+            if hasattr(getattr(model, "observation_space", None), "spaces")
+            else []
+        )
 
     # ------------------------------------------------------------------
     # Public planner interface
@@ -141,9 +148,11 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
     # Internal helpers
     # ------------------------------------------------------------------
     # Keys that SelectiveCloudSchedulerEnv strips from the agent observation.
-    _OBS_EXCLUDED_KEYS: frozenset[str] = frozenset(
-        {"scans", "poses_x", "poses_y", "poses_theta"}
-    )
+    # Must stay in sync with SelectiveCloudSchedulerEnv._OBS_EXCLUDED_KEYS.
+    _OBS_EXCLUDED_KEYS: frozenset[str] = frozenset({
+        "poses_x", "poses_y", "poses_theta",
+        "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
+    })
 
     def _build_rl_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
         """Reconstruct the augmented observation expected by the trained policy."""
@@ -163,6 +172,12 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
             [last.speed if last is not None else 0.0], dtype=np.float32
         )
         rl_obs["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
+        # cloud_age was added after some models were trained; only include it
+        # when the loaded model's observation space actually expects it.
+        if not self._model_obs_keys or "cloud_age" in self._model_obs_keys:
+            rl_obs["cloud_age"] = np.clip(
+                np.array(p.last_cloud_age, dtype=np.float32), 0.0, 999.0
+            )
         return rl_obs
 
 
@@ -329,7 +344,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch1.pt",
+        default="data/models/left_wall_dist_arch2.pt",
         help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
     )
     ec.add_argument(
@@ -341,7 +356,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch1.pt",
+        default="data/models/heading_error_arch2.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
