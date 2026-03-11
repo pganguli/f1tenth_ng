@@ -16,8 +16,6 @@ sys.path.insert(0, os.path.abspath("../../packages/f110_scripts/src"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "F1TENTH-NG"
-copyright = "2026, Prateek Ganguli"
-author = "Prateek Ganguli"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

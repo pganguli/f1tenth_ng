@@ -5,10 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "f110-gym"
 version = "0.3.1"
-authors = [
-  {name = "Hongrui Zheng", email = "billyzheng.bz@gmail.com"},
-  {name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com"}
-]
 description = "F1TENTH gymnasium environment"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -34,6 +30,3 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[project.urls]
-Homepage = "https://f1tenth.org"

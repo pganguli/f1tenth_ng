@@ -49,17 +49,4 @@ while not done:
     env.render()
 ```
 
-## Citing
 
-If you find this Gym environment useful, please consider citing:
-
-```bibtex
-@inproceedings{okelly2020f1tenth,
-  title={F1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
-  author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},
-  booktitle={NeurIPS 2019 Competition and Demonstration Track},
-  pages={77--89},
-  year={2020},
-  organization={PMLR}
-}
-```

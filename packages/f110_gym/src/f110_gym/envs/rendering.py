@@ -1,6 +1,5 @@
 """
 Rendering engine for f1tenth gym env based on pyglet and OpenGL
-Author: Hongrui Zheng
 Updated for pyglet 2.x compatibility
 """
 

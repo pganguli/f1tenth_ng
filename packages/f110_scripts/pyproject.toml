@@ -5,11 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "f110-scripts"
 version = "0.1.0"
-authors = [
-  { name = "Prateek Ganguli", email = "prateek.ganguli@gmail.com" },
-  { name = "Tingan Zhu", email = "tingan@cs.unc.edu" },
-  { name = "Cem Baykal", email = "cembay@cs.unc.edu" },
-]
 description = "Scripts for F1TENTH gym and planners"
 requires-python = ">=3.10"
 dependencies = [

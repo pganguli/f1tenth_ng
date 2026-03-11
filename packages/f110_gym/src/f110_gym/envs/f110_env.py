@@ -1,6 +1,4 @@
-"""
-Author: Hongrui Zheng
-"""
+
 
 import os
 import sys
