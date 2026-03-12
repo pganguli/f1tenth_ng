@@ -51,8 +51,11 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
         Reference waypoints used for CTE computation in the default reward.
     cloud_latency : int
         Round-trip latency in simulation steps for any cloud DNN call.
-    alpha_steer, alpha_speed : float
-        Edge-cloud blending weights for the underlying planner.
+    alpha_left, alpha_track, alpha_heading : float
+        Per-feature edge-cloud blending weights for the underlying planner.
+    sigma_proc_left, sigma_proc_track, sigma_proc_heading : float | None
+        Per-feature process-noise standard deviations enabling age-dependent
+        blending.  ``None`` (default) keeps weights static.
     top_k : int
         Number of DNNs to call per step (the env enforces this by picking the
         top-k softmax probabilities from the agent's logit vector).
@@ -95,8 +98,12 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
         map: str,
         waypoints: np.ndarray,
         cloud_latency: int = 10,
-        alpha_steer: float = 0.7,
-        alpha_speed: float = 0.7,
+        alpha_left: float = 0.996,
+        alpha_track: float = 0.988,
+        alpha_heading: float = 0.974,
+        sigma_proc_left: Optional[float] = None,
+        sigma_proc_track: Optional[float] = None,
+        sigma_proc_heading: Optional[float] = None,
         top_k: int = 1,
         edge_left_wall_model_path: Optional[str] = None,
         edge_track_width_model_path: Optional[str] = None,
@@ -125,8 +132,12 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
 
         self._planner = SelectiveEdgeCloudPlanner(
             cloud_latency=cloud_latency,
-            alpha_steer=alpha_steer,
-            alpha_speed=alpha_speed,
+            alpha_left=alpha_left,
+            alpha_track=alpha_track,
+            alpha_heading=alpha_heading,
+            sigma_proc_left=sigma_proc_left,
+            sigma_proc_track=sigma_proc_track,
+            sigma_proc_heading=sigma_proc_heading,
             top_k=top_k,
             edge_left_wall_model_path=edge_left_wall_model_path,
             edge_track_width_model_path=edge_track_width_model_path,

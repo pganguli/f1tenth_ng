@@ -22,8 +22,9 @@ MAP_STR=""
 WAYPOINTS_STR=""
 EVAL_MAP_STR=""
 EVAL_WAYPOINTS_STR=""
-ALPHA_STEER=""
-ALPHA_SPEED=""
+ALPHA_LEFT=""
+ALPHA_TRACK=""
+ALPHA_HEADING=""
 EXTRA_ARGS=""
 SBATCH_EXTRA=()
 
@@ -38,8 +39,9 @@ while [[ $# -gt 0 ]]; do
         --eval-map-str)         EVAL_MAP_STR="$2";       shift 2 ;;
         --eval-waypoints-str)   EVAL_WAYPOINTS_STR="$2"; shift 2 ;;
         --cloud-latency)        CLOUD_LATENCY="$2";      shift 2 ;;
-        --alpha-steer)          ALPHA_STEER="$2";        shift 2 ;;
-        --alpha-speed)          ALPHA_SPEED="$2";        shift 2 ;;
+        --alpha-left)           ALPHA_LEFT="$2";         shift 2 ;;
+        --alpha-track)          ALPHA_TRACK="$2";        shift 2 ;;
+        --alpha-heading)        ALPHA_HEADING="$2";      shift 2 ;;
         --extra)                EXTRA_ARGS="$2";         shift 2 ;;
         *)                      SBATCH_EXTRA+=("$1");    shift ;;
     esac
@@ -75,8 +77,9 @@ export REWARD="$REWARD"
 [[ -n "$EVAL_MAP_STR"     ]] && export EVAL_MAP="$EVAL_MAP_STR"
 [[ -n "$EVAL_WAYPOINTS_STR" ]] && export EVAL_WAYPOINTS="$EVAL_WAYPOINTS_STR"
 [[ -n "$CLOUD_LATENCY"    ]] && export CLOUD_LATENCY="$CLOUD_LATENCY"
-[[ -n "$ALPHA_STEER"      ]] && export ALPHA_STEER="$ALPHA_STEER"
-[[ -n "$ALPHA_SPEED"      ]] && export ALPHA_SPEED="$ALPHA_SPEED"
+[[ -n "$ALPHA_LEFT"       ]] && export ALPHA_LEFT="$ALPHA_LEFT"
+[[ -n "$ALPHA_TRACK"      ]] && export ALPHA_TRACK="$ALPHA_TRACK"
+[[ -n "$ALPHA_HEADING"    ]] && export ALPHA_HEADING="$ALPHA_HEADING"
 [[ -n "$EXTRA_ARGS"       ]] && export EXTRA_ARGS="$EXTRA_ARGS"
 
 # ── Submit ────────────────────────────────────────────────────────────────────

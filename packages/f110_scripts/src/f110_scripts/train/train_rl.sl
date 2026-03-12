@@ -4,7 +4,7 @@
 # or export it before calling sbatch (see sbatch_rl.sh).
 
 #SBATCH --job-name=f1tenth_rl
-#SBATCH --qos=gpu_access
+#SBATCH --qos=hp_volta_gpu
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
@@ -26,8 +26,9 @@
 : "${CALL_WEIGHTS:=}"
 : "${TARGET_CALL_RATES:=}"
 : "${CLOUD_LATENCY:=10}"
-: "${ALPHA_STEER:=0.7}"
-: "${ALPHA_SPEED:=0.2}"
+: "${ALPHA_LEFT:=0.996}"
+: "${ALPHA_TRACK:=0.988}"
+: "${ALPHA_HEADING:=0.974}"
 : "${EXTRA_ARGS:=}"
 
 echo "=== Task $SLURM_JOB_ID: REWARD=$REWARD CLOUD_LATENCY=$CLOUD_LATENCY N_ENVS=$N_ENVS TIMESTEPS=$TIMESTEPS ==="
@@ -55,8 +56,9 @@ CMD=(
     --timesteps "$TIMESTEPS"
     --reward    "$REWARD"
     --cloud-latency  "$CLOUD_LATENCY"
-    --alpha-steer    "$ALPHA_STEER"
-    --alpha-speed    "$ALPHA_SPEED"
+    --alpha-left     "$ALPHA_LEFT"
+    --alpha-track    "$ALPHA_TRACK"
+    --alpha-heading  "$ALPHA_HEADING"
     --checkpoint-freq 500000
     --eval-freq       1000000
     --eval-episodes   5

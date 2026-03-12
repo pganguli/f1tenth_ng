@@ -34,6 +34,7 @@ from f110_planning.render_callbacks import (
 from f110_planning.base import CloudScheduler
 from f110_planning.schedulers import FixedIntervalScheduler, RoundRobinScheduler, SensitivityProportionalScheduler
 from f110_planning.utils import add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
+from f110_planning.visualization.svg_trace import SimTrace, collect_step, render_svg
 from stable_baselines3 import PPO
 import gymnasium.spaces as _gym_spaces
 
@@ -318,6 +319,19 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--svg-output",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help=(
+            "If set, save a vector SVG trace of the car path and cloud-call "
+            "regions to this file after the simulation ends.  The map is drawn "
+            "with a white background; cloud calls appear as translucent shaded "
+            "regions and the car path is drawn on top."
+        ),
+    )
+
+    parser.add_argument(
         "--left-wall-model",
         type=str,
         default="data/models/left_wall_dist_arch6.pt",
@@ -349,16 +363,40 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
-        "--alpha-steer",
+        "--alpha-left",
         type=float,
-        default=0.7,
-        help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
+        default=0.996,
+        help="Cloud blending weight for left-wall feature (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
-        "--alpha-speed",
+        "--alpha-track",
         type=float,
-        default=0.2,
-        help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
+        default=0.988,
+        help="Cloud blending weight for track-width feature.",
+    )
+    ec.add_argument(
+        "--alpha-heading",
+        type=float,
+        default=0.974,
+        help="Cloud blending weight for heading-error feature.",
+    )
+    ec.add_argument(
+        "--sigma-proc-left",
+        type=float,
+        default=None,
+        help="Process-noise std for left-wall (enables age-dependent blending).",
+    )
+    ec.add_argument(
+        "--sigma-proc-track",
+        type=float,
+        default=None,
+        help="Process-noise std for track-width (enables age-dependent blending).",
+    )
+    ec.add_argument(
+        "--sigma-proc-heading",
+        type=float,
+        default=None,
+        help="Process-noise std for heading-error (enables age-dependent blending).",
     )
     ec.add_argument(
         "--cloud-interval",
@@ -496,8 +534,12 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
         # Shared planner kwargs (minus scheduler/top_k which depend on path)
         ec_kwargs: dict[str, Any] = {
             "cloud_latency": args.cloud_latency,
-            "alpha_steer": args.alpha_steer,
-            "alpha_speed": args.alpha_speed,
+            "alpha_left": args.alpha_left,
+            "alpha_track": args.alpha_track,
+            "alpha_heading": args.alpha_heading,
+            "sigma_proc_left": args.sigma_proc_left,
+            "sigma_proc_track": args.sigma_proc_track,
+            "sigma_proc_heading": args.sigma_proc_heading,
             "lookahead_distance": args.lookahead,
             "lateral_gain": args.lateral_gain,
             "edge_left_wall_model_path": args.edge_left_wall_model,
@@ -614,6 +656,7 @@ def _run_reactive_sim(
     planner: Any,
     r_mode: str | None,
     waypoints: np.ndarray,
+    trace: SimTrace | None = None,
 ) -> tuple[float, dict[str, float]]:
     """Executes the reactive simulation loop with metric collection."""
     wpts = waypoints if waypoints.size > 0 else None
@@ -630,6 +673,9 @@ def _run_reactive_sim(
             )
             done, laptime = (terminated or truncated), laptime + float(reward)
             metrics.on_step(obs, action, float(reward), ego_idx=0)
+
+            if trace is not None:
+                collect_step(trace, obs, planner)
 
             if r_mode:
                 env.render()
@@ -662,9 +708,12 @@ def main() -> None:
     if r_mode:
         env.render()
 
+    svg_out = getattr(args, "svg_output", None)
+    trace = SimTrace() if svg_out else None
+
     print(f"Executing {args.planner} simulation loop...")
     start_time = time.time()
-    laptime, _ = _run_reactive_sim(env, obs, planner, r_mode, waypoints)
+    laptime, _ = _run_reactive_sim(env, obs, planner, r_mode, waypoints, trace=trace)
 
     total_real_time = time.time() - start_time
     print("\n--- Simulation Summary ---")
@@ -674,6 +723,15 @@ def main() -> None:
         print(f"RT-Factor:         {laptime / total_real_time:.2f}x")
 
     env.close()
+
+    if svg_out and trace is not None:
+        render_svg(
+            trace,
+            args.map,
+            args.map_ext,
+            waypoints=waypoints if waypoints.size > 0 else None,
+            output_path=svg_out,
+        )
 
 
 if __name__ == "__main__":

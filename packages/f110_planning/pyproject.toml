@@ -14,6 +14,7 @@ dependencies = [
   "pyglet>=2.0.10",
   "simple-pid>=2.0.0",
   "torch>=2.0.0",
+  "matplotlib>=3.7.0",
   "f110-gym",
 ]
 

@@ -11,9 +11,10 @@ received cloud result ("held").  Before any cloud result arrives for a given
 DNN, the corresponding edge output is used as a seamless fallback so control is
 always well-defined.
 
-The resolved (left, track, heading) triple is used to compute a "cloud action"
-(steer + speed) via the same reactive controller as the edge planner.  The two
-actions are then blended with :attr:`alpha_steer` / :attr:`alpha_speed`.
+The (left, track, heading) triple is blended feature-by-feature using
+MSE-derived per-feature weights before being passed into the reactive
+controller once.  Weights are age-dependent when process-noise parameters
+are supplied.
 """
 
 from __future__ import annotations
@@ -35,10 +36,18 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
     ----------
     cloud_latency : int
         Round-trip latency in simulation steps for any cloud DNN.
-    alpha_steer : float
-        Blending weight for steering (0 = edge only, 1 = cloud only).
-    alpha_speed : float
-        Blending weight for speed (0 = edge only, 1 = cloud only).
+    alpha_left : float
+        Static blending weight for the left-wall feature (0 = edge, 1 = cloud).
+        Default is the closed-form MSE optimum σ²_e / (σ²_e + σ²_c).
+    alpha_track : float
+        Static blending weight for the track-width feature.
+    alpha_heading : float
+        Static blending weight for the heading-error feature.
+    sigma_proc_left, sigma_proc_track, sigma_proc_heading : float | None
+        Per-feature process-noise standard deviations (σ_proc, not σ²).
+        When provided the blending weight ages as
+        ``α_i(t) = σ²_e / (σ²_e + σ²_c + σ²_proc × age)``.
+        ``None`` (default) keeps the weight fixed at the supplied static value.
     top_k : int
         Maximum number of DNNs that may be called per step (informational;
         the mask is enforced by the caller / environment).
@@ -56,11 +65,20 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
     HEADING = 2
     NUM_DNNS = 3
 
+    # Empirical MSE constants from DNN evaluation (used for default alpha computation).
+    # Order: [LEFT, TRACK, HEADING]
+    _SIGMA2_EDGE: tuple[float, ...] = (0.059444, 0.041763, 0.038003)
+    _SIGMA2_CLOUD: tuple[float, ...] = (0.000212, 0.000522, 0.001409)
+
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         cloud_latency: int = 10,
-        alpha_steer: float = 0.7,
-        alpha_speed: float = 0.7,
+        alpha_left: float = 0.996,
+        alpha_track: float = 0.988,
+        alpha_heading: float = 0.974,
+        sigma_proc_left: Optional[float] = None,
+        sigma_proc_track: Optional[float] = None,
+        sigma_proc_heading: Optional[float] = None,
         top_k: int = 1,
         lookahead_distance: float = 1.0,
         max_speed: float = 5.0,
@@ -73,8 +91,10 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         cloud_heading_model_path: Optional[str] = None,
     ) -> None:
         self.cloud_latency = cloud_latency
-        self.alpha_steer = alpha_steer
-        self.alpha_speed = alpha_speed
+        self._static_alphas: list[float] = [alpha_left, alpha_track, alpha_heading]
+        self._sigma_proc: list[Optional[float]] = [
+            sigma_proc_left, sigma_proc_track, sigma_proc_heading
+        ]
         self.top_k = top_k
         self.lookahead_distance = lookahead_distance
         self.max_speed = max_speed
@@ -106,8 +126,9 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
             self._cloud_loader.heading_model,
         ]
 
-        # per-DNN in-flight queues: each entry is (arrival_step, scan_1d)
-        self._queues: list[deque[tuple[int, np.ndarray]]] = [
+        # per-DNN in-flight queues:
+        # each entry is (arrival_step, scan_1d, edge_left, edge_track, edge_heading)
+        self._queues: list[deque[tuple[int, np.ndarray, float, float, float]]] = [
             deque() for _ in range(self.NUM_DNNS)
         ]
         # per-DNN held cloud results; None = no result yet → edge fallback
@@ -174,25 +195,34 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         scan: np.ndarray = obs["scans"][ego_idx]
 
         # 1. Run edge planner — caches last_left_dist / last_track_width / last_heading_error
-        edge_action = self.edge_planner.plan(obs, ego_idx)
+        self.edge_planner.plan(obs, ego_idx)
         self.last_edge_left = self.edge_planner.last_left_dist
         self.last_edge_track = self.edge_planner.last_track_width
         self.last_edge_heading = self.edge_planner.last_heading_error
         self.last_target_point = self.edge_planner.last_target_point
 
-        # 2. Enqueue cloud requests for selected DNNs
+        # 2. Enqueue cloud requests for selected DNNs (snapshot edge outputs for
+        #    edge-delta latency correction on arrival)
         scan_snapshot = scan.copy()
         for i, call in enumerate(call_mask):
             if call:
-                self._queues[i].append((step + self.cloud_latency, scan_snapshot))
+                self._queues[i].append((
+                    step + self.cloud_latency,
+                    scan_snapshot,
+                    self.last_edge_left,
+                    self.last_edge_track,
+                    self.last_edge_heading,
+                ))
 
-        # 3. Receive any arrived cloud results
+        # 3. Receive any arrived cloud results; apply edge-delta correction
+        _edge_now = (self.last_edge_left, self.last_edge_track, self.last_edge_heading)
         for i in range(self.NUM_DNNS):
             while self._queues[i] and self._queues[i][0][0] <= step:
-                _, stale_scan = self._queues[i].popleft()
+                _, stale_scan, enq_left, enq_track, enq_heading = self._queues[i].popleft()
                 result = self._cloud_loader.predict(self._cloud_models[i], stale_scan)
                 if result is not None:
-                    self._cloud_cache[i] = float(result)
+                    enq_edge = (enq_left, enq_track, enq_heading)[i]
+                    self._cloud_cache[i] = float(result) + (_edge_now[i] - enq_edge)
                     self._cloud_last_updated[i] = step
 
         # Update public cloud-age attribute
@@ -203,46 +233,45 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
                 else 999
             )
 
-        # 4. Resolve each slot:
-        #    • Called DNNs   — use the most recently received cloud result if
-        #      one exists (latency may mean it is 1–cloud_latency steps old),
-        #      otherwise fall back to the current edge output.
-        #    • Uncalled DNNs — ALWAYS use the current fresh edge output.
-        #      Using a held cloud value here can be arbitrarily stale (e.g.
-        #      cloud_cache[HEADING] not refreshed for 50+ steps while the
-        #      agent called only the left-wall DNN on a straight).  Feeding
-        #      a stale heading-error into get_reactive_actuation is the
-        #      primary cause of crashes at extreme bends.
-        resolved_left = (
-            self._cloud_cache[self.LEFT]
-            if (call_mask[self.LEFT] and self._cloud_cache[self.LEFT] is not None)
-            else self.last_edge_left
-        )
-        resolved_track = (
-            self._cloud_cache[self.TRACK]
-            if (call_mask[self.TRACK] and self._cloud_cache[self.TRACK] is not None)
-            else self.last_edge_track
-        )
-        resolved_heading = (
-            self._cloud_cache[self.HEADING]
-            if (call_mask[self.HEADING] and self._cloud_cache[self.HEADING] is not None)
-            else self.last_edge_heading
-        )
+        # 4. Feature-level blend: for each slot compute an age-dependent (or
+        #    static) alpha and blend the raw feature values.  Cache always
+        #    contributes regardless of call_mask; the call_mask only controls
+        #    which cloud DNNs receive new requests this step.
+        edge_vals = (self.last_edge_left, self.last_edge_track, self.last_edge_heading)
+        blended: list[float] = []
+        for i in range(self.NUM_DNNS):
+            if self._cloud_cache[i] is None:
+                # No cloud result has ever arrived for this slot → use pure edge.
+                blended.append(edge_vals[i])
+            else:
+                age = self.last_cloud_age[i]
+                sp = self._sigma_proc[i]
+                if sp is not None:
+                    a = self._alpha_age(
+                        age,
+                        self._SIGMA2_EDGE[i],
+                        self._SIGMA2_CLOUD[i],
+                        sp * sp,
+                    )
+                else:
+                    a = self._static_alphas[i]
+                blended.append(a * self._cloud_cache[i] + (1.0 - a) * edge_vals[i])
 
-        self.last_cloud_left = resolved_left
-        self.last_cloud_track = resolved_track
-        self.last_cloud_heading = resolved_heading
+        blended_left, blended_track, blended_heading = blended
+        self.last_cloud_left = blended_left
+        self.last_cloud_track = blended_track
+        self.last_cloud_heading = blended_heading
 
-        # 5. Compute cloud action from resolved features
+        # 5. Compute action from blended feature triple (single controller call).
         car_theta: float = float(obs["poses_theta"][ego_idx])
         car_position = np.array([obs["poses_x"][ego_idx], obs["poses_y"][ego_idx]])
         current_speed: float = float(obs["linear_vels_x"][ego_idx])
 
-        resolved_right = max(resolved_track - resolved_left, 0.0)
-        _, cloud_steer, cloud_speed = get_reactive_actuation(
-            left_dist=resolved_left,
-            right_dist=resolved_right,
-            heading_error=resolved_heading,
+        blended_right = max(blended_track - blended_left, 0.0)
+        _, blended_steer, blended_speed = get_reactive_actuation(
+            left_dist=blended_left,
+            right_dist=blended_right,
+            heading_error=blended_heading,
             car_position=car_position,
             car_theta=car_theta,
             current_speed=current_speed,
@@ -250,14 +279,6 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
             max_speed=self.max_speed,
             wheelbase=self.wheelbase,
             lateral_gain=self.lateral_gain,
-        )
-
-        # 6. Blend
-        blended_steer = (
-            self.alpha_steer * cloud_steer + (1.0 - self.alpha_steer) * edge_action.steer
-        )
-        blended_speed = (
-            self.alpha_speed * cloud_speed + (1.0 - self.alpha_speed) * edge_action.speed
         )
 
         action = Action(steer=blended_steer, speed=blended_speed)
@@ -284,3 +305,19 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
         self.last_cloud_track = 0.0
         self.last_cloud_heading = 0.0
         self.last_target_point = None
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _alpha_age(age: int, sigma_e2: float, sigma_c2: float, sigma_proc2: float) -> float:
+        """Compute the age-dependent blending weight.
+
+        ``α = σ²_e / (σ²_e + σ²_c + σ²_proc × age)``
+
+        At age=0 this reduces to the closed-form static MSE optimum.  As age
+        grows the cloud contribution is down-weighted by accumulated process
+        noise.  Returns 0.5 if the denominator is zero (degenerate case).
+        """
+        denom = sigma_e2 + sigma_c2 + sigma_proc2 * age
+        return sigma_e2 / denom if denom > 0.0 else 0.5

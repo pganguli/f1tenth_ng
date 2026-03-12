@@ -69,13 +69,11 @@ def test_edge_fallback_before_cloud_arrives(obs: dict[str, Any]) -> None:
     assert planner.last_cloud_heading == pytest.approx(planner.last_edge_heading)
 
 
-def test_stale_cache_not_used_for_uncalled_dnn(obs: dict[str, Any]) -> None:
-    """A populated cloud cache for a DNN must NOT be used when that DNN is
-    absent from the current call_mask.  Fresh edge output must be used instead.
-
-    This prevents arbitrarily-stale cloud values from poisoning the reactive
-    controller at extreme bends when top_k=1 keeps cycling through only one
-    DNN.
+def test_cache_always_contributes_with_age_weighting(obs: dict[str, Any]) -> None:
+    """Populated cloud caches always contribute to the blended output, regardless
+    of whether the DNN was in the current call_mask.  When sigma_proc is None
+    (static weights) the blended value must differ from the pure edge value
+    whenever the sentinel is far from the edge estimate.
     """
     planner = SelectiveEdgeCloudPlanner(cloud_latency=10)
 
@@ -88,22 +86,24 @@ def test_stale_cache_not_used_for_uncalled_dnn(obs: dict[str, Any]) -> None:
     planner._cloud_cache[SelectiveEdgeCloudPlanner.TRACK] = 2222.0   # pylint: disable=protected-access
     planner._cloud_cache[SelectiveEdgeCloudPlanner.HEADING] = 3333.0 # pylint: disable=protected-access
 
-    # Step 1: call ONLY DNN 1 (TRACK) — LEFT and HEADING must NOT use sentinels.
-    # With latency=10 the TRACK result has not arrived yet either, so TRACK
-    # uses its injected stale value (call_mask[TRACK]=True, cache is not None).
+    # Step 1: call ONLY DNN 1 (TRACK) — LEFT and HEADING caches should still
+    # blend into the output (with their static alpha weights).
     planner.plan(obs, call_mask=[False, True, False])
 
-    fresh_edge_left = planner.last_edge_left
-    fresh_edge_heading = planner.last_edge_heading
-
-    assert planner.last_cloud_left == pytest.approx(fresh_edge_left), (
-        f"Stale LEFT sentinel (1111.0) leaked; expected fresh edge {fresh_edge_left}"
+    # All three blended values must be affected by the large sentinels;
+    # none of them should equal the pure edge estimate.
+    # (alpha_left=0.996, alpha_track=0.988, alpha_heading=0.974 by default)
+    assert planner.last_cloud_left != pytest.approx(planner.last_edge_left), (
+        "LEFT sentinel (1111.0) should blend into last_cloud_left"
     )
-    assert planner.last_cloud_heading == pytest.approx(fresh_edge_heading), (
-        f"Stale HEADING sentinel (3333.0) leaked; expected fresh edge {fresh_edge_heading}"
+    assert planner.last_cloud_heading != pytest.approx(planner.last_edge_heading), (
+        "HEADING sentinel (3333.0) should blend into last_cloud_heading"
     )
-    # TRACK was called and cache is populated → should use the stale sentinel.
-    assert planner.last_cloud_track == pytest.approx(2222.0)
+    # TRACK cache was also just available (static alpha=0.988), so it also
+    # shifts the blended value.
+    assert planner.last_cloud_track != pytest.approx(planner.last_edge_track), (
+        "TRACK sentinel (2222.0) should blend into last_cloud_track"
+    )
 
 
 def test_cloud_cache_consumed_after_latency(obs: dict[str, Any]) -> None:
@@ -182,3 +182,50 @@ def test_plan_returns_finite_action(obs: dict[str, Any]) -> None:
     assert np.isfinite(action.steer)
     assert np.isfinite(action.speed)
     assert action.speed >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# Per-feature alpha blending
+# ---------------------------------------------------------------------------
+
+def test_alpha_age_static_at_age_zero(obs: dict[str, Any]) -> None:
+    """_alpha_age at age=0 must equal sigma_e^2 / (sigma_e^2 + sigma_c^2)."""
+    se2, sc2 = 0.059444, 0.000212
+    expected = se2 / (se2 + sc2)
+    result = SelectiveEdgeCloudPlanner._alpha_age(  # pylint: disable=protected-access
+        age=0, sigma_e2=se2, sigma_c2=sc2, sigma_proc2=0.01
+    )
+    assert result == pytest.approx(expected, rel=1e-9)
+
+
+def test_alpha_age_decreases_with_age(obs: dict[str, Any]) -> None:
+    """When sigma_proc > 0, alpha must decrease as age increases."""
+    se2, sc2, sp2 = 0.059444, 0.000212, 0.01
+    alpha_0 = SelectiveEdgeCloudPlanner._alpha_age(0, se2, sc2, sp2)  # pylint: disable=protected-access
+    alpha_5 = SelectiveEdgeCloudPlanner._alpha_age(5, se2, sc2, sp2)  # pylint: disable=protected-access
+    alpha_20 = SelectiveEdgeCloudPlanner._alpha_age(20, se2, sc2, sp2)  # pylint: disable=protected-access
+    assert alpha_0 > alpha_5 > alpha_20
+
+
+def test_edge_fallback_before_cloud_ever_arrives(obs: dict[str, Any]) -> None:
+    """When cache is None (no cloud result yet), blended value must equal edge."""
+    planner = SelectiveEdgeCloudPlanner(cloud_latency=10)
+    planner.plan(obs, call_mask=[False, False, False])
+    # All caches still None → blended == edge
+    assert planner.last_cloud_left == pytest.approx(planner.last_edge_left)
+    assert planner.last_cloud_track == pytest.approx(planner.last_edge_track)
+    assert planner.last_cloud_heading == pytest.approx(planner.last_edge_heading)
+
+
+def test_edge_delta_correction_stored_in_cache(obs: dict[str, Any]) -> None:
+    """With cloud_latency=0 the cache should be updated on the same step.
+    The stored value should equal cloud_result + (edge_now - edge_at_enqueue),
+    which at latency=0 collapses to the raw cloud output (delta = 0).
+    """
+    planner = SelectiveEdgeCloudPlanner(cloud_latency=0)
+    planner.plan(obs, call_mask=[True, False, False])
+    # cache[LEFT] may be None if the model returns None, but it must not crash
+    # and any non-None value should be a finite float.
+    cached = planner._cloud_cache[SelectiveEdgeCloudPlanner.LEFT]  # pylint: disable=protected-access
+    if cached is not None:
+        assert np.isfinite(cached)

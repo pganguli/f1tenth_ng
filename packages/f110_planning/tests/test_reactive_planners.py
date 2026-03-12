@@ -15,6 +15,7 @@ from f110_planning.reactive import (
     DisparityExtenderPlanner,
     EdgeCloudPlanner,
     GapFollowerPlanner,
+    SelectiveEdgeCloudPlanner,
 )
 from f110_planning.utils import F110_MAX_STEER
 
@@ -105,3 +106,26 @@ def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> No
 
     assert abs(action_edge.steer - expected_edge_only_steer) < 1e-9
     assert abs(action_cloud.steer - expected_cloud_only_steer) < 1e-9
+
+
+def test_selective_edge_cloud_feature_blend(reactive_obs: dict[str, Any]) -> None:
+    """SelectiveEdgeCloudPlanner with alpha=1 for all features must produce
+    the same action as one with alpha=0 when no cloud result has yet arrived
+    (cache=None → pure edge fallback for both).
+    """
+    reactive_obs["scans"][0] = np.ones(1080) * 5.0
+
+    planner_a = SelectiveEdgeCloudPlanner(
+        cloud_latency=10, alpha_left=0.0, alpha_track=0.0, alpha_heading=0.0
+    )
+    planner_b = SelectiveEdgeCloudPlanner(
+        cloud_latency=10, alpha_left=1.0, alpha_track=1.0, alpha_heading=1.0
+    )
+
+    action_a = planner_a.plan(copy.deepcopy(reactive_obs), call_mask=[False, False, False])
+    action_b = planner_b.plan(copy.deepcopy(reactive_obs), call_mask=[False, False, False])
+
+    # Before any cloud result arrives both planners fall back to pure edge; the
+    # actions must be identical regardless of alpha.
+    assert action_a.steer == pytest.approx(action_b.steer, abs=1e-9)
+    assert action_a.speed == pytest.approx(action_b.speed, abs=1e-9)

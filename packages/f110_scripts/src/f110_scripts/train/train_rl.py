@@ -12,7 +12,7 @@ Usage example (single map, single CPU)::
         --map data/maps/F1/Oschersleben/Oschersleben_map \\
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \\
         --agent ppo --reward cte --top-k 1 \\
-        --alpha-steer 0.7 --alpha-speed 0.2 \\
+        --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 \\
         --timesteps 5000000
 
 Multi-map + multi-CPU (e.g. Slurm node with 32 cores and a GPU)::
@@ -64,8 +64,12 @@ def _make_single_env(
     reward_name: str,
     reward_kwargs: dict,
     cloud_latency: int,
-    alpha_steer: float,
-    alpha_speed: float,
+    alpha_left: float,
+    alpha_track: float,
+    alpha_heading: float,
+    sigma_proc_left: float | None,
+    sigma_proc_track: float | None,
+    sigma_proc_heading: float | None,
     top_k: int,
     max_episode_steps: int,
     edge_left_wall_model: str,
@@ -90,8 +94,12 @@ def _make_single_env(
         map=map_path,
         waypoints=waypoints,
         cloud_latency=cloud_latency,
-        alpha_steer=alpha_steer,
-        alpha_speed=alpha_speed,
+        alpha_left=alpha_left,
+        alpha_track=alpha_track,
+        alpha_heading=alpha_heading,
+        sigma_proc_left=sigma_proc_left,
+        sigma_proc_track=sigma_proc_track,
+        sigma_proc_heading=sigma_proc_heading,
         top_k=top_k,
         edge_left_wall_model_path=edge_left_wall_model,
         edge_track_width_model_path=edge_track_width_model,
@@ -113,8 +121,12 @@ def _make_multi_map_env(
     reward_name: str,
     reward_kwargs: dict,
     cloud_latency: int,
-    alpha_steer: float,
-    alpha_speed: float,
+    alpha_left: float,
+    alpha_track: float,
+    alpha_heading: float,
+    sigma_proc_left: float | None,
+    sigma_proc_track: float | None,
+    sigma_proc_heading: float | None,
     top_k: int,
     max_episode_steps: int,
     edge_left_wall_model: str,
@@ -143,8 +155,12 @@ def _make_multi_map_env(
             map=map_path,
             waypoints=waypoints,
             cloud_latency=cloud_latency,
-            alpha_steer=alpha_steer,
-            alpha_speed=alpha_speed,
+            alpha_left=alpha_left,
+            alpha_track=alpha_track,
+            alpha_heading=alpha_heading,
+            sigma_proc_left=sigma_proc_left,
+            sigma_proc_track=sigma_proc_track,
+            sigma_proc_heading=sigma_proc_heading,
             top_k=top_k,
             edge_left_wall_model_path=edge_left_wall_model,
             edge_track_width_model_path=edge_track_width_model,
@@ -219,12 +235,28 @@ def parse_args() -> argparse.Namespace:
         help="Number of cloud DNNs to call per step (out of m=3)",
     )
     parser.add_argument(
-        "--alpha-steer", type=float, default=0.7,
-        help="Cloud blending weight for steering (0=edge only, 1=cloud only)",
+        "--alpha-left", type=float, default=0.996,
+        help="Cloud blending weight for left-wall feature (0=edge only, 1=cloud only)",
     )
     parser.add_argument(
-        "--alpha-speed", type=float, default=0.2,
-        help="Cloud blending weight for speed (0=edge only, 1=cloud only)",
+        "--alpha-track", type=float, default=0.988,
+        help="Cloud blending weight for track-width feature",
+    )
+    parser.add_argument(
+        "--alpha-heading", type=float, default=0.974,
+        help="Cloud blending weight for heading-error feature",
+    )
+    parser.add_argument(
+        "--sigma-proc-left", type=float, default=None,
+        help="Process-noise std for left-wall (enables age-dependent blending)",
+    )
+    parser.add_argument(
+        "--sigma-proc-track", type=float, default=None,
+        help="Process-noise std for track-width (enables age-dependent blending)",
+    )
+    parser.add_argument(
+        "--sigma-proc-heading", type=float, default=None,
+        help="Process-noise std for heading-error (enables age-dependent blending)",
     )
     parser.add_argument(
         "--max-episode-steps", type=int, default=2000,
@@ -436,16 +468,17 @@ def parse_args() -> argparse.Namespace:
 def _run_tag(args: argparse.Namespace) -> str:
     """Build a descriptive run tag from key training parameters.
 
-    Format: ``{agent}_{reward}_k{top_k}_as{alpha_steer}_asp{alpha_speed}_lat{cloud_latency}``
+    Format: ``{agent}_{reward}_k{top_k}_aL{alpha_left}_aT{alpha_track}_aH{alpha_heading}_lat{cloud_latency}``
 
-    Example: ``ppo_cte_k1_as0.5_asp0.1_lat10``
+    Example: ``ppo_cte_k1_aL0.996_aT0.988_aH0.974_lat10``
     """
     return (
         f"{args.agent.lower()}"
         f"_{args.reward}"
         f"_k{args.top_k}"
-        f"_as{args.alpha_steer:g}"
-        f"_asp{args.alpha_speed:g}"
+        f"_aL{args.alpha_left:g}"
+        f"_aT{args.alpha_track:g}"
+        f"_aH{args.alpha_heading:g}"
         f"_lat{args.cloud_latency}"
     )
 
@@ -503,8 +536,12 @@ def _build_vec_env(args: argparse.Namespace, reward_kwargs: dict[str, Any]) -> t
         reward_name=args.reward,
         reward_kwargs=reward_kwargs,
         cloud_latency=args.cloud_latency,
-        alpha_steer=args.alpha_steer,
-        alpha_speed=args.alpha_speed,
+        alpha_left=args.alpha_left,
+        alpha_track=args.alpha_track,
+        alpha_heading=args.alpha_heading,
+        sigma_proc_left=args.sigma_proc_left,
+        sigma_proc_track=args.sigma_proc_track,
+        sigma_proc_heading=args.sigma_proc_heading,
         top_k=args.top_k,
         max_episode_steps=args.max_episode_steps,
         edge_left_wall_model=args.edge_left_wall_model,
@@ -615,8 +652,12 @@ def main() -> None:
             reward_name=args.reward,
             reward_kwargs=reward_kwargs,
             cloud_latency=args.cloud_latency,
-            alpha_steer=args.alpha_steer,
-            alpha_speed=args.alpha_speed,
+            alpha_left=args.alpha_left,
+            alpha_track=args.alpha_track,
+            alpha_heading=args.alpha_heading,
+            sigma_proc_left=args.sigma_proc_left,
+            sigma_proc_track=args.sigma_proc_track,
+            sigma_proc_heading=args.sigma_proc_heading,
             top_k=args.top_k,
             max_episode_steps=args.max_episode_steps,
             edge_left_wall_model=args.edge_left_wall_model,
