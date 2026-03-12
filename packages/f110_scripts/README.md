@@ -9,6 +9,14 @@ environment active.
 source .venv/bin/activate
 ```
 
+If the virtual environment does not exist yet, create it first:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
 ---
 
 ## Step 1 — Re-collect training data
@@ -37,6 +45,9 @@ python packages/f110_scripts/src/f110_scripts/datagen/combine_datasets.py \
 > **Note:** The glob intentionally excludes `combined_all.npz` itself so that
 > earlier combined files are not double-counted.
 
+All 21 `config_*.yaml` training configs have their `train_path` set to
+`data/datasets/combined_all.npz` and will automatically pick up the new file.
+
 ---
 
 ## Step 3 — Train NN predictors (Slurm)
@@ -45,27 +56,15 @@ The Slurm array covers 21 configs (3 features × 7 architectures, indices 0–20
 
 | Indices  | Architectures |
 |----------|---------------|
-| 0–2      | arch 1 — heading / left\_wall / track\_width |
+| 0–2      | arch 1 |
 | 3–5      | arch 2 |
 | 6–8      | arch 3 |
 | 9–11     | arch 4 |
 | 12–14    | arch 5 |
-| 15–17    | arch 6 — heading / left\_wall / track\_width |
+| 15–17    | arch 6 |
 | 18–20    | arch 7 |
 
-Submit arch 1 and arch 6 at high priority first, remaining arches after:
-
-```bash
-# High-priority: arch 1 (0-2) and arch 6 (15-17)
-sbatch --array=0-2,15-17 --qos=hp_volta_gpu \
-    packages/f110_scripts/src/f110_scripts/train/train_nn.sl
-
-# Remaining arches (can run concurrently)
-sbatch --array=3-14,18-20 \
-    packages/f110_scripts/src/f110_scripts/train/train_nn.sl
-```
-
-Alternatively, use the interactive launcher which prompts for array selection:
+Use the interactive launcher to submit the full array:
 
 ```bash
 bash packages/f110_scripts/src/f110_scripts/train/sbatch_nn.sh

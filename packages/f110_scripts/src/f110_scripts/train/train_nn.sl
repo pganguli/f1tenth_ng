@@ -2,7 +2,7 @@
 # f1tenth DNN training — Slurm array job
 
 #SBATCH --job-name=f1tenth_dnn
-#SBATCH --qos=gpu_access
+#SBATCH --qos=hp_volta_gpu
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4

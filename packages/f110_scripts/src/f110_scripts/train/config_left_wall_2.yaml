@@ -1,6 +1,6 @@
 # Left Wall prediction -- arch 2
 data:
-  train_path: "data/datasets/_lidar_tracking_combined_map_pure_pursuit_n295712.npz"
+  train_path: "data/datasets/combined_all.npz"
   target_col: "left_wall_dist"
   batch_size: 128
   num_workers: 8
