@@ -2,12 +2,12 @@
 # f1tenth DNN training — Slurm array job
 
 #SBATCH --job-name=f1tenth_dnn
-#SBATCH --qos=hp_volta_gpu
+#SBATCH --qos=gpu_access
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=8g
-#SBATCH --time=3:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64g
+#SBATCH --time=4:00:00
 #SBATCH --output=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%A_%a.out
 #SBATCH --error=packages/f110_scripts/src/f110_scripts/train/slurm_logs/%x_%A_%a.err
 #SBATCH --array=0-20
