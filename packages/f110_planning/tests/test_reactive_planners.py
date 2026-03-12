@@ -78,12 +78,12 @@ def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> No
 
     # Build two planners whose edge and cloud sub-planners produce predictable
     # outputs by relying entirely on the lateral_gain path (no DNN model loaded).
-    # With alpha_steer=0 the final action steers must equal the edge action steers.
+    # With alpha_*=0 the final action must equal the edge-only prediction.
     planner_edge_only = EdgeCloudPlanner(
-        cloud_latency=0, alpha_steer=0.0, alpha_speed=0.0
+        cloud_latency=0, alpha_left=0.0, alpha_track=0.0, alpha_heading=0.0
     )
     planner_cloud_only = EdgeCloudPlanner(
-        cloud_latency=0, alpha_steer=1.0, alpha_speed=1.0
+        cloud_latency=0, alpha_left=1.0, alpha_track=1.0, alpha_heading=1.0
     )
 
     # Force a cloud result by running step 0 (FixedIntervalScheduler calls at step 0)

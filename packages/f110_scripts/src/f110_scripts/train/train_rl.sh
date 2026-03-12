@@ -14,12 +14,12 @@ SENS="0.36876279 0.36876279 0.26247441"
 COMMON=(--map-str "$MAP_STR" --waypoints-str "$WP_STR" --eval-map-str "$EVAL_MAP_STR" --eval-waypoints-str "$EVAL_WP_STR")
 
 # ── 6 runs: 3 rewards × 2 latencies ──────────────────────────────────────────
-# lat=0  (alpha_left=0.996, alpha_track=0.988, alpha_heading=0.974)
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 0  --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 0  --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 --call-weights-str "$SENS"
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 0  --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 --call-weights-str "$SENS"
+# lat=0  (alpha_left=0.9995553221, alpha_track=0.9986653465, alpha_heading=0.9896705275)
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 0  --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 0  --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --call-weights-str "$SENS"
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 0  --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --call-weights-str "$SENS"
 
-# lat=10  (alpha_left=0.996, alpha_track=0.988, alpha_heading=0.974)
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 10 --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 10 --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 --call-weights-str "$SENS"
-bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 10 --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 --call-weights-str "$SENS"
+# lat=10  (alpha_left=0.9995553221, alpha_track=0.9986653465, alpha_heading=0.9896705275)
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte                       --cloud-latency 10 --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_annealed  --cloud-latency 10 --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --call-weights-str "$SENS"
+bash "$SBATCH_RL" "${COMMON[@]}" --reward cte_sensitivity_staleness --cloud-latency 10 --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --call-weights-str "$SENS"

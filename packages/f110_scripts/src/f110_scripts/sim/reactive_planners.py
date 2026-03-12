@@ -334,14 +334,14 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch6.pt",
+        default="data/models/left_wall_dist_arch5.pt",
         help="Path to self-sufficient TorchScript .pt model for left wall distance.",
     )
 
     parser.add_argument(
         "--track-width-model",
         type=str,
-        default="data/models/track_width_arch6.pt",
+        default="data/models/track_width_arch5.pt",
         help="Path to self-sufficient TorchScript .pt model for total track width.",
     )
 
@@ -365,37 +365,37 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--alpha-left",
         type=float,
-        default=0.996,
+        default=0.9995553221,
         help="Cloud blending weight for left-wall feature (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
         "--alpha-track",
         type=float,
-        default=0.988,
+        default=0.9986653465,
         help="Cloud blending weight for track-width feature.",
     )
     ec.add_argument(
         "--alpha-heading",
         type=float,
-        default=0.974,
+        default=0.9896705275,
         help="Cloud blending weight for heading-error feature.",
     )
     ec.add_argument(
         "--sigma-proc-left",
         type=float,
-        default=None,
+        default=0.044961,
         help="Process-noise std for left-wall (enables age-dependent blending).",
     )
     ec.add_argument(
         "--sigma-proc-track",
         type=float,
-        default=None,
+        default=0.067937,
         help="Process-noise std for track-width (enables age-dependent blending).",
     )
     ec.add_argument(
         "--sigma-proc-heading",
         type=float,
-        default=None,
+        default=0.033182,
         help="Process-noise std for heading-error (enables age-dependent blending).",
     )
     ec.add_argument(
@@ -431,13 +431,13 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch2.pt",
+        default="data/models/left_wall_dist_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
     )
     ec.add_argument(
         "--edge-track-width-model",
         type=str,
-        default="data/models/track_width_arch1.pt",
+        default="data/models/track_width_arch2.pt",
         help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
@@ -449,13 +449,13 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch6.pt",
+        default="data/models/left_wall_dist_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
     )
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch6.pt",
+        default="data/models/track_width_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(

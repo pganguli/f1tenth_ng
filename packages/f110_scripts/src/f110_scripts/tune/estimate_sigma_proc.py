@@ -5,6 +5,11 @@ heading_error) the process noise σ_proc is estimated as the standard deviation
 of successive first differences across all trajectories in
 ``data/datasets/*.npz``.
 
+Note: ``track_width`` is a derived feature — the NPZ files store
+``left_wall_dist`` and ``right_wall_dist`` separately, so
+``track_width = left_wall_dist + right_wall_dist`` is computed on the fly
+before differencing (matching how ``LidarDataset`` handles it in train_nn.py).
+
 Under a random-walk model  y(t) = y(t-1) + ε(t),  σ_proc = std(ε(t)).  Feed
 the printed values into SelectiveEdgeCloudPlanner as ``sigma_proc_left``,
 ``sigma_proc_track``, and ``sigma_proc_heading`` to enable age-dependent alpha
@@ -27,13 +32,20 @@ from pathlib import Path
 import numpy as np
 
 
-# Keys expected inside each .npz file.  They must contain 1-D arrays of equal
-# length.  Adjust if the dataset schema changes.
-_FEATURE_KEYS = {
+# Direct NPZ keys → feature name.
+_DIRECT_KEYS = {
     "left_wall_dist": "left_wall_dist",
-    "track_width":    "track_width",
     "heading_error":  "heading_error",
 }
+
+# Derived features: feature name → (key_a, key_b) where value = a + b.
+# track_width is not stored in the NPZ; it is computed as
+# left_wall_dist + right_wall_dist (mirrors LidarDataset in train_nn.py).
+_DERIVED_KEYS: dict[str, tuple[str, str]] = {
+    "track_width": ("left_wall_dist", "right_wall_dist"),
+}
+
+_ALL_FEATURES = list(_DIRECT_KEYS) + list(_DERIVED_KEYS)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -107,16 +119,31 @@ def estimate_sigma_proc(
         )
 
     # Collect first-differences for each feature across all trajectories.
-    diffs: dict[str, list[np.ndarray]] = {k: [] for k in _FEATURE_KEYS}
+    diffs: dict[str, list[np.ndarray]] = {k: [] for k in _ALL_FEATURES}
     missing: set[str] = set()
 
     for path in files:
         data = np.load(path, allow_pickle=False)
-        for feat, key in _FEATURE_KEYS.items():
+
+        # Direct features.
+        for feat, key in _DIRECT_KEYS.items():
             if key not in data:
                 missing.add(f"{Path(path).name}:{key}")
                 continue
             arr = data[key].ravel().astype(np.float64)
+            if arr.size < 2:
+                continue
+            diffs[feat].append(np.diff(arr))
+
+        # Derived features (sum of two stored keys).
+        for feat, (key_a, key_b) in _DERIVED_KEYS.items():
+            if key_a not in data or key_b not in data:
+                missing.add(f"{Path(path).name}:{feat}(derived)")
+                continue
+            arr = (
+                data[key_a].ravel().astype(np.float64)
+                + data[key_b].ravel().astype(np.float64)
+            )
             if arr.size < 2:
                 continue
             diffs[feat].append(np.diff(arr))
@@ -131,7 +158,7 @@ def estimate_sigma_proc(
         )
 
     result: dict[str, float] = {}
-    for feat in _FEATURE_KEYS:
+    for feat in _ALL_FEATURES:
         all_diffs = diffs[feat]
         if not all_diffs:
             print(

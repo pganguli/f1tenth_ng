@@ -26,9 +26,12 @@
 : "${CALL_WEIGHTS:=}"
 : "${TARGET_CALL_RATES:=}"
 : "${CLOUD_LATENCY:=10}"
-: "${ALPHA_LEFT:=0.996}"
-: "${ALPHA_TRACK:=0.988}"
-: "${ALPHA_HEADING:=0.974}"
+: "${ALPHA_LEFT:=0.9995553221}"
+: "${ALPHA_TRACK:=0.9986653465}"
+: "${ALPHA_HEADING:=0.9896705275}"
+: "${SIGMA_PROC_LEFT:=0.044961}"
+: "${SIGMA_PROC_TRACK:=0.067937}"
+: "${SIGMA_PROC_HEADING:=0.033182}"
 : "${EXTRA_ARGS:=}"
 
 echo "=== Task $SLURM_JOB_ID: REWARD=$REWARD CLOUD_LATENCY=$CLOUD_LATENCY N_ENVS=$N_ENVS TIMESTEPS=$TIMESTEPS ==="
@@ -59,6 +62,9 @@ CMD=(
     --alpha-left     "$ALPHA_LEFT"
     --alpha-track    "$ALPHA_TRACK"
     --alpha-heading  "$ALPHA_HEADING"
+    --sigma-proc-left    "$SIGMA_PROC_LEFT"
+    --sigma-proc-track   "$SIGMA_PROC_TRACK"
+    --sigma-proc-heading "$SIGMA_PROC_HEADING"
     --checkpoint-freq 500000
     --eval-freq       1000000
     --eval-episodes   5

@@ -12,7 +12,7 @@ Usage example (single map, single CPU)::
         --map data/maps/F1/Oschersleben/Oschersleben_map \\
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \\
         --agent ppo --reward cte --top-k 1 \\
-        --alpha-left 0.996 --alpha-track 0.988 --alpha-heading 0.974 \\
+        --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 \
         --timesteps 5000000
 
 Multi-map + multi-CPU (e.g. Slurm node with 32 cores and a GPU)::
@@ -235,27 +235,27 @@ def parse_args() -> argparse.Namespace:
         help="Number of cloud DNNs to call per step (out of m=3)",
     )
     parser.add_argument(
-        "--alpha-left", type=float, default=0.996,
+        "--alpha-left", type=float, default=0.9995553221,
         help="Cloud blending weight for left-wall feature (0=edge only, 1=cloud only)",
     )
     parser.add_argument(
-        "--alpha-track", type=float, default=0.988,
+        "--alpha-track", type=float, default=0.9986653465,
         help="Cloud blending weight for track-width feature",
     )
     parser.add_argument(
-        "--alpha-heading", type=float, default=0.974,
+        "--alpha-heading", type=float, default=0.9896705275,
         help="Cloud blending weight for heading-error feature",
     )
     parser.add_argument(
-        "--sigma-proc-left", type=float, default=None,
+        "--sigma-proc-left", type=float, default=0.044961,
         help="Process-noise std for left-wall (enables age-dependent blending)",
     )
     parser.add_argument(
-        "--sigma-proc-track", type=float, default=None,
+        "--sigma-proc-track", type=float, default=0.067937,
         help="Process-noise std for track-width (enables age-dependent blending)",
     )
     parser.add_argument(
-        "--sigma-proc-heading", type=float, default=None,
+        "--sigma-proc-heading", type=float, default=0.033182,
         help="Process-noise std for heading-error (enables age-dependent blending)",
     )
     parser.add_argument(
@@ -267,11 +267,11 @@ def parse_args() -> argparse.Namespace:
     models = parser.add_argument_group("models", "TorchScript .pt model paths")
     models.add_argument(
         "--edge-left-wall-model", type=str,
-        default="data/models/left_wall_dist_arch2.pt",
+        default="data/models/left_wall_dist_arch1.pt",
     )
     models.add_argument(
         "--edge-track-width-model", type=str,
-        default="data/models/track_width_arch1.pt",
+        default="data/models/track_width_arch2.pt",
     )
     models.add_argument(
         "--edge-heading-model", type=str,
@@ -279,11 +279,11 @@ def parse_args() -> argparse.Namespace:
     )
     models.add_argument(
         "--cloud-left-wall-model", type=str,
-        default="data/models/left_wall_dist_arch6.pt",
+        default="data/models/left_wall_dist_arch5.pt",
     )
     models.add_argument(
         "--cloud-track-width-model", type=str,
-        default="data/models/track_width_arch6.pt",
+        default="data/models/track_width_arch5.pt",
     )
     models.add_argument(
         "--cloud-heading-model", type=str,
@@ -470,7 +470,7 @@ def _run_tag(args: argparse.Namespace) -> str:
 
     Format: ``{agent}_{reward}_k{top_k}_aL{alpha_left}_aT{alpha_track}_aH{alpha_heading}_lat{cloud_latency}``
 
-    Example: ``ppo_cte_k1_aL0.996_aT0.988_aH0.974_lat10``
+    Example: ``ppo_cte_k1_aL0.999555_aT0.998665_aH0.989671_lat10``
     """
     return (
         f"{args.agent.lower()}"

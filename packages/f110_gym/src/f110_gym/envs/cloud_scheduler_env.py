@@ -45,8 +45,9 @@ class CloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-attribute
         map: str,
         waypoints: np.ndarray,
         cloud_latency: int = 10,
-        alpha_steer: float = 0.7,
-        alpha_speed: float = 0.7,
+        alpha_left: float = 0.5,
+        alpha_track: float = 0.5,
+        alpha_heading: float = 0.5,
         edge_left_wall_model_path: Optional[str] = None,
         edge_track_width_model_path: Optional[str] = None,
         edge_heading_model_path: Optional[str] = None,
@@ -85,8 +86,9 @@ class CloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-attribute
         from f110_planning.reactive import EdgeCloudPlanner  # pylint: disable=import-outside-toplevel
         self._planner = EdgeCloudPlanner(
             cloud_latency=cloud_latency,
-            alpha_steer=alpha_steer,
-            alpha_speed=alpha_speed,
+            alpha_left=alpha_left,
+            alpha_track=alpha_track,
+            alpha_heading=alpha_heading,
             scheduler=self._rl_scheduler,
             edge_left_wall_model_path=edge_left_wall_model_path,
             edge_track_width_model_path=edge_track_width_model_path,

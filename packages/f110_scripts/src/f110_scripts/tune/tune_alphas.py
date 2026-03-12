@@ -119,8 +119,15 @@ def evaluate_runner(args, waypoints, start_pose, render_override=None):
 
     def _eval(alpha_steer: float, alpha_speed: float) -> tuple:
         eval_args = copy.deepcopy(args)
-        eval_args.alpha_steer = alpha_steer
-        eval_args.alpha_speed = alpha_speed
+        # Map 2-D search axes to the 3 feature-level alpha parameters:
+        # alpha_steer drives lateral features (left_wall, heading)
+        # alpha_speed drives the track-width feature
+        eval_args.alpha_left = alpha_steer
+        eval_args.alpha_heading = alpha_steer
+        eval_args.alpha_track = alpha_speed
+        eval_args.sigma_proc_left = None
+        eval_args.sigma_proc_track = None
+        eval_args.sigma_proc_heading = None
         planner = _create_planner(eval_args, waypoints)
 
         env_local = setup_env(args, render_override)
@@ -195,8 +202,8 @@ def main() -> None:
 
     # report optimal configuration
     print("\nOptimal configuration")
-    print(f"  alpha_steer = {best_steer:.3f}")
-    print(f"  alpha_speed = {best_speed:.3f}")
+    print(f"  alpha_left/heading = {best_steer:.3f}")
+    print(f"  alpha_track        = {best_speed:.3f}")
     print(f"  score       = {best_score:.3f}")
     print(f"  crash_free  = {best_crash_free}")
 
