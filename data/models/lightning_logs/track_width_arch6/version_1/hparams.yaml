@@ -1,8 +1,0 @@
-arch_id: 6
-lr: 0.0003
-lr_patience: 15
-lr_scheduler_factor: 0.1
-max_epochs: 700
-optimizer: adamw
-scheduler: cosine
-weight_decay: 0.0001
