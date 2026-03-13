@@ -12,7 +12,7 @@ Usage example (single map, single CPU)::
         --map data/maps/F1/Oschersleben/Oschersleben_map \\
         --waypoints data/maps/F1/Oschersleben/Oschersleben_centerline.tsv \\
         --agent ppo --reward cte --top-k 1 \\
-        --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 \
+        --alpha-left 0.9996583552 --alpha-track 0.9982270658 --alpha-heading 0.9965485302 \
         --timesteps 5000000
 
 Multi-map + multi-CPU (e.g. Slurm node with 32 cores and a GPU)::
@@ -235,15 +235,15 @@ def parse_args() -> argparse.Namespace:
         help="Number of cloud DNNs to call per step (out of m=3)",
     )
     parser.add_argument(
-        "--alpha-left", type=float, default=0.9995553221,
+        "--alpha-left", type=float, default=0.9996583552,
         help="Cloud blending weight for left-wall feature (0=edge only, 1=cloud only)",
     )
     parser.add_argument(
-        "--alpha-track", type=float, default=0.9986653465,
+        "--alpha-track", type=float, default=0.9982270658,
         help="Cloud blending weight for track-width feature",
     )
     parser.add_argument(
-        "--alpha-heading", type=float, default=0.9896705275,
+        "--alpha-heading", type=float, default=0.9965485302,
         help="Cloud blending weight for heading-error feature",
     )
     parser.add_argument(
@@ -283,7 +283,7 @@ def parse_args() -> argparse.Namespace:
     )
     models.add_argument(
         "--cloud-track-width-model", type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch7.pt",
     )
     models.add_argument(
         "--cloud-heading-model", type=str,
@@ -470,7 +470,7 @@ def _run_tag(args: argparse.Namespace) -> str:
 
     Format: ``{agent}_{reward}_k{top_k}_aL{alpha_left}_aT{alpha_track}_aH{alpha_heading}_lat{cloud_latency}``
 
-    Example: ``ppo_cte_k1_aL0.999555_aT0.998665_aH0.989671_lat10``
+    Example: ``ppo_cte_k1_aL0.9996583552_aT0.9982270658_aH0.9965485302_lat10``
     """
     return (
         f"{args.agent.lower()}"

@@ -26,12 +26,12 @@
 : "${CALL_WEIGHTS:=}"
 : "${TARGET_CALL_RATES:=}"
 : "${CLOUD_LATENCY:=10}"
-: "${ALPHA_LEFT:=0.9995553221}"
-: "${ALPHA_TRACK:=0.9986653465}"
-: "${ALPHA_HEADING:=0.9896705275}"
-: "${SIGMA_PROC_LEFT:=0.044961}"
-: "${SIGMA_PROC_TRACK:=0.067937}"
-: "${SIGMA_PROC_HEADING:=0.033182}"
+: "${ALPHA_LEFT:=}"
+: "${ALPHA_TRACK:=}"
+: "${ALPHA_HEADING:=}"
+: "${SIGMA_PROC_LEFT:=}"
+: "${SIGMA_PROC_TRACK:=}"
+: "${SIGMA_PROC_HEADING:=}"
 : "${EXTRA_ARGS:=}"
 
 echo "=== Task $SLURM_JOB_ID: REWARD=$REWARD CLOUD_LATENCY=$CLOUD_LATENCY N_ENVS=$N_ENVS TIMESTEPS=$TIMESTEPS ==="
@@ -59,12 +59,6 @@ CMD=(
     --timesteps "$TIMESTEPS"
     --reward    "$REWARD"
     --cloud-latency  "$CLOUD_LATENCY"
-    --alpha-left     "$ALPHA_LEFT"
-    --alpha-track    "$ALPHA_TRACK"
-    --alpha-heading  "$ALPHA_HEADING"
-    --sigma-proc-left    "$SIGMA_PROC_LEFT"
-    --sigma-proc-track   "$SIGMA_PROC_TRACK"
-    --sigma-proc-heading "$SIGMA_PROC_HEADING"
     --checkpoint-freq 500000
     --eval-freq       1000000
     --eval-episodes   5
@@ -76,6 +70,12 @@ CMD=(
 [[ -n "$RESUME" && -f "$RESUME" ]] && CMD+=(--resume "$RESUME")
 [[ -n "$EVAL_MAP"        ]] && { read -ra _A <<< "$EVAL_MAP";        CMD+=(--eval-map        "${_A[@]}"); }
 [[ -n "$EVAL_WAYPOINTS"  ]] && { read -ra _A <<< "$EVAL_WAYPOINTS";  CMD+=(--eval-waypoints  "${_A[@]}"); }
+[[ -n "$ALPHA_LEFT"      ]] && CMD+=(--alpha-left     "$ALPHA_LEFT")
+[[ -n "$ALPHA_TRACK"     ]] && CMD+=(--alpha-track    "$ALPHA_TRACK")
+[[ -n "$ALPHA_HEADING"   ]] && CMD+=(--alpha-heading  "$ALPHA_HEADING")
+[[ -n "$SIGMA_PROC_LEFT" ]] && CMD+=(--sigma-proc-left    "$SIGMA_PROC_LEFT")
+[[ -n "$SIGMA_PROC_TRACK" ]] && CMD+=(--sigma-proc-track   "$SIGMA_PROC_TRACK")
+[[ -n "$SIGMA_PROC_HEADING" ]] && CMD+=(--sigma-proc-heading "$SIGMA_PROC_HEADING")
 
 # Append any caller-supplied extra flags
 if [[ -n "$EXTRA_ARGS" ]]; then

@@ -341,7 +341,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--track-width-model",
         type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch7.pt",
         help="Path to self-sufficient TorchScript .pt model for total track width.",
     )
 
@@ -365,19 +365,19 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--alpha-left",
         type=float,
-        default=0.9995553221,
+        default=0.9996583552,
         help="Cloud blending weight for left-wall feature (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
         "--alpha-track",
         type=float,
-        default=0.9986653465,
+        default=0.9982270658,
         help="Cloud blending weight for track-width feature.",
     )
     ec.add_argument(
         "--alpha-heading",
         type=float,
-        default=0.9896705275,
+        default=0.9965485302,
         help="Cloud blending weight for heading-error feature.",
     )
     ec.add_argument(
@@ -455,7 +455,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch5.pt",
+        default="data/models/track_width_arch7.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
