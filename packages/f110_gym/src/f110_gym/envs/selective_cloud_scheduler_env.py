@@ -270,7 +270,10 @@ class SelectiveCloudSchedulerEnv(gym.Env):  # pylint: disable=too-many-instance-
             [float(np.clip(p.last_cloud_heading, -pi, pi))], dtype=np.float32
         )
         last = p.last_action
-        out["last_steer"] = np.array([last.steer if last is not None else 0.0], dtype=np.float32)
+        out["last_steer"] = np.array(
+            [float(np.clip(last.steer if last is not None else 0.0, -float(F110_MAX_STEER), float(F110_MAX_STEER)))],
+            dtype=np.float32,
+        )
         out["last_speed"] = np.array(
             [float(np.clip(last.speed if last is not None else 0.0, 0.0, 20.0))],
             dtype=np.float32,

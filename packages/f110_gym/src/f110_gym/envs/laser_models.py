@@ -586,6 +586,8 @@ class ScanSimulator2D:
             noise = rng.normal(0.0, std_dev, size=self.num_beams)
             scan += noise
 
+        np.clip(scan, 0.0, self.max_range, out=scan)
+
         return scan
 
     def get_increment(self) -> float:
