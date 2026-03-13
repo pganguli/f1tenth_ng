@@ -33,7 +33,7 @@ from f110_planning.render_callbacks import (
 )
 from f110_planning.base import CloudScheduler
 from f110_planning.schedulers import FixedIntervalScheduler, RoundRobinScheduler, SensitivityProportionalScheduler
-from f110_planning.utils import add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
+from f110_planning.utils import F110_MAX_STEER, add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
 from f110_planning.visualization.svg_trace import SimTrace, collect_step, render_svg
 from stable_baselines3 import PPO
 import gymnasium.spaces as _gym_spaces
@@ -195,18 +195,28 @@ class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
         """Reconstruct the augmented observation expected by the trained policy."""
         p = self._planner
         last = p.last_action
+        pi = float(np.pi)
         rl_obs = {k: v for k, v in obs.items() if k not in self._OBS_EXCLUDED_KEYS}
-        rl_obs["edge_left_dist"] = np.array([p.last_edge_left], dtype=np.float32)
-        rl_obs["edge_track_width"] = np.array([p.last_edge_track], dtype=np.float32)
-        rl_obs["edge_heading_error"] = np.array([p.last_edge_heading], dtype=np.float32)
-        rl_obs["cloud_left_dist"] = np.array([p.last_cloud_left], dtype=np.float32)
-        rl_obs["cloud_track_width"] = np.array([p.last_cloud_track], dtype=np.float32)
-        rl_obs["cloud_heading_error"] = np.array([p.last_cloud_heading], dtype=np.float32)
+        rl_obs["edge_left_dist"] = np.array([max(0.0, p.last_edge_left)], dtype=np.float32)
+        rl_obs["edge_track_width"] = np.array([max(0.0, p.last_edge_track)], dtype=np.float32)
+        rl_obs["edge_heading_error"] = np.array(
+            [float(np.clip(p.last_edge_heading, -pi, pi))], dtype=np.float32
+        )
+        rl_obs["cloud_left_dist"] = np.array([max(0.0, p.last_cloud_left)], dtype=np.float32)
+        rl_obs["cloud_track_width"] = np.array([max(0.0, p.last_cloud_track)], dtype=np.float32)
+        rl_obs["cloud_heading_error"] = np.array(
+            [float(np.clip(p.last_cloud_heading, -pi, pi))], dtype=np.float32
+        )
         rl_obs["last_steer"] = np.array(
-            [last.steer if last is not None else 0.0], dtype=np.float32
+            [float(np.clip(
+                last.steer if last is not None else 0.0,
+                -float(F110_MAX_STEER), float(F110_MAX_STEER),
+            ))],
+            dtype=np.float32,
         )
         rl_obs["last_speed"] = np.array(
-            [last.speed if last is not None else 0.0], dtype=np.float32
+            [float(np.clip(last.speed if last is not None else 0.0, 0.0, 20.0))],
+            dtype=np.float32,
         )
         rl_obs["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
         # cloud_age was added after some models were trained; only include it

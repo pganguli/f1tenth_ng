@@ -21,22 +21,22 @@ for City in "MexicoCity" "Monza" "Silverstone" "Spa"; do
       --map "data/maps/F1/${City}/${City}_map" \
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
-      --rl-scheduler data/models/PPO_4/ppo_cte_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat0.zip \
+      --rl-scheduler data/models/ppo_cte_k1_aL0.999658_aT0.998227_aH0.996549_lat0.zip \
       --cloud-latency 0;
   # cte_sensitivity_staleness, lat=0
   python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py \
       --map "data/maps/F1/${City}/${City}_map" \
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
-      --rl-scheduler data/models/PPO_4/ppo_cte_sensitivity_staleness_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat0.zip \
+      --rl-scheduler data/models/ppo_cte_sensitivity_staleness_k1_aL0.999658_aT0.998227_aH0.996549_lat0.zip \
       --cloud-latency 0;
   # cte_sensitivity_annealed, lat=0
   python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py \
       --map "data/maps/F1/${City}/${City}_map" \
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
-      --rl-scheduler data/models/PPO_4/ppo_cte_sensitivity_annealed_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat0.zip \
-      --cloud-latency 0 --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --top-k 1;
+      --rl-scheduler ../../../../../data/models/ppo_cte_sensitivity_annealed_k1_aL0.999658_aT0.998227_aH0.996549_lat0.zip \
+      --cloud-latency 0 --top-k 1;
   # Round-robin, lat=10
   python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py \
       --map "data/maps/F1/${City}/${City}_map" \
@@ -57,20 +57,21 @@ for City in "MexicoCity" "Monza" "Silverstone" "Spa"; do
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
       --rl-scheduler data/models/PPO_4/ppo_cte_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat10.zip \
-      --cloud-latency 10 --alpha-left 0.9995553221 --alpha-track 0.9986653465 --alpha-heading 0.9896705275 --top-k 1;
+      --rl-scheduler data/models/ppo_cte_k1_aL0.999658_aT0.998227_aH0.996549_lat10.zip \
+      --cloud-latency 10 --top-k 1;
   # cte_sensitivity_staleness, lat=10
   python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py \
       --map "data/maps/F1/${City}/${City}_map" \
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
-      --rl-scheduler data/models/PPO_4/ppo_cte_sensitivity_staleness_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat10.zip \
+      --rl-scheduler data/models/ppo_cte_sensitivity_staleness_k1_aL0.999658_aT0.998227_aH0.996549_lat10.zip \
       --cloud-latency 10;
   # cte_sensitivity_annealed, lat=10
   python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py \
       --map "data/maps/F1/${City}/${City}_map" \
       --waypoints "data/maps/F1/${City}/${City}_centerline.tsv" \
       --planner edge_cloud --max-laps 2 --render-mode None \
-      --rl-scheduler data/models/PPO_4/ppo_cte_sensitivity_annealed_k1_aL0.9995553221_aT0.9986653465_aH0.9896705275_lat10.zip \
+      --rl-scheduler data/models/ppo_cte_sensitivity_annealed_k1_aL0.999658_aT0.998227_aH0.996549_lat10.zip \
       --cloud-latency 10;
 done
 

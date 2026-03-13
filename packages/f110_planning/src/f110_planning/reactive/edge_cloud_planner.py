@@ -123,6 +123,16 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
         # record whether a cloud call was requested on the last invocation
         self.last_cloud_call: bool = False
 
+    @property
+    def last_call_mask(self) -> list[bool]:
+        """Expose a per-DNN mask compatible with CloudCallCountMetric.
+
+        EdgeCloudPlanner calls all three DNN features together (left-wall,
+        track-width, heading) as a single cloud request, so the mask is
+        uniform: all True when a call was made, all False otherwise.
+        """
+        return [self.last_cloud_call] * 3
+
     # ------------------------------------------------------------------
     # BasePlanner interface
     # ------------------------------------------------------------------
