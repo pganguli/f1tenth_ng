@@ -1,0 +1,8 @@
+arch_id: 7
+lr: 5.0e-05
+lr_patience: 20
+lr_scheduler_factor: 0.5
+max_epochs: 700
+optimizer: adamw
+scheduler: reduce_on_plateau
+weight_decay: 0.0001
