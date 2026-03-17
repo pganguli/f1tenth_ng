@@ -267,6 +267,20 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--burst-window",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "Number of consecutive steps each DNN selection is repeated before "
+            "the scheduler advances to the next group.  With the default of 1 "
+            "the original interleaved pattern is used (l,t,h,l,t,h,…).  Setting "
+            "N>1 groups calls into bursts (l,l,…,t,t,…,h,h,…) while preserving "
+            "the overall per-DNN call rates.  Applies to 'round_robin' and "
+            "'sensitivity' strategies."
+        ),
+    )
+    parser.add_argument(
         "--call-weights",
         type=float,
         nargs="+",
@@ -572,21 +586,29 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
 
         if args.cloud_strategy == "round_robin":
             top_k = getattr(args, "top_k", 1)
+            burst_window = getattr(args, "burst_window", 1)
             inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
             scheduler = RoundRobinScheduler(
-                num_dnns=SelectiveEdgeCloudPlanner.NUM_DNNS, top_k=top_k
+                num_dnns=SelectiveEdgeCloudPlanner.NUM_DNNS,
+                top_k=top_k,
+                burst_window=burst_window,
             )
             return _SelectiveDumbPlanner(inner, scheduler)
 
         if args.cloud_strategy == "sensitivity":
             top_k = getattr(args, "top_k", 1)
+            burst_window = getattr(args, "burst_window", 1)
             weights = getattr(args, "call_weights", None)
             if not weights:
                 raise ValueError(
                     "--call-weights must be provided for the 'sensitivity' cloud strategy."
                 )
             inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
-            scheduler = SensitivityProportionalScheduler(weights=list(weights), top_k=top_k)
+            scheduler = SensitivityProportionalScheduler(
+                weights=list(weights),
+                top_k=top_k,
+                burst_window=burst_window,
+            )
             return _SelectiveDumbPlanner(inner, scheduler)
 
         # rl: auto-detect policy type from saved action space

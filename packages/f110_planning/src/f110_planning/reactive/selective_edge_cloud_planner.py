@@ -65,10 +65,12 @@ class SelectiveEdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instan
     HEADING = 2
     NUM_DNNS = 3
 
-    # Empirical MSE constants from DNN evaluation (used for default alpha computation).
+    # Empirical MSE constants from DNN evaluation (used for age-dependent alpha computation).
     # Order: [LEFT, TRACK, HEADING]
-    _SIGMA2_EDGE: tuple[float, ...] = (0.059444, 0.041763, 0.038003)
-    _SIGMA2_CLOUD: tuple[float, ...] = (0.000212, 0.000522, 0.001409)
+    # Edge: arch1 (left_wall_dist), arch2 (track_width), arch2 (heading_error)
+    # Cloud: arch5 (left_wall_dist), arch7 (track_width), arch6 (heading_error)
+    _SIGMA2_EDGE: tuple[float, ...] = (0.028020, 0.036518, 0.019371)
+    _SIGMA2_CLOUD: tuple[float, ...] = (0.000518, 0.001539, 0.001140)
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
