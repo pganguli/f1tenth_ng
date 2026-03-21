@@ -3,10 +3,11 @@ Shared utilities and constants for F1TENTH simulation and data generation script
 """
 
 import argparse
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import gymnasium as gym
 from f110_gym.envs.base_classes import Integrator
+import numpy as np
 
 # Default map and waypoint configuration
 DEFAULT_MAP = "data/maps/F1/Oschersleben/Oschersleben_map"
@@ -78,8 +79,12 @@ def add_common_sim_args(
     parser.add_argument(
         "--start-theta",
         type=float,
-        default=DEFAULT_START_THETA,
-        help="Initial orientation (yaw) of the vehicle in radians.",
+        default=None,
+        help=(
+            "Initial orientation (yaw) of the vehicle in radians. "
+            "Defaults to the value stored in the map YAML (start_pose[2]), "
+            f"or {DEFAULT_START_THETA} if the YAML has no such key."
+        ),
     )
     parser.add_argument(
         "--render-mode",
@@ -103,6 +108,12 @@ def add_common_sim_args(
         type=int,
         default=DEFAULT_RENDER_FPS,
         help="Target frames per second for rendering.",
+    )
+    parser.add_argument(
+        "--randomize",
+        action="store_true",
+        default=False,
+        help="Randomize starting pose (x, y, theta)."
     )
 
 
@@ -138,3 +149,81 @@ def setup_env(args: argparse.Namespace, render_mode: Optional[str] = None) -> An
         max_laps=getattr(args, "max_laps", None),
     )
     return env
+
+
+def load_start_pose_from_yaml(
+    map_path: str,
+) -> Optional[tuple[float, float, float]]:
+    """
+    Read ``start_pose`` from a map YAML file.
+
+    The YAML key is expected to be a 3-element list ``[x, y, theta]``,
+    matching the ``origin`` convention used by the map format::
+
+        start_pose: [0.0, 0.0, 2.857332]
+
+    Args:
+        map_path: Path to the map without the .yaml extension
+                  (matches the --map CLI argument).
+
+    Returns:
+        ``(start_x, start_y, start_theta)`` if the key is present and valid,
+        otherwise ``None``.
+    """
+    import yaml  # local import to avoid a hard top-level dependency
+
+    yaml_path = map_path + ".yaml"
+    try:
+        with open(yaml_path) as f:
+            data = yaml.safe_load(f)
+        pose = data.get("start_pose")
+        if isinstance(pose, (list, tuple)) and len(pose) == 3:
+            return float(pose[0]), float(pose[1]), float(pose[2])
+    except (OSError, TypeError, AttributeError):
+        pass
+    return None
+
+
+def resolve_start_pose(
+    args: argparse.Namespace,
+) -> tuple[float, float, float]:
+    """
+    Return the starting pose for the vehicle.
+
+    Priority (highest first):
+
+    1. Explicit ``--start-theta`` CLI value (non-None).
+    2. ``start_x`` / ``start_y`` / ``start_theta`` keys in the map YAML.
+    3. Module-level defaults (``DEFAULT_START_X/Y/THETA``).
+
+    ``--start-x`` and ``--start-y`` always fall back to their defaults when
+    not supplied; theta is the only value sourced from the YAML because
+    x/y are universally 0.0 across all current maps.
+
+    Args:
+        args: Parsed arguments from :func:`add_common_sim_args`.
+
+    Returns:
+        ``(start_x, start_y, start_theta)`` as floats.
+    """
+    sx = args.start_x if args.start_x is not None else DEFAULT_START_X
+    sy = args.start_y if args.start_y is not None else DEFAULT_START_Y
+    st = args.start_theta  # None when the user did not pass --start-theta
+
+    if st is None:
+        yaml_pose = load_start_pose_from_yaml(args.map)
+        if yaml_pose is not None:
+            sx, sy, st = yaml_pose
+        else:
+            st = DEFAULT_START_THETA
+    
+    if getattr(args, "randomize", False):
+        # Randomize x/y within ±1.0 units, theta within [-pi, pi]
+        sx = np.random.uniform(sx - 0.5, sx + 0.5)
+        sy = np.random.uniform(sy - 0.5, sy + 0.5)
+        # sx = 0.5
+        # sy = -0.5
+
+        st = np.random.uniform(st-(np.pi)/4, st+(np.pi)/4)
+
+    return float(sx), float(sy), float(st)
