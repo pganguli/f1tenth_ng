@@ -7,6 +7,7 @@ from typing import Any, Optional, Union
 
 import gymnasium as gym
 from f110_gym.envs.base_classes import Integrator
+import numpy as np
 
 # Default map and waypoint configuration
 DEFAULT_MAP = "data/maps/F1/Oschersleben/Oschersleben_map"
@@ -107,6 +108,12 @@ def add_common_sim_args(
         type=int,
         default=DEFAULT_RENDER_FPS,
         help="Target frames per second for rendering.",
+    )
+    parser.add_argument(
+        "--randomize",
+        action="store_true",
+        default=False,
+        help="Randomize starting pose (x, y, theta)."
     )
 
 
@@ -209,5 +216,14 @@ def resolve_start_pose(
             sx, sy, st = yaml_pose
         else:
             st = DEFAULT_START_THETA
+    
+    if getattr(args, "randomize", False):
+        # Randomize x/y within ±1.0 units, theta within [-pi, pi]
+        sx = np.random.uniform(sx - 0.5, sx + 0.5)
+        sy = np.random.uniform(sy - 0.5, sy + 0.5)
+        # sx = 0.5
+        # sy = -0.5
+
+        st = np.random.uniform(st-(np.pi)/4, st+(np.pi)/4)
 
     return float(sx), float(sy), float(st)
