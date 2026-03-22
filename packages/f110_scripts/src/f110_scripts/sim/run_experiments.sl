@@ -9,8 +9,8 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32g
 #SBATCH --time=8:00:00
-#SBATCH --output=slurm_logs/%x_%j.out
-#SBATCH --error=slurm_logs/%x_%j.err
+#SBATCH --output=packages/f110_scripts/src/f110_scripts/sim/slurm_logs/%x_%j.out
+#SBATCH --error=packages/f110_scripts/src/f110_scripts/sim/slurm_logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
 
 # ── Info ──

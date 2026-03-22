@@ -1,7 +1,9 @@
-=== Job ID: 38336438 ===
-=== Node: c151404.ll.unc.edu ===
+=== Job ID: 38461444 ===
+=== Node: g141608.ll.unc.edu ===
 === Working dir: /nas/longleaf/home/tingan/f1tenth_ng ===
 === Working directory ===
 /nas/longleaf/home/tingan/f1tenth_ng
+PYTHONPATH: /nas/longleaf/home/tingan/f1tenth_ng/packages:
 === Starting experiments ===
+Running in: /nas/longleaf/home/tingan/f1tenth_ng
 === Finished ===

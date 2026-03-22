@@ -1,0 +1,3 @@
+packages/f110_scripts/src/f110_scripts/sim/run_experiments.sh: line 34: syntax error near unexpected token `<<<'
+packages/f110_scripts/src/f110_scripts/sim/run_experiments.sh: line 34: `<<<<<<< HEAD'
+srun: error: g141608: task 0: Exited with exit code 2

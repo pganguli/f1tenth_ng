@@ -1,0 +1,488 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_planning/src/f110_planning/__init__.py", line 6, in <module>
+    from .schedulers import FixedIntervalScheduler
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_planning/src/f110_planning/schedulers/__init__.py", line 11
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
+  File "/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py", line 24
+    >>>>>>> 95f809fb041789464291ea49d624ce862a0b59cf
+             ^
+SyntaxError: invalid decimal literal
