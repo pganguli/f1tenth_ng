@@ -438,6 +438,7 @@ def run_episode(
 
     done = False
     step_idx = 0
+    step_cap_hit = False
     medium_calls = 0
     large_calls = 0
     total_cloud_calls = 0
@@ -463,6 +464,7 @@ def run_episode(
         step_idx += 1
         if not done and step_idx >= max_steps:
             done = True
+            step_cap_hit = True
 
     wall_time_s = time.perf_counter() - start_wall
     env.close()
@@ -483,7 +485,7 @@ def run_episode(
             "large_call_fraction": (
                 float(large_calls) / float(total_cloud_calls) if total_cloud_calls else 0.0
             ),
-            "step_cap_hit": float(step_idx >= max_steps),
+            "step_cap_hit": float(step_cap_hit),
             "wall_time_s": round(float(wall_time_s), 4),
             "rt_factor": round(float(report["lap_time_s"]) / wall_time_s, 4),
             "params_json": json.dumps(exp.params, sort_keys=True),
