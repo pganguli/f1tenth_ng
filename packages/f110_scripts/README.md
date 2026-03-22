@@ -170,7 +170,7 @@ jobs via `sbatch_rl.sh`:
 bash packages/f110_scripts/src/f110_scripts/train/train_rl.sh
 ```
 
-Trained models are saved under `data/models/PPO_4/` with filenames of the form:
+Trained models are saved under `data/models/` with filenames of the form:
 
 ```
 ppo_<reward>_k1_aL<alpha_left>_aT<alpha_track>_aH<alpha_heading>_lat<latency>.zip
@@ -180,17 +180,22 @@ ppo_<reward>_k1_aL<alpha_left>_aT<alpha_track>_aH<alpha_heading>_lat<latency>.zi
 
 ## Step 7 — Test RL agents
 
-Runs all scheduler variants (fixed-interval, logistic deviation-aware, and the
-6 RL policies) on four held-out maps (MexicoCity, Monza, Silverstone, Spa) at
-both latency settings:
+Runs the currently enabled scheduler variants in `test_rl.sh` on the script's
+configured held-out maps. In the current version that means:
+
+- three maps: `Spa`, `Nuerburgring`, and `Sochi`
+- fixed-interval and logistic scheduler baselines
+- two active RL policies per latency setting: `cte` and `cte_sensitivity_annealed`
+
+The `cte_sensitivity_staleness` runs remain in the script as commented examples.
 
 ```bash
 bash packages/f110_scripts/src/f110_scripts/train/test_rl.sh 2>&1 | tee test_results_PPO4.txt
 ```
 
 > Before running, verify that the model paths inside `test_rl.sh` match the
-> filenames produced by Step 6.  If you changed alpha or latency values in
-> Step 5, the zip filenames will differ and `test_rl.sh` must be updated to
+> filenames produced by Step 6. If you changed alpha, reward, or latency values
+> in Step 5, the zip filenames will differ and `test_rl.sh` must be updated to
 > match.
 
 ---
@@ -205,5 +210,5 @@ bash packages/f110_scripts/src/f110_scripts/train/test_rl.sh 2>&1 | tee test_res
 | 4a | `eval_nn.py` | MSE table |
 | 4b | `estimate_sigma_proc.py` | σ_proc values |
 | 5 | `sed` updates | Updated shell scripts |
-| 6 | `train_rl.sh` | `data/models/PPO_4/*.zip` |
+| 6 | `train_rl.sh` | `data/models/*.zip` |
 | 7 | `test_rl.sh` | Console / `test_results_PPO4.txt` |

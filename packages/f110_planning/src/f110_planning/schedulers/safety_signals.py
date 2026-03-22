@@ -73,4 +73,3 @@ def build_signals(
         ),
         speed=float(speed_value) if isinstance(speed_value, (int, float)) else None,
     )
-

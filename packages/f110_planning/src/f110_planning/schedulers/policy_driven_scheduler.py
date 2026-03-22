@@ -38,4 +38,3 @@ class PolicyDrivenScheduler(CloudScheduler):  # pylint: disable=too-few-public-m
             signals=signals,
             latest_cloud_action_available=latest_cloud_action is not None,
         )
-

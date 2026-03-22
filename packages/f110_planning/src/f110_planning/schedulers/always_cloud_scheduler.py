@@ -19,4 +19,3 @@ class AlwaysCloudScheduler(CloudScheduler):  # pylint: disable=too-few-public-me
     ) -> bool:
         del step, obs, latest_cloud_action, context
         return True
-
