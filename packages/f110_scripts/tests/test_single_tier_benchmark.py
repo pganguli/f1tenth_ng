@@ -22,6 +22,17 @@ def _load_benchmark_module():
     return module
 
 
+def _load_oracle_module():
+    root = Path(__file__).resolve().parents[3]
+    script_path = root / "scripts/benchmarks/benchmark_single_tier_oracle_baseline.py"
+    spec = spec_from_file_location("benchmark_single_tier_oracle_baseline", script_path)
+    assert spec is not None and spec.loader is not None
+    module = module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_default_experiments_cover_paper_strategies() -> None:
     """Default benchmark sweep should cover all paper strategy families."""
     module = _load_benchmark_module()
@@ -49,6 +60,20 @@ def test_canonical_defaults_target_corrected_10_map_workflow(monkeypatch) -> Non
     assert args.output_stem == "single_tier_paper_strategies_10maps"
     assert args.cloud_latency == module.DEFAULT_CLOUD_LATENCY == 5
     assert args.maps.split(",") == module.DEFAULT_MAPS
+
+
+def test_oracle_defaults_use_zero_latency_full_cloud_reference(monkeypatch) -> None:
+    """The optional reference benchmark should default to a full-cloud latency-0 setup."""
+    module = _load_oracle_module()
+    monkeypatch.setattr(sys, "argv", ["benchmark_single_tier_oracle_baseline.py"])
+
+    args = module.parse_args()
+
+    assert args.output_stem == "single_tier_oracle_baseline_10maps"
+    assert args.cloud_latency == 0
+    assert args.alpha_left == 1.0
+    assert args.alpha_track == 1.0
+    assert args.alpha_heading == 1.0
 
 
 def test_run_episode_reports_scheduler_metrics(monkeypatch) -> None:

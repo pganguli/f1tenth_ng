@@ -179,7 +179,17 @@ class EdgeCloudPlanner(BasePlanner):  # pylint: disable=too-many-instance-attrib
                 k: (v.copy() if isinstance(v, np.ndarray) else v)
                 for k, v in obs.items()
             }
-            self._cloud_requests.append((step + self.cloud_latency, obs_snapshot))
+            if self.cloud_latency <= 0:
+                self._latest_cloud_action = self.cloud_planner.plan(
+                    obs_snapshot, ego_idx=ego_idx
+                )
+                self._latest_cloud_features = (
+                    self.cloud_planner.last_left_dist,
+                    self.cloud_planner.last_track_width,
+                    self.cloud_planner.last_heading_error,
+                )
+            else:
+                self._cloud_requests.append((step + self.cloud_latency, obs_snapshot))
 
         # Keep render-callback pointer in sync
         self.last_target_point = self.edge_planner.last_target_point

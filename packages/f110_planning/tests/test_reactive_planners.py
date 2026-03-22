@@ -191,6 +191,47 @@ def test_edge_cloud_planner_reset_clears_last_cloud_call() -> None:
     assert not planner.last_cloud_call
 
 
+def test_edge_cloud_planner_latency_zero_uses_same_step_cloud_features(
+    reactive_obs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Zero-latency cloud calls should be consumed on the same planning step."""
+    planner = EdgeCloudPlanner(cloud_latency=0, alpha_steer=1.0, alpha_speed=1.0)
+
+    def edge_plan(*_args, **_kwargs) -> Action:
+        planner.edge_planner.last_left_dist = 1.0
+        planner.edge_planner.last_track_width = 2.0
+        planner.edge_planner.last_heading_error = 0.1
+        return Action(steer=0.0, speed=1.0)
+
+    def cloud_plan(*_args, **_kwargs) -> Action:
+        planner.cloud_planner.last_left_dist = 4.0
+        planner.cloud_planner.last_track_width = 6.0
+        planner.cloud_planner.last_heading_error = 0.3
+        return Action(steer=0.4, speed=3.0)
+
+    planner.edge_planner.plan = edge_plan  # type: ignore[method-assign]
+    planner.cloud_planner.plan = cloud_plan  # type: ignore[method-assign]
+
+    def fake_reactive_action(*_args, **kwargs) -> Action:
+        assert kwargs["left_dist"] == pytest.approx(4.0)
+        assert kwargs["right_dist"] == pytest.approx(2.0)
+        assert kwargs["heading_error"] == pytest.approx(0.3)
+        return Action(steer=0.25, speed=2.5)
+
+    monkeypatch.setattr(
+        "f110_planning.reactive.edge_cloud_planner.get_reactive_action",
+        fake_reactive_action,
+    )
+
+    action = planner.plan(copy.deepcopy(reactive_obs))
+
+    assert planner.last_cloud_call
+    assert planner._latest_cloud_features == pytest.approx((4.0, 6.0, 0.3))  # pylint: disable=protected-access
+    assert action.steer == pytest.approx(0.25)
+    assert action.speed == pytest.approx(2.5)
+
+
 def test_multi_tier_edge_cloud_planner_uses_requested_tier_blending(
     reactive_obs: dict[str, Any],
 ) -> None:

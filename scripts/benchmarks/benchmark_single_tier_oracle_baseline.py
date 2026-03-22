@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Canonical reference benchmark: idealized always-hit latency-0 baseline.
+"""Canonical reference benchmark: idealized zero-latency always-cloud baseline.
 
 Reads: the same corrected 10-map setup as the single-tier benchmark.
 Writes: optional idealized-reference artifacts under ``data/benchmarks``.
@@ -42,7 +42,7 @@ DEFAULT_MAPS = [
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
-        description="Optional idealized reference benchmark for the corrected 10-map workflow.",
+        description="Optional idealized zero-latency always-cloud reference for the corrected 10-map workflow.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         epilog=(
             "Status: canonical optional reference. Example: "
@@ -77,7 +77,7 @@ def parse_args() -> argparse.Namespace:
         "--cloud-latency",
         type=int,
         default=0,
-        help="Latency for the oracle baseline, defaulting to 0 steps.",
+        help="Latency for the idealized reference, defaulting to 0 steps.",
     )
     parser.add_argument(
         "--output-stem",
@@ -88,20 +88,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--alpha-left",
         type=float,
-        default=0.2,
-        help="Cloud blend weight for the left-distance feature.",
+        default=1.0,
+        help="Cloud blend weight for the left-distance feature in the reference controller.",
     )
     parser.add_argument(
         "--alpha-track",
         type=float,
-        default=0.2,
-        help="Cloud blend weight for the track-width feature.",
+        default=1.0,
+        help="Cloud blend weight for the track-width feature in the reference controller.",
     )
     parser.add_argument(
         "--alpha-heading",
         type=float,
-        default=0.7,
-        help="Cloud blend weight for the heading-error feature.",
+        default=1.0,
+        help="Cloud blend weight for the heading-error feature in the reference controller.",
     )
     parser.add_argument(
         "--deviation-steer-weight",
@@ -135,7 +135,7 @@ def main() -> None:
         deviation_steer_weight=args.deviation_steer_weight,
         deviation_speed_weight=args.deviation_speed_weight,
     )
-    experiment = Experiment("always_hit", "always", {})
+    experiment = Experiment("zero_latency_full_cloud_reference", "always", {})
 
     results = [
         run_episode(

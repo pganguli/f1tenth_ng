@@ -941,7 +941,6 @@ def main() -> None:
     print(f"Real Wall Time:    {total_real_time:.3f}s")
     if total_real_time > 0:
         print(f"RT-Factor:         {laptime / total_real_time:.2f}x")
-
     env.close()
 
 

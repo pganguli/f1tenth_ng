@@ -135,7 +135,7 @@ def parse_args() -> argparse.Namespace:
         "--oracle-summary-csv",
         type=str,
         default="",
-        help="Optional path to an always-hit latency-0 oracle summary CSV.",
+        help="Optional path to an idealized zero-latency full-cloud reference summary CSV.",
     )
     parser.add_argument(
         "--output-dir",
@@ -621,7 +621,7 @@ def figure_normalized_family_frontiers(
     add_title_block(
         fig,
         "Family Frontiers Relative To The Latency-0 Baseline",
-        "Y-axis is the competitive ratio RMSE / oracle-RMSE. 1.0 is the latency-0 always-hit reference; values below 1 mean the latency-5 run beat that reference on that map.",
+        "Y-axis is the competitive ratio RMSE / reference-RMSE. 1.0 is the idealized zero-latency full-cloud reference; values below 1 mean the latency-5 run beat that empirical anchor on that map.",
     )
 
     for axis, map_name in zip(axes_flat, map_order):
@@ -1123,8 +1123,8 @@ def figure_roofline_oracle(
     ax.set_facecolor(PANEL)
     add_title_block(
         fig,
-        "Roofline Comparison Against The Oracle Floor",
-        "Each row starts at the latency-0 always-hit reference with ratio 1.0. The second anchor is realistic always-hit at latency 5, so the overlaid methods show how much of that gap they recover.",
+        "Roofline Comparison Against The Zero-Latency Reference",
+        "Each row starts at the idealized zero-latency full-cloud reference with ratio 1.0. The second anchor is realistic always-hit at latency 5, so the overlaid methods show how much of that gap they recover.",
     )
 
     y_positions = np.arange(len(merged))

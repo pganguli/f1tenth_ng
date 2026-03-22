@@ -96,7 +96,7 @@ def add_title(fig: plt.Figure, title: str, subtitle: str) -> None:
         0.03,
         0.965,
         title,
-        fontsize=26,
+        fontsize=22,
         fontweight="bold",
         color=TEXT,
         ha="left",
@@ -104,13 +104,24 @@ def add_title(fig: plt.Figure, title: str, subtitle: str) -> None:
     )
     fig.text(
         0.03,
-        0.925,
+        0.918,
         subtitle,
-        fontsize=11.5,
+        fontsize=11.0,
         color=MUTED,
         ha="left",
         va="top",
     )
+
+
+def _trial_text(summary: pd.DataFrame) -> str:
+    """Return a compact trial-count description."""
+    trials = sorted({int(value) for value in summary["trials"].dropna().astype(int)})
+    if not trials:
+        return "trial count unavailable"
+    if len(trials) == 1:
+        return f"n={trials[0]} trials per configuration"
+    joined = ", ".join(str(value) for value in trials)
+    return f"trial counts present: {joined}"
 
 
 def best_target_table(summary: pd.DataFrame) -> pd.DataFrame:
@@ -144,9 +155,35 @@ def figure_target_band_winners(
 ) -> list[Path]:
     """Plot the best target-band configuration per map with clean side labels."""
     winners = best_target_table(summary)
+    total_maps = summary["map_name"].nunique()
+    trial_text = _trial_text(summary)
+    if winners.empty:
+        fig = plt.figure(figsize=(12.0, 4.5))
+        fig.patch.set_facecolor(BG)
+        ax = fig.add_subplot(111)
+        ax.set_facecolor(PANEL)
+        ax.axis("off")
+        ax.text(
+            0.5,
+            0.5,
+            "No configurations landed inside the 55-65% CCR band.",
+            ha="center",
+            va="center",
+            fontsize=16,
+            fontweight="bold",
+            color=TEXT,
+        )
+        add_title(
+            fig,
+            "Best 55-65% CCR Configuration Per Map",
+            f"No in-band winners across {total_maps} maps; {trial_text}.",
+        )
+        return save_figure_formats(fig, out_dir, "curated_target_band_winners", formats, dpi)
+
     y_pos = np.arange(len(winners))
 
-    fig = plt.figure(figsize=(14.0, 9.4))
+    fig_height = max(4.8, 2.6 + 1.6 * len(winners))
+    fig = plt.figure(figsize=(14.0, fig_height))
     fig.patch.set_facecolor(BG)
     grid = fig.add_gridspec(
         1,
@@ -190,8 +227,8 @@ def figure_target_band_winners(
             row_y,
             (
                 f"{STRATEGY_DISPLAY[row.strategy]}  "
-                f"|  CCR {row.cloud_call_rate_mean:.3f}  "
-                f"|  RMSE {row.crosstrack_rmse_m_mean:.3f}"
+                f"|  CCR {row.cloud_call_rate_mean:.3f}±{row.cloud_call_rate_std:.3f}  "
+                f"|  RMSE {row.crosstrack_rmse_m_mean:.3f}±{row.crosstrack_rmse_m_std:.3f}"
             ),
             fontsize=11.3,
             color=TEXT,
@@ -201,7 +238,10 @@ def figure_target_band_winners(
     add_title(
         fig,
         "Best 55-65% CCR Configuration Per Map",
-        "Negative bars beat the always-hit baseline. The right-hand label reports the winning family, achieved cloud-call rate, and RMSE.",
+        (
+            f"Showing {len(winners)} of {total_maps} maps with in-band candidates. "
+            f"Negative bars beat always-hit; {trial_text}."
+        ),
     )
     return save_figure_formats(fig, out_dir, "curated_target_band_winners", formats, dpi)
 
@@ -231,7 +271,10 @@ def figure_strategy_wins_curated(
     add_title(
         fig,
         "Which Strategy Actually Wins?",
-        "Top panel counts the best overall configuration per map. Bottom panel counts the best configuration inside the 55-65% CCR target band.",
+        (
+            f"Top: best overall per map. Bottom: best inside the 55-65% CCR band. "
+            f"{best_target_table(summary).shape[0]} maps had in-band winners; {_trial_text(summary)}."
+        ),
     )
 
     for axis, series, title in zip(
@@ -250,7 +293,8 @@ def figure_strategy_wins_curated(
         axis.invert_yaxis()
         axis.grid(axis="x", alpha=0.3, color=GRID)
         axis.set_title(title, fontsize=15, fontweight="bold", loc="left", pad=8)
-        axis.set_xlim(0, max(6.6, float(values.max()) + 0.6))
+        max_wins = max(1.6, float(values.max()) + 0.6)
+        axis.set_xlim(0, max(max_wins, summary["map_name"].nunique() + 0.8))
         for row_y, value in zip(y, values):
             axis.text(
                 value + 0.14,
@@ -293,9 +337,44 @@ def figure_target_band_head_to_head(
         )
 
     compare = pd.DataFrame(rows)
+    total_maps = summary["map_name"].nunique()
+    present_families = sorted(
+        {
+            STRATEGY_DISPLAY[strategy]
+            for strategy in best["strategy"].unique()
+            if strategy in STRATEGY_DISPLAY
+        }
+    )
+    if compare.empty:
+        fig = plt.figure(figsize=(12.0, 4.5))
+        fig.patch.set_facecolor(BG)
+        ax = fig.add_subplot(111)
+        ax.set_facecolor(PANEL)
+        ax.axis("off")
+        ax.text(
+            0.5,
+            0.5,
+            "No maps contained both Bernoulli families inside the target band.",
+            ha="center",
+            va="center",
+            fontsize=16,
+            fontweight="bold",
+            color=TEXT,
+        )
+        add_title(
+            fig,
+            "Target-Band Head-To-Head: Bernoulli vs Bernoulli+Guard",
+            (
+                f"Showing 0 of {total_maps} maps. Families present in-band: "
+                f"{', '.join(present_families) if present_families else 'none'}."
+            ),
+        )
+        return save_figure_formats(fig, out_dir, "curated_target_band_head_to_head", formats, dpi)
+
     y = np.arange(len(compare))
 
-    fig = plt.figure(figsize=(13.8, 8.9))
+    fig_height = max(4.8, 2.6 + 1.6 * len(compare))
+    fig = plt.figure(figsize=(13.8, fig_height))
     fig.patch.set_facecolor(BG)
     grid = fig.add_gridspec(
         1,
@@ -362,8 +441,11 @@ def figure_target_band_head_to_head(
 
     add_title(
         fig,
-        "Target-Band Head-To-Head: Bernoulli vs Bernoulli+Guard",
-        "Only these two families produced 55-65% CCR configurations on the corrected 10-map subset. Left is better.",
+        "Head-To-Head Inside The 55-65% CCR Band",
+        (
+            f"Showing {len(compare)} of {total_maps} maps where both families appear in-band. "
+            f"Families present in-band: {', '.join(present_families)}. Left is better."
+        ),
     )
     return save_figure_formats(fig, out_dir, "curated_target_band_head_to_head", formats, dpi)
 
@@ -381,6 +463,14 @@ def run(
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     summary = load_single_summary(single_summary_csv, target_low, target_high)
+    defaults = {
+        "trials": 1,
+        "cloud_call_rate_std": 0.0,
+        "crosstrack_rmse_m_std": 0.0,
+    }
+    for column, default_value in defaults.items():
+        if column not in summary.columns:
+            summary[column] = default_value
 
     outputs: list[Path] = []
     outputs.extend(figure_target_band_winners(summary, out_dir, formats, dpi))

@@ -1,6 +1,11 @@
 """Tests for cloud scheduler implementations."""
 
-from f110_planning.schedulers import FixedIntervalScheduler, RLScheduler
+from f110_planning.schedulers import (
+    FixedIntervalScheduler,
+    RLScheduler,
+    RoundRobinScheduler,
+    SensitivityProportionalScheduler,
+)
 
 
 def test_fixed_interval() -> None:
@@ -23,3 +28,9 @@ def test_rl_scheduler_basic() -> None:
     # clearing via reset
     sched.reset()
     assert not sched.should_call_cloud(0, {}, None)
+
+
+def test_legacy_scheduler_exports_remain_available() -> None:
+    """Older scheduler imports should remain available from the package root."""
+    assert RoundRobinScheduler is not None
+    assert SensitivityProportionalScheduler is not None

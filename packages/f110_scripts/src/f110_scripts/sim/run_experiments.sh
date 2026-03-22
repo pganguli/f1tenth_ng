@@ -1,11 +1,17 @@
 #!/bin/bash
 
+# Legacy helper for quick manual comparisons.
+# Canonical benchmark workflow lives in scripts/benchmarks/README.md.
+
 # =========================
 # CONFIG
 # =========================
 PY_SCRIPT="packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py"
 OUTPUT_DIR="results"
 N_RUNS=1   # keep small for debugging
+ALPHA_LEFT="0.999658"
+ALPHA_TRACK="0.998227"
+ALPHA_HEADING="0.996549"
 
 # Maps + waypoints (paired by index)
 MAPS=(
@@ -65,12 +71,18 @@ for idx in ${!MAPS[@]}; do
                     EXTRA_ARGS="--cloud-strategy logistic --logistic-center 0.03 --logistic-slope 40"
 
                 elif [ "$STRAT" == "rl_simple" ]; then
-                    MODEL="data/models/ppo_cte_k1_as0.7_asp0.2_lat${LAT}.zip"
+                    MODEL="data/models/ppo_cte_k1_aL${ALPHA_LEFT}_aT${ALPHA_TRACK}_aH${ALPHA_HEADING}_lat${LAT}.zip"
                     EXTRA_ARGS="--cloud-strategy rl --rl-scheduler $MODEL"
 
                 elif [ "$STRAT" == "rl_boot" ]; then
-                    MODEL="data/models/ppo_cte_sensitivity_annealed_k1_as0.7_asp0.2_lat${LAT}.zip"
+                    MODEL="data/models/ppo_cte_sensitivity_annealed_k1_aL${ALPHA_LEFT}_aT${ALPHA_TRACK}_aH${ALPHA_HEADING}_lat${LAT}.zip"
                     EXTRA_ARGS="--cloud-strategy rl --rl-scheduler $MODEL"
+                fi
+
+                if [[ "$STRAT" == rl_* ]] && [ ! -f "$MODEL" ]; then
+                    echo "Warning: missing RL scheduler checkpoint at $MODEL"
+                    echo "$i,NaN" >> $OUTPUT_FILE
+                    continue
                 fi
 
                 # -------------------------
@@ -81,6 +93,9 @@ for idx in ${!MAPS[@]}; do
                     --waypoints $WP \
                     --planner edge_cloud \
                     --cloud-latency $LAT \
+                    --alpha-left $ALPHA_LEFT \
+                    --alpha-track $ALPHA_TRACK \
+                    --alpha-heading $ALPHA_HEADING \
                     --render-mode None \
                     --max-laps 2 \
                     --randomize \

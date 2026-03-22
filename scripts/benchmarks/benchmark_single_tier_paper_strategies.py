@@ -454,6 +454,7 @@ def run_episode(
     call_steps: list[int] = []
     collision_steps = 0
     done = False
+    step_cap_hit = False
     step_idx = 0
     start_wall = time.perf_counter()
 
@@ -469,8 +470,9 @@ def run_episode(
         collision_steps += int(bool(obs["collisions"][0] > 0))
         done = bool(terminated or truncated)
         step_idx += 1
-        if step_idx >= max_steps:
+        if not done and step_idx >= max_steps:
             done = True
+            step_cap_hit = True
 
     wall_time_s = time.perf_counter() - start_wall
     env.close()
@@ -500,7 +502,7 @@ def run_episode(
             "max_call_gap_steps": round(float(max_gap), 4),
             "collision_count": float(collision_count),
             "collision_steps": float(collision_steps),
-            "step_cap_hit": float(step_idx >= max_steps),
+            "step_cap_hit": float(step_cap_hit),
             "wall_time_s": round(float(wall_time_s), 4),
             "rt_factor": (
                 round(float(report["lap_time_s"]) / wall_time_s, 4)
@@ -523,6 +525,7 @@ def summarize(results: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame
         .agg(
             trials=("run_idx", "count"),
             collision_rate=("collision", "mean"),
+            step_cap_rate=("step_cap_hit", "mean"),
             collision_count_mean=("collision_count", "mean"),
             collision_steps_mean=("collision_steps", "mean"),
             laps_completed_mean=("laps_completed", "mean"),
@@ -555,6 +558,7 @@ def summarize(results: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame
             "map_name",
             "cloud_latency",
             "collision_rate",
+            "step_cap_rate",
             "crosstrack_rmse_m_mean",
             "cloud_call_rate_mean",
             "experiment",

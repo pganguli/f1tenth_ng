@@ -105,7 +105,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--summary-csv",
         type=str,
-        default="data/benchmarks/single_tier_paper_strategies_summary.csv",
+        default="data/benchmarks/single_tier_paper_strategies_10maps_summary.csv",
         help="Path to the aggregated benchmark summary CSV.",
     )
     parser.add_argument(
