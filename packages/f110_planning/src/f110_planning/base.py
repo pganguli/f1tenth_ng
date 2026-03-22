@@ -3,7 +3,8 @@ Base classes and common types for F1TENTH Planning.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple
+from enum import Enum
+from typing import Any, Mapping, NamedTuple
 
 
 class Action(NamedTuple):
@@ -17,6 +18,13 @@ class Action(NamedTuple):
 
     steer: float
     speed: float
+
+
+class CloudTier(str, Enum):
+    """Available cloud tiers for multi-tier edge/cloud planning."""
+
+    MEDIUM = "medium"
+    LARGE = "large"
 
 
 class BasePlanner(ABC):  # pylint: disable=too-few-public-methods
@@ -54,6 +62,7 @@ class CloudScheduler(ABC):  # pylint: disable=too-few-public-methods
         step: int,
         obs: dict[str, Any],
         latest_cloud_action: Action | None,
+        context: dict[str, Any] | None = None,
     ) -> bool:
         """
         Return ``True`` to issue a cloud request on this step.
@@ -63,7 +72,36 @@ class CloudScheduler(ABC):  # pylint: disable=too-few-public-methods
             obs: The current observation dict.
             latest_cloud_action: The most recent cloud action received
                 (``None`` if no cloud result has arrived yet).
+            context: Optional runtime context from the edge planner
+                (e.g., uncertainty estimates).
 
         Returns:
             Whether to send a new cloud inference request.
+        """
+
+
+class TieredCloudScheduler(ABC):  # pylint: disable=too-few-public-methods
+    """
+    Decide which cloud tier to invoke for multi-tier cloud planning.
+    """
+
+    @abstractmethod
+    def choose_cloud_tier(
+        self,
+        step: int,
+        obs: dict[str, Any],
+        latest_cloud_actions: Mapping[CloudTier, Action | None],
+        context: dict[str, Any] | None = None,
+    ) -> CloudTier | None:
+        """
+        Return the cloud tier to request on this step, or ``None`` for edge-only.
+
+        Args:
+            step: The current simulation step (0-based).
+            obs: The current observation dict.
+            latest_cloud_actions: Latest available action for each cloud tier.
+            context: Optional runtime context from the planner.
+
+        Returns:
+            Requested cloud tier or ``None`` if no cloud request should be issued.
         """

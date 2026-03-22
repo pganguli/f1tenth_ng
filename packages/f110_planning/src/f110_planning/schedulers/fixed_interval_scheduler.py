@@ -25,5 +25,7 @@ class FixedIntervalScheduler(CloudScheduler):  # pylint: disable=too-few-public-
         step: int,
         obs: dict[str, Any],
         latest_cloud_action: Action | None,
+        context: dict[str, Any] | None = None,
     ) -> bool:
+        del obs, latest_cloud_action, context  # unused by fixed-interval policy
         return step % self.interval == 0

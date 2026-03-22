@@ -10,6 +10,12 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+try:
+    from stable_baselines3 import PPO
+except ModuleNotFoundError:
+    PPO = None
+
 from f110_planning.metrics import MetricAggregator
 from f110_planning.reactive import (
     BubblePlanner,
@@ -18,65 +24,70 @@ from f110_planning.reactive import (
     EdgeCloudPlanner,
     GapFollowerPlanner,
     LidarDNNPlanner,
-    SelectiveEdgeCloudPlanner,
+    MultiTierEdgeCloudPlanner,
 )
 from f110_planning.render_callbacks import (
     create_camera_tracking,
+    create_cloud_call_renderer,
     create_dynamic_waypoint_renderer,
     create_heading_error_renderer,
     create_trace_renderer,
-    create_cloud_call_renderer,
-    create_selective_cloud_call_renderer,
     create_waypoint_renderer,
     render_lidar,
     render_side_distances,
 )
 from f110_planning.base import CloudScheduler
-from f110_planning.schedulers import FixedIntervalScheduler, RoundRobinScheduler, SensitivityProportionalScheduler
-from f110_planning.utils import F110_MAX_STEER, add_common_sim_args, load_waypoints, resolve_start_pose, setup_env
-from f110_planning.visualization.svg_trace import SimTrace, collect_step, render_svg
-from stable_baselines3 import PPO
-import gymnasium.spaces as _gym_spaces
+from f110_planning.schedulers import (
+    AlwaysCloudScheduler,
+    BernoulliMaxMissConfig,
+    BernoulliMaxMissPolicy,
+    FixedIntervalScheduler,
+    FixedBernoulliConfig,
+    FixedBernoulliPolicy,
+    PolicyDrivenScheduler,
+    DeterministicDeviationConfig,
+    DeterministicDeviationPolicy,
+    LogisticRiskConfig,
+    LogisticRiskPolicy,
+    ExponentialRiskConfig,
+    ExponentialRiskPolicy,
+    PiecewiseLinearRampConfig,
+    PiecewiseLinearRampPolicy,
+    TieredPolicyDrivenScheduler,
+    TieredProbabilisticRiskConfig,
+    TieredProbabilisticRiskPolicy,
+    TieredThresholdConfig,
+    TieredThresholdPolicy,
+)
+from f110_planning.utils import (
+    add_common_sim_args,
+    load_waypoints,
+    resolve_start_pose,
+    setup_env,
+)
 
 
 # ------------------------------------------------------------------
-# Shared top-k helper (mirrors SelectiveCloudSchedulerEnv._resolve_topk)
-# ------------------------------------------------------------------
-def _resolve_topk(logits: np.ndarray, top_k: int) -> list[bool]:
-    """Numerically-stable softmax → top-k bool mask."""
-    logits = np.asarray(logits, dtype=np.float64).ravel()
-    shifted = logits - logits.max()
-    probs = np.exp(shifted)
-    probs /= probs.sum()
-    top_k_idx = np.argsort(probs)[-top_k:]
-    mask = [False] * len(logits)
-    for i in top_k_idx:
-        mask[i] = True
-    return mask
-
-
-# ------------------------------------------------------------------
-# Cloud scheduler wrapper for *binary* policies saved by train_rl.py
+# Cloud scheduler wrapper for policies saved by train_rl.py
 # ------------------------------------------------------------------
 class PolicyScheduler(CloudScheduler):
-    """``CloudScheduler`` backed by an SB3 binary policy (Discrete / Box(1))."""
+    """``CloudScheduler`` backed by an SB3 PPO policy"""
 
     def __init__(self, policy_path: str) -> None:
+        if PPO is None:
+            raise ModuleNotFoundError(
+                "stable_baselines3 is required for --cloud-strategy rl"
+            )
         self._model = PPO.load(policy_path)
-
-    @classmethod
-    def _from_model(cls, model: Any) -> "PolicyScheduler":
-        """Construct from an already-loaded SB3 model (skips file I/O)."""
-        inst = cls.__new__(cls)
-        inst._model = model  # pylint: disable=protected-access
-        return inst
 
     def should_call_cloud(
         self,
         step: int,
         obs: dict[str, Any],
         latest_cloud_action: Any | None,
+        context: dict[str, Any] | None = None,
     ) -> bool:
+        del step, latest_cloud_action, context
         # the policy was trained on observations produced by the RL wrapper,
         # which include a few extra keys.  When running normal simulations the
         # raw env obs lack those fields, causing SB3 to raise a KeyError.  We
@@ -85,147 +96,12 @@ class PolicyScheduler(CloudScheduler):
         obs_rl = {**obs}
         obs_rl.setdefault("cloud_request_pending", 0)
         obs_rl.setdefault("latest_cloud_action", np.array([0.0, 0.0]))
+        obs_rl.setdefault("crosstrack_dist", np.array([0.0]))
         action, _ = self._model.predict(obs_rl, deterministic=True)
         return bool(action)
 
     def reset(self) -> None:  # type: ignore[override]
         """No persistent state to reset for a stateless policy."""
-
-
-# ------------------------------------------------------------------
-# ------------------------------------------------------------------
-# Thin wrapper: SelectiveEdgeCloudPlanner + any get_call_mask() scheduler
-# ------------------------------------------------------------------
-class _SelectiveDumbPlanner:  # pylint: disable=too-few-public-methods
-    """Wraps :class:`SelectiveEdgeCloudPlanner` with a deterministic mask scheduler.
-
-    The scheduler must expose ``get_call_mask() -> list[bool]`` and
-    ``reset()``.  Matches the public surface of
-    :class:`SelectivePolicyPlanner` so rendering callbacks work unchanged.
-    """
-
-    def __init__(
-        self,
-        inner_planner: SelectiveEdgeCloudPlanner,
-        scheduler: Any,
-    ) -> None:
-        self._planner = inner_planner
-        self._scheduler = scheduler
-
-    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Any:
-        call_mask = self._scheduler.get_call_mask()
-        return self._planner.plan(obs, call_mask=call_mask, ego_idx=ego_idx)
-
-    def reset(self) -> None:
-        self._planner.reset()
-        self._scheduler.reset()
-
-    @property
-    def last_call_mask(self) -> list[bool]:
-        return self._planner.last_call_mask
-
-    @property
-    def last_target_point(self) -> Any:
-        return self._planner.last_target_point
-
-
-# Selective-policy planner (Box(3) logit action, per-DNN scheduling)
-# ------------------------------------------------------------------
-class SelectivePolicyPlanner:  # pylint: disable=too-few-public-methods
-    """Wraps :class:`SelectiveEdgeCloudPlanner` + a trained SB3 policy.
-
-    At each planning step the policy predicts logits over the m=3 DNN slots;
-    the top-k indices are selected as the ``call_mask`` passed to the inner
-    :class:`SelectiveEdgeCloudPlanner`.  The augmented RL observation is
-    reconstructed from the planner's last outputs so the policy receives the
-    same feature vector it was trained on.
-    """
-
-    def __init__(
-        self,
-        inner_planner: SelectiveEdgeCloudPlanner,
-        model: Any,
-        waypoints: np.ndarray,
-        top_k: int = 1,
-    ) -> None:
-        self._planner = inner_planner
-        self._model = model
-        self._waypoints = waypoints
-        self._top_k = top_k
-        # Keys expected by this model's stored observation space — used to
-        # gracefully handle models trained before cloud_age was added.
-        self._model_obs_keys: frozenset[str] = frozenset(
-            getattr(model, "observation_space", {}).spaces.keys()
-            if hasattr(getattr(model, "observation_space", None), "spaces")
-            else []
-        )
-
-    # ------------------------------------------------------------------
-    # Public planner interface
-    # ------------------------------------------------------------------
-    def plan(self, obs: dict[str, Any], ego_idx: int = 0) -> Any:
-        obs_rl = self._build_rl_obs(obs)
-        logits, _ = self._model.predict(obs_rl, deterministic=True)
-        call_mask = _resolve_topk(np.asarray(logits), self._top_k)
-        return self._planner.plan(obs, call_mask=call_mask, ego_idx=ego_idx)
-
-    def reset(self) -> None:
-        self._planner.reset()
-
-    # Forward render-callback attributes
-    @property
-    def last_call_mask(self) -> list[bool]:
-        return self._planner.last_call_mask
-
-    @property
-    def last_target_point(self) -> Any:
-        return self._planner.last_target_point
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-    # Keys that SelectiveCloudSchedulerEnv strips from the agent observation.
-    # Must stay in sync with SelectiveCloudSchedulerEnv._OBS_EXCLUDED_KEYS.
-    _OBS_EXCLUDED_KEYS: frozenset[str] = frozenset({
-        "poses_x", "poses_y", "poses_theta",
-        "ang_vels_z", "ego_idx", "collisions", "lap_times", "lap_counts",
-    })
-
-    def _build_rl_obs(self, obs: dict[str, Any]) -> dict[str, Any]:
-        """Reconstruct the augmented observation expected by the trained policy."""
-        p = self._planner
-        last = p.last_action
-        pi = float(np.pi)
-        rl_obs = {k: v for k, v in obs.items() if k not in self._OBS_EXCLUDED_KEYS}
-        rl_obs["edge_left_dist"] = np.array([max(0.0, p.last_edge_left)], dtype=np.float32)
-        rl_obs["edge_track_width"] = np.array([max(0.0, p.last_edge_track)], dtype=np.float32)
-        rl_obs["edge_heading_error"] = np.array(
-            [float(np.clip(p.last_edge_heading, -pi, pi))], dtype=np.float32
-        )
-        rl_obs["cloud_left_dist"] = np.array([max(0.0, p.last_cloud_left)], dtype=np.float32)
-        rl_obs["cloud_track_width"] = np.array([max(0.0, p.last_cloud_track)], dtype=np.float32)
-        rl_obs["cloud_heading_error"] = np.array(
-            [float(np.clip(p.last_cloud_heading, -pi, pi))], dtype=np.float32
-        )
-        rl_obs["last_steer"] = np.array(
-            [float(np.clip(
-                last.steer if last is not None else 0.0,
-                -float(F110_MAX_STEER), float(F110_MAX_STEER),
-            ))],
-            dtype=np.float32,
-        )
-        rl_obs["last_speed"] = np.array(
-            [float(np.clip(last.speed if last is not None else 0.0, 0.0, 20.0))],
-            dtype=np.float32,
-        )
-        rl_obs["cloud_calls_mask"] = np.array(p.last_call_mask, dtype=np.int8)
-        # cloud_age was added after some models were trained; only include it
-        # when the loaded model's observation space actually expects it.
-        if not self._model_obs_keys or "cloud_age" in self._model_obs_keys:
-            rl_obs["cloud_age"] = np.clip(
-                np.array(p.last_cloud_age, dtype=np.float32), 0.0, 999.0
-            )
-        return rl_obs
 
 
 def _build_reactive_parser() -> argparse.ArgumentParser:
@@ -248,7 +124,15 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--planner",
         type=str,
-        choices=["bubble", "gap", "disparity", "dynamic", "dnn", "edge_cloud"],
+        choices=[
+            "bubble",
+            "gap",
+            "disparity",
+            "dynamic",
+            "dnn",
+            "edge_cloud",
+            "multi_tier_edge_cloud",
+        ],
         default="edge_cloud",
         help="Algorithm for obstacle avoidance and navigation.",
     )
@@ -256,39 +140,30 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cloud-strategy",
         type=str,
-        choices=["always", "interval", "rl", "round_robin", "sensitivity"],
+        choices=[
+            "always",
+            "hybrid",
+            "interval",
+            "rl",
+            "deterministic",
+            "fixed_bernoulli",
+            "bernoulli_max_miss",
+            "logistic",
+            "exponential",
+            "piecewise_ramp",
+            "tiered_probabilistic",
+            "tiered_threshold",
+        ],
         default="rl",
         help=(
             "Cloud calling strategy: 'always' issues a request every step, "
-            "'interval' uses --cloud-interval spacing, 'rl' loads a policy "
-            "specified by --rl-scheduler, 'round_robin' cycles through DNNs "
-            "sequentially (top-k per step), and 'sensitivity' calls DNNs "
-            "proportionally to --call-weights."
-        ),
-    )
-    parser.add_argument(
-        "--burst-window",
-        type=int,
-        default=1,
-        metavar="N",
-        help=(
-            "Number of consecutive steps each DNN selection is repeated before "
-            "the scheduler advances to the next group.  With the default of 1 "
-            "the original interleaved pattern is used (l,t,h,l,t,h,…).  Setting "
-            "N>1 groups calls into bursts (l,l,…,t,t,…,h,h,…) while preserving "
-            "the overall per-DNN call rates.  Applies to 'round_robin' and "
-            "'sensitivity' strategies."
-        ),
-    )
-    parser.add_argument(
-        "--call-weights",
-        type=float,
-        nargs="+",
-        default=None,
-        metavar="W",
-        help=(
-            "Per-DNN sensitivity weights for the 'sensitivity' cloud strategy "
-            "(space-separated floats, one per DNN slot; normalised internally)."
+            "'hybrid' also requests cloud every step, "
+            "'interval' uses --cloud-interval spacing, and 'rl' loads a "
+            "policy specified by --rl-scheduler. Safety strategies include "
+            "'deterministic', 'fixed_bernoulli', 'bernoulli_max_miss', "
+            "'logistic', 'exponential', and 'piecewise_ramp'. "
+            "Multi-tier strategies include "
+            "'tiered_probabilistic' and 'tiered_threshold'."
         ),
     )
 
@@ -336,36 +211,16 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--cloud-dot-history",
-        type=int,
-        default=10000,
-        help="Maximum number of cloud-call dots retained on the plot before oldest are removed.",
-    )
-
-    parser.add_argument(
-        "--svg-output",
-        type=str,
-        default=None,
-        metavar="PATH",
-        help=(
-            "If set, save a vector SVG trace of the car path and cloud-call "
-            "regions to this file after the simulation ends.  The map is drawn "
-            "with a white background; cloud calls appear as translucent shaded "
-            "regions and the car path is drawn on top."
-        ),
-    )
-
-    parser.add_argument(
         "--left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch5.pt",
+        default="data/models/left_wall_dist_arch6.pt",
         help="Path to self-sufficient TorchScript .pt model for left wall distance.",
     )
 
     parser.add_argument(
         "--track-width-model",
         type=str,
-        default="data/models/track_width_arch7.pt",
+        default="data/models/track_width_arch6.pt",
         help="Path to self-sufficient TorchScript .pt model for total track width.",
     )
 
@@ -387,40 +242,16 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
-        "--alpha-left",
+        "--alpha-steer",
         type=float,
-        default=0.9996583552,
-        help="Cloud blending weight for left-wall feature (0 = edge only, 1 = cloud only).",
+        default=0.5,
+        help="Cloud weight for steering (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
-        "--alpha-track",
+        "--alpha-speed",
         type=float,
-        default=0.9982270658,
-        help="Cloud blending weight for track-width feature.",
-    )
-    ec.add_argument(
-        "--alpha-heading",
-        type=float,
-        default=0.9965485302,
-        help="Cloud blending weight for heading-error feature.",
-    )
-    ec.add_argument(
-        "--sigma-proc-left",
-        type=float,
-        default=0.044961,
-        help="Process-noise std for left-wall (enables age-dependent blending).",
-    )
-    ec.add_argument(
-        "--sigma-proc-track",
-        type=float,
-        default=0.067937,
-        help="Process-noise std for track-width (enables age-dependent blending).",
-    )
-    ec.add_argument(
-        "--sigma-proc-heading",
-        type=float,
-        default=0.033182,
-        help="Process-noise std for heading-error (enables age-dependent blending).",
+        default=0.1,
+        help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
         "--cloud-interval",
@@ -433,24 +264,130 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         type=str,
         default="data/models/cloud_scheduler.zip",
         help=(
-            "Path to a saved SB3 policy (.zip) for cloud scheduling.  If the "
-            "file exists the policy will be used; otherwise the fixed-interval "
-            "scheduler (--cloud-interval) is employed.  Both the old binary "
-            "scheduler (Discrete/Box(1)) and the new selective per-DNN "
-            "scheduler (Box(3) logits) are auto-detected from the model."
+            "Path to a PPO policy (.zip) for cloud scheduling.  If the file "
+            "exists the policy will be used; otherwise the fixed-interval "
+            "scheduler (--cloud-interval) is employed."
         ),
     )
     ec.add_argument(
-        "--rl-agent",
-        type=str,
-        default="ppo",
-        help="SB3 algorithm used to save --rl-scheduler (ppo | sac | td3 | a2c).",
+        "--safety-threshold",
+        type=float,
+        default=0.03,
+        help="Deviation threshold for deterministic strategy.",
     )
     ec.add_argument(
-        "--top-k",
+        "--safety-min-interval",
         type=int,
         default=1,
-        help="Number of DNNs to call per step when using the selective RL policy.",
+        help="Minimum steps between cloud invocations for safety strategies.",
+    )
+    ec.add_argument(
+        "--safety-warmup-steps",
+        type=int,
+        default=1,
+        help="Always request cloud for first N steps in safety strategies.",
+    )
+    ec.add_argument(
+        "--safety-fallback-interval",
+        type=int,
+        default=0,
+        help="Force periodic cloud refresh every N steps when > 0.",
+    )
+    ec.add_argument(
+        "--safety-max-miss",
+        type=int,
+        default=5,
+        help="Maximum consecutive eligible misses for safety strategies.",
+    )
+    ec.add_argument(
+        "--strategy-seed",
+        type=int,
+        default=7,
+        help="Random seed for probabilistic strategies.",
+    )
+    ec.add_argument(
+        "--fixed-bernoulli-p",
+        type=float,
+        default=0.6,
+        help="Cloud-call probability for fixed Bernoulli scheduling.",
+    )
+    ec.add_argument(
+        "--bernoulli-max-miss-p",
+        type=float,
+        default=0.6,
+        help="Base cloud-call probability for Bernoulli+max-miss scheduling.",
+    )
+    ec.add_argument(
+        "--logistic-center",
+        type=float,
+        default=0.03,
+        help="Deviation center for logistic strategy.",
+    )
+    ec.add_argument(
+        "--logistic-slope",
+        type=float,
+        default=40.0,
+        help="Sigmoid slope for logistic strategy.",
+    )
+    ec.add_argument(
+        "--logistic-p-min",
+        type=float,
+        default=0.0,
+        help="Minimum cloud-call probability for logistic strategy.",
+    )
+    ec.add_argument(
+        "--logistic-p-max",
+        type=float,
+        default=1.0,
+        help="Maximum cloud-call probability for logistic strategy.",
+    )
+    ec.add_argument(
+        "--exp-center",
+        type=float,
+        default=0.03,
+        help="Deviation center for exponential strategy.",
+    )
+    ec.add_argument(
+        "--exp-rate",
+        type=float,
+        default=25.0,
+        help="Growth rate for exponential strategy.",
+    )
+    ec.add_argument(
+        "--exp-p-min",
+        type=float,
+        default=0.0,
+        help="Minimum cloud-call probability for exponential strategy.",
+    )
+    ec.add_argument(
+        "--exp-p-max",
+        type=float,
+        default=1.0,
+        help="Maximum cloud-call probability for exponential strategy.",
+    )
+    ec.add_argument(
+        "--ramp-d-low",
+        type=float,
+        default=0.01,
+        help="Lower deviation threshold for piecewise-ramp scheduling.",
+    )
+    ec.add_argument(
+        "--ramp-d-high",
+        type=float,
+        default=0.05,
+        help="Upper deviation threshold for piecewise-ramp scheduling.",
+    )
+    ec.add_argument(
+        "--deviation-steer-weight",
+        type=float,
+        default=1.0,
+        help="Weight on steering disagreement when forming the deviation signal.",
+    )
+    ec.add_argument(
+        "--deviation-speed-weight",
+        type=float,
+        default=1.0,
+        help="Weight on speed disagreement when forming the deviation signal.",
     )
     ec.add_argument(
         "--edge-left-wall-model",
@@ -461,25 +398,25 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-track-width-model",
         type=str,
-        default="data/models/track_width_arch2.pt",
+        default="data/models/track_width_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch2.pt",
+        default="data/models/heading_error_arch1.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
         "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch5.pt",
+        default="data/models/left_wall_dist_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
     )
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch7.pt",
+        default="data/models/track_width_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
@@ -487,6 +424,132 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         type=str,
         default="data/models/heading_error_arch6.pt",
         help="Path to self-sufficient TorchScript .pt cloud heading-error model.",
+    )
+    ec.add_argument(
+        "--medium-cloud-latency",
+        type=int,
+        default=6,
+        help="Round-trip latency in simulation steps for medium cloud inference.",
+    )
+    ec.add_argument(
+        "--large-cloud-latency",
+        type=int,
+        default=10,
+        help="Round-trip latency in simulation steps for large cloud inference.",
+    )
+    ec.add_argument(
+        "--alpha-steer-medium",
+        type=float,
+        default=0.5,
+        help="Medium-cloud blend weight for steering.",
+    )
+    ec.add_argument(
+        "--alpha-speed-medium",
+        type=float,
+        default=0.1,
+        help="Medium-cloud blend weight for speed.",
+    )
+    ec.add_argument(
+        "--alpha-steer-large",
+        type=float,
+        default=0.7,
+        help="Large-cloud blend weight for steering.",
+    )
+    ec.add_argument(
+        "--alpha-speed-large",
+        type=float,
+        default=0.2,
+        help="Large-cloud blend weight for speed.",
+    )
+    ec.add_argument(
+        "--tier-medium-threshold",
+        type=float,
+        default=0.03,
+        help="Disagreement threshold above which medium cloud is requested.",
+    )
+    ec.add_argument(
+        "--tier-large-threshold",
+        type=float,
+        default=0.08,
+        help="Disagreement threshold above which large cloud is requested.",
+    )
+    ec.add_argument(
+        "--tier-steer-weight",
+        type=float,
+        default=1.0,
+        help="Weight on steering disagreement for tiered threshold routing.",
+    )
+    ec.add_argument(
+        "--tier-speed-weight",
+        type=float,
+        default=0.0,
+        help="Weight on speed disagreement for tiered threshold routing.",
+    )
+    ec.add_argument(
+        "--tier-medium-prob",
+        type=float,
+        default=0.3,
+        help="Fixed probability of calling the medium cloud on an eligible step.",
+    )
+    ec.add_argument(
+        "--tier-large-prob",
+        type=float,
+        default=0.2,
+        help="Fixed probability of calling the large cloud on an eligible step.",
+    )
+    ec.add_argument(
+        "--edge2-left-wall-model",
+        type=str,
+        default="data/models/left_wall_dist_arch2.pt",
+        help="Path to self-sufficient TorchScript .pt edge left wall distance model.",
+    )
+    ec.add_argument(
+        "--edge2-track-width-model",
+        type=str,
+        default="data/models/track_width_arch2.pt",
+        help="Path to self-sufficient TorchScript .pt edge track width model.",
+    )
+    ec.add_argument(
+        "--edge2-heading-model",
+        type=str,
+        default="data/models/heading_error_arch2.pt",
+        help="Path to self-sufficient TorchScript .pt edge heading-error model.",
+    )
+    ec.add_argument(
+        "--medium-left-wall-model",
+        type=str,
+        default="data/models/left_wall_dist_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt medium cloud left wall distance model.",
+    )
+    ec.add_argument(
+        "--medium-track-width-model",
+        type=str,
+        default="data/models/track_width_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt medium cloud track width model.",
+    )
+    ec.add_argument(
+        "--medium-heading-model",
+        type=str,
+        default="data/models/heading_error_arch5.pt",
+        help="Path to self-sufficient TorchScript .pt medium cloud heading-error model.",
+    )
+    ec.add_argument(
+        "--large-left-wall-model",
+        type=str,
+        default="data/models/left_wall_dist_arch6.pt",
+        help="Path to self-sufficient TorchScript .pt large cloud left wall distance model.",
+    )
+    ec.add_argument(
+        "--large-track-width-model",
+        type=str,
+        default="data/models/track_width_arch6.pt",
+        help="Path to self-sufficient TorchScript .pt large cloud track width model.",
+    )
+    ec.add_argument(
+        "--large-heading-model",
+        type=str,
+        default="data/models/heading_error_arch6.pt",
+        help="Path to self-sufficient TorchScript .pt large cloud heading-error model.",
     )
 
     return parser
@@ -510,7 +573,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # pylint: disable=too-many-branches
+def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # pylint: disable=too-many-branches,too-many-statements
     """Instantiates the requested reactive planner based on CLI arguments."""
     if args.planner == "bubble":
         kwargs = {"safety_radius": args.safety_radius}
@@ -555,15 +618,122 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
 
     if args.planner == "edge_cloud":
         # choose scheduler based on strategy
-        # Shared planner kwargs (minus scheduler/top_k which depend on path)
-        ec_kwargs: dict[str, Any] = {
+        if args.cloud_strategy in ("always", "hybrid"):
+            scheduler = AlwaysCloudScheduler()
+        elif args.cloud_strategy == "interval":
+            scheduler = FixedIntervalScheduler(interval=args.cloud_interval)
+        elif args.cloud_strategy == "rl":
+            if args.rl_scheduler is not None and Path(args.rl_scheduler).exists():
+                print(f"Using RL scheduler at {args.rl_scheduler}")
+                scheduler = PolicyScheduler(args.rl_scheduler)
+            else:
+                # fall back to default interval behavior when policy missing
+                scheduler = FixedIntervalScheduler(interval=args.cloud_interval)
+        elif args.cloud_strategy == "deterministic":
+            scheduler = PolicyDrivenScheduler(
+                DeterministicDeviationPolicy(
+                    DeterministicDeviationConfig(
+                        threshold=args.safety_threshold,
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                    )
+                )
+            )
+        elif args.cloud_strategy == "fixed_bernoulli":
+            scheduler = PolicyDrivenScheduler(
+                FixedBernoulliPolicy(
+                    FixedBernoulliConfig(
+                        p=getattr(args, "fixed_bernoulli_p", 0.6),
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        seed=args.strategy_seed,
+                    )
+                )
+            )
+        elif args.cloud_strategy == "bernoulli_max_miss":
+            scheduler = PolicyDrivenScheduler(
+                BernoulliMaxMissPolicy(
+                    BernoulliMaxMissConfig(
+                        p=getattr(args, "bernoulli_max_miss_p", 0.6),
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                        seed=args.strategy_seed,
+                    )
+                )
+            )
+        elif args.cloud_strategy == "logistic":
+            scheduler = PolicyDrivenScheduler(
+                LogisticRiskPolicy(
+                    LogisticRiskConfig(
+                        center=args.logistic_center,
+                        slope=args.logistic_slope,
+                        p_min=args.logistic_p_min,
+                        p_max=args.logistic_p_max,
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                        seed=args.strategy_seed,
+                    )
+                )
+            )
+        elif args.cloud_strategy == "exponential":
+            scheduler = PolicyDrivenScheduler(
+                ExponentialRiskPolicy(
+                    ExponentialRiskConfig(
+                        center=args.exp_center,
+                        rate=args.exp_rate,
+                        p_min=args.exp_p_min,
+                        p_max=args.exp_p_max,
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                        seed=args.strategy_seed,
+                    )
+                )
+            )
+        elif args.cloud_strategy == "piecewise_ramp":
+            scheduler = PolicyDrivenScheduler(
+                PiecewiseLinearRampPolicy(
+                    PiecewiseLinearRampConfig(
+                        d_low=getattr(args, "ramp_d_low", 0.01),
+                        d_high=getattr(args, "ramp_d_high", 0.05),
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                        seed=args.strategy_seed,
+                    )
+                )
+            )
+        else:
+            raise ValueError(
+                "edge_cloud requires --cloud-strategy to be one of "
+                "'always', 'hybrid', 'interval', 'rl', 'deterministic', "
+                "'fixed_bernoulli', 'bernoulli_max_miss', 'logistic', "
+                "'exponential', or 'piecewise_ramp'"
+            )
+
+        kwargs = {
             "cloud_latency": args.cloud_latency,
-            "alpha_left": args.alpha_left,
-            "alpha_track": args.alpha_track,
-            "alpha_heading": args.alpha_heading,
-            "sigma_proc_left": args.sigma_proc_left,
-            "sigma_proc_track": args.sigma_proc_track,
-            "sigma_proc_heading": args.sigma_proc_heading,
+            "scheduler": scheduler,
+            "alpha_steer": getattr(
+                args,
+                "alpha_steer",
+                getattr(args, "alpha_heading", 0.5),
+            ),
+            "alpha_speed": getattr(
+                args,
+                "alpha_speed",
+                getattr(args, "alpha_track", getattr(args, "alpha_left", 0.1)),
+            ),
+            "deviation_steer_weight": getattr(args, "deviation_steer_weight", 1.0),
+            "deviation_speed_weight": getattr(args, "deviation_speed_weight", 1.0),
             "lookahead_distance": args.lookahead,
             "lateral_gain": args.lateral_gain,
             "edge_left_wall_model_path": args.edge_left_wall_model,
@@ -573,78 +743,75 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
             "cloud_track_width_model_path": args.cloud_track_width_model,
             "cloud_heading_model_path": args.cloud_heading_model,
         }
+        for name in ("alpha_left", "alpha_track", "alpha_heading"):
+            if hasattr(args, name):
+                kwargs[name] = getattr(args, name)
         if args.speed is not None:
-            ec_kwargs["max_speed"] = args.speed
+            kwargs["max_speed"] = args.speed
+        return EdgeCloudPlanner(**kwargs)
 
-        if args.cloud_strategy == "always":
-            return EdgeCloudPlanner(scheduler=FixedIntervalScheduler(interval=1), **ec_kwargs)
-
-        if args.cloud_strategy == "interval":
-            return EdgeCloudPlanner(
-                scheduler=FixedIntervalScheduler(interval=args.cloud_interval), **ec_kwargs
-            )
-
-        if args.cloud_strategy == "round_robin":
-            top_k = getattr(args, "top_k", 1)
-            burst_window = getattr(args, "burst_window", 1)
-            inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
-            scheduler = RoundRobinScheduler(
-                num_dnns=SelectiveEdgeCloudPlanner.NUM_DNNS,
-                top_k=top_k,
-                burst_window=burst_window,
-            )
-            return _SelectiveDumbPlanner(inner, scheduler)
-
-        if args.cloud_strategy == "sensitivity":
-            top_k = getattr(args, "top_k", 1)
-            burst_window = getattr(args, "burst_window", 1)
-            weights = getattr(args, "call_weights", None)
-            if not weights:
-                raise ValueError(
-                    "--call-weights must be provided for the 'sensitivity' cloud strategy."
+    if args.planner == "multi_tier_edge_cloud":
+        if args.cloud_strategy == "tiered_probabilistic":
+            scheduler = TieredPolicyDrivenScheduler(
+                TieredProbabilisticRiskPolicy(
+                    TieredProbabilisticRiskConfig(
+                        p_medium=args.tier_medium_prob,
+                        p_large=args.tier_large_prob,
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                        seed=args.strategy_seed,
+                    )
                 )
-            inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
-            scheduler = SensitivityProportionalScheduler(
-                weights=list(weights),
-                top_k=top_k,
-                burst_window=burst_window,
             )
-            return _SelectiveDumbPlanner(inner, scheduler)
+            oracle_disagreement_routing = False
+        elif args.cloud_strategy == "tiered_threshold":
+            scheduler = TieredPolicyDrivenScheduler(
+                TieredThresholdPolicy(
+                    TieredThresholdConfig(
+                        medium_threshold=args.tier_medium_threshold,
+                        large_threshold=args.tier_large_threshold,
+                        min_interval=args.safety_min_interval,
+                        warmup_steps=args.safety_warmup_steps,
+                        fallback_interval=args.safety_fallback_interval,
+                        max_miss=args.safety_max_miss,
+                    )
+                )
+            )
+            oracle_disagreement_routing = True
+        else:
+            raise ValueError(
+                "multi_tier_edge_cloud requires --cloud-strategy to be "
+                "'tiered_probabilistic' or 'tiered_threshold'"
+            )
 
-        # rl: auto-detect policy type from saved action space
-        policy_path = args.rl_scheduler
-        if policy_path is not None and Path(policy_path).exists():
-            print(f"Using RL scheduler at {policy_path}")
-            # Use the module-level PPO for the default case so tests can
-            # monkeypatch it.  Other algorithms go through REGISTRY.
-            algo_name = getattr(args, "rl_agent", "ppo").lower()
-            if algo_name == "ppo":
-                algo_cls = PPO  # module-level, monkeypatchable
-            else:
-                from f110_scripts.train.agents import REGISTRY as _AGENT_REGISTRY  # pylint: disable=import-outside-toplevel
-                if not _AGENT_REGISTRY:
-                    from stable_baselines3 import A2C, SAC, TD3  # pylint: disable=import-outside-toplevel
-                    _AGENT_REGISTRY.update({"sac": SAC, "td3": TD3, "a2c": A2C})
-                algo_cls = _AGENT_REGISTRY.get(algo_name, PPO)
-            model = algo_cls.load(policy_path)
-
-            # Detect by action space: Box(3) → selective per-DNN policy
-            action_space = getattr(model, "action_space", None)
-            if (
-                isinstance(action_space, _gym_spaces.Box)
-                and action_space.shape == (3,)
-            ):
-                top_k = getattr(args, "top_k", 1)
-                inner = SelectiveEdgeCloudPlanner(top_k=top_k, **ec_kwargs)
-                return SelectivePolicyPlanner(inner, model, waypoints, top_k=top_k)
-
-            # Fallback: old binary policy → PolicyScheduler + EdgeCloudPlanner
-            return EdgeCloudPlanner(scheduler=PolicyScheduler._from_model(model), **ec_kwargs)
-
-        # No valid policy file → fixed-interval fallback
-        return EdgeCloudPlanner(
-            scheduler=FixedIntervalScheduler(interval=args.cloud_interval), **ec_kwargs
-        )
+        kwargs = {
+            "scheduler": scheduler,
+            "medium_cloud_latency": args.medium_cloud_latency,
+            "large_cloud_latency": args.large_cloud_latency,
+            "alpha_steer_medium": args.alpha_steer_medium,
+            "alpha_speed_medium": args.alpha_speed_medium,
+            "alpha_steer_large": args.alpha_steer_large,
+            "alpha_speed_large": args.alpha_speed_large,
+            "lookahead_distance": args.lookahead,
+            "lateral_gain": args.lateral_gain,
+            "edge_left_wall_model_path": args.edge2_left_wall_model,
+            "edge_track_width_model_path": args.edge2_track_width_model,
+            "edge_heading_model_path": args.edge2_heading_model,
+            "medium_left_wall_model_path": args.medium_left_wall_model,
+            "medium_track_width_model_path": args.medium_track_width_model,
+            "medium_heading_model_path": args.medium_heading_model,
+            "large_left_wall_model_path": args.large_left_wall_model,
+            "large_track_width_model_path": args.large_track_width_model,
+            "large_heading_model_path": args.large_heading_model,
+            "oracle_disagreement_routing": oracle_disagreement_routing,
+            "tier_steer_weight": args.tier_steer_weight,
+            "tier_speed_weight": args.tier_speed_weight,
+        }
+        if args.speed is not None:
+            kwargs["max_speed"] = args.speed
+        return MultiTierEdgeCloudPlanner(**kwargs)
 
     raise ValueError(f"Unsupported planner logic: {args.planner}")
 
@@ -663,23 +830,15 @@ def _setup_rendering(
         env.unwrapped.add_render_callback(create_waypoint_renderer(waypoints))
         env.unwrapped.add_render_callback(create_heading_error_renderer(waypoints, 0))
 
-    if args.planner in ["dynamic", "dnn", "edge_cloud"]:
+    if args.planner in ["dynamic", "dnn", "edge_cloud", "multi_tier_edge_cloud"]:
         env.unwrapped.add_render_callback(
             create_dynamic_waypoint_renderer(planner, agent_idx=0)
         )
     # when using the edge-cloud planner we can also visualize the cloud calls
-    if args.planner == "edge_cloud":
-        max_pts = getattr(args, "cloud_dot_history", 10000)
-        if hasattr(planner, "last_call_mask"):
-            # SelectiveEdgeCloudPlanner: colour-coded per-DNN dots
-            env.unwrapped.add_render_callback(
-                create_selective_cloud_call_renderer(planner, agent_idx=0, max_points=max_pts)
-            )
-        else:
-            # EdgeCloudPlanner: single orange dot on any cloud call
-            env.unwrapped.add_render_callback(
-                create_cloud_call_renderer(planner, agent_idx=0, max_points=max_pts)
-            )
+    if args.planner in ["edge_cloud", "multi_tier_edge_cloud"]:
+        env.unwrapped.add_render_callback(
+            create_cloud_call_renderer(planner, agent_idx=0)
+        )
 
 
 def _run_reactive_sim(
@@ -688,11 +847,10 @@ def _run_reactive_sim(
     planner: Any,
     r_mode: str | None,
     waypoints: np.ndarray,
-    trace: SimTrace | None = None,
 ) -> tuple[float, dict[str, float]]:
     """Executes the reactive simulation loop with metric collection."""
     wpts = waypoints if waypoints.size > 0 else None
-    metrics = MetricAggregator.create_default(waypoints=wpts, selective_planner=planner)
+    metrics = MetricAggregator.create_default(waypoints=wpts)
     metrics.on_reset(obs, waypoints=wpts)
 
     laptime, done = 0.0, False
@@ -705,9 +863,6 @@ def _run_reactive_sim(
             )
             done, laptime = (terminated or truncated), laptime + float(reward)
             metrics.on_step(obs, action, float(reward), ego_idx=0)
-
-            if trace is not None:
-                collect_step(trace, obs, planner)
 
             if r_mode:
                 env.render()
@@ -740,12 +895,9 @@ def main() -> None:
     if r_mode:
         env.render()
 
-    svg_out = getattr(args, "svg_output", None)
-    trace = SimTrace() if svg_out else None
-
     print(f"Executing {args.planner} simulation loop...")
     start_time = time.time()
-    laptime, _ = _run_reactive_sim(env, obs, planner, r_mode, waypoints, trace=trace)
+    laptime, _ = _run_reactive_sim(env, obs, planner, r_mode, waypoints)
 
     total_real_time = time.time() - start_time
     print("\n--- Simulation Summary ---")
@@ -755,15 +907,6 @@ def main() -> None:
         print(f"RT-Factor:         {laptime / total_real_time:.2f}x")
 
     env.close()
-
-    if svg_out and trace is not None:
-        render_svg(
-            trace,
-            args.map,
-            args.map_ext,
-            waypoints=waypoints if waypoints.size > 0 else None,
-            output_path=svg_out,
-        )
 
 
 if __name__ == "__main__":

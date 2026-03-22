@@ -15,8 +15,9 @@ from f110_planning.reactive import (
     DisparityExtenderPlanner,
     EdgeCloudPlanner,
     GapFollowerPlanner,
-    SelectiveEdgeCloudPlanner,
+    MultiTierEdgeCloudPlanner,
 )
+from f110_planning.base import Action, CloudScheduler, CloudTier, TieredCloudScheduler
 from f110_planning.utils import F110_MAX_STEER
 
 
@@ -78,12 +79,12 @@ def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> No
 
     # Build two planners whose edge and cloud sub-planners produce predictable
     # outputs by relying entirely on the lateral_gain path (no DNN model loaded).
-    # With alpha_*=0 the final action must equal the edge-only prediction.
+    # With alpha_steer=0 the final action steers must equal the edge action steers.
     planner_edge_only = EdgeCloudPlanner(
-        cloud_latency=0, alpha_left=0.0, alpha_track=0.0, alpha_heading=0.0
+        cloud_latency=0, alpha_steer=0.0, alpha_speed=0.0
     )
     planner_cloud_only = EdgeCloudPlanner(
-        cloud_latency=0, alpha_left=1.0, alpha_track=1.0, alpha_heading=1.0
+        cloud_latency=0, alpha_steer=1.0, alpha_speed=1.0
     )
 
     # Force a cloud result by running step 0 (FixedIntervalScheduler calls at step 0)
@@ -108,24 +109,130 @@ def test_edge_cloud_planner_alpha_boundaries(reactive_obs: dict[str, Any]) -> No
     assert abs(action_cloud.steer - expected_cloud_only_steer) < 1e-9
 
 
-def test_selective_edge_cloud_feature_blend(reactive_obs: dict[str, Any]) -> None:
-    """SelectiveEdgeCloudPlanner with alpha=1 for all features must produce
-    the same action as one with alpha=0 when no cloud result has yet arrived
-    (cache=None → pure edge fallback for both).
-    """
-    reactive_obs["scans"][0] = np.ones(1080) * 5.0
+class _SequenceTierScheduler(TieredCloudScheduler):
+    """Simple deterministic tier scheduler for planner tests."""
 
-    planner_a = SelectiveEdgeCloudPlanner(
-        cloud_latency=10, alpha_left=0.0, alpha_track=0.0, alpha_heading=0.0
+    def __init__(self, decisions: list[CloudTier | None]) -> None:
+        self.decisions = decisions
+
+    def choose_cloud_tier(
+        self,
+        step: int,
+        obs: dict[str, Any],
+        latest_cloud_actions: dict[CloudTier, Action | None],
+        context: dict[str, Any] | None = None,
+    ) -> CloudTier | None:
+        del obs, latest_cloud_actions, context
+        if step < len(self.decisions):
+            return self.decisions[step]
+        return None
+
+
+class _CaptureScheduler(CloudScheduler):
+    """Record scheduler contexts for single-tier planner tests."""
+
+    def __init__(self) -> None:
+        self.contexts: list[dict[str, float]] = []
+
+    def should_call_cloud(
+        self,
+        step: int,
+        obs: dict[str, Any],
+        latest_cloud_action: Action | None,
+        context: dict[str, Any] | None = None,
+    ) -> bool:
+        del step, obs, latest_cloud_action
+        self.contexts.append(dict(context or {}))
+        return False
+
+
+def test_edge_cloud_planner_action_distance_uses_weights() -> None:
+    """Weighted L1 action disagreement should combine steer and speed terms."""
+    planner = EdgeCloudPlanner(
+        deviation_steer_weight=2.0,
+        deviation_speed_weight=0.5,
     )
-    planner_b = SelectiveEdgeCloudPlanner(
-        cloud_latency=10, alpha_left=1.0, alpha_track=1.0, alpha_heading=1.0
+
+    distance = planner._action_distance(  # pylint: disable=protected-access
+        Action(steer=0.3, speed=4.0),
+        Action(steer=0.1, speed=3.0),
     )
 
-    action_a = planner_a.plan(copy.deepcopy(reactive_obs), call_mask=[False, False, False])
-    action_b = planner_b.plan(copy.deepcopy(reactive_obs), call_mask=[False, False, False])
+    assert distance == pytest.approx(0.9)
 
-    # Before any cloud result arrives both planners fall back to pure edge; the
-    # actions must be identical regardless of alpha.
-    assert action_a.steer == pytest.approx(action_b.steer, abs=1e-9)
-    assert action_a.speed == pytest.approx(action_b.speed, abs=1e-9)
+
+def test_edge_cloud_planner_deviation_is_action_distance(
+    reactive_obs: dict[str, Any],
+) -> None:
+    """Scheduler context should use edge-vs-held-cloud action disagreement."""
+    scheduler = _CaptureScheduler()
+    planner = EdgeCloudPlanner(
+        scheduler=scheduler,
+        cloud_latency=0,
+        deviation_steer_weight=2.0,
+        deviation_speed_weight=0.5,
+    )
+    planner.edge_planner.plan = lambda *_args, **_kwargs: Action(steer=0.3, speed=4.0)  # type: ignore[method-assign]
+    planner._latest_cloud_action = Action(steer=0.1, speed=3.0)  # pylint: disable=protected-access
+
+    planner.plan(copy.deepcopy(reactive_obs))
+
+    assert scheduler.contexts
+    assert scheduler.contexts[-1]["deviation"] == pytest.approx(0.9)
+
+
+def test_edge_cloud_planner_reset_clears_last_cloud_call() -> None:
+    """Reset should clear the previous cloud-call flag."""
+    planner = EdgeCloudPlanner()
+    planner.last_cloud_call = True
+
+    planner.reset()
+
+    assert not planner.last_cloud_call
+
+
+def test_multi_tier_edge_cloud_planner_uses_requested_tier_blending(
+    reactive_obs: dict[str, Any],
+) -> None:
+    """Multi-tier planner should blend medium and large cloud actions separately."""
+    planner = MultiTierEdgeCloudPlanner(
+        scheduler=_SequenceTierScheduler([CloudTier.MEDIUM, None, CloudTier.LARGE, None]),
+        medium_cloud_latency=0,
+        large_cloud_latency=0,
+        alpha_steer_medium=0.25,
+        alpha_speed_medium=0.25,
+        alpha_steer_large=0.75,
+        alpha_speed_large=0.75,
+    )
+
+    planner.edge_planner.plan = lambda *_args, **_kwargs: Action(steer=0.2, speed=2.0)  # type: ignore[method-assign]
+    planner.medium_cloud_planner.last_left_dist = 1.0
+    planner.medium_cloud_planner.last_track_width = 2.0
+    planner.medium_cloud_planner.last_heading_error = 0.1
+    planner.medium_cloud_planner.plan = (  # type: ignore[method-assign]
+        lambda *_args, **_kwargs: Action(steer=0.6, speed=4.0)
+    )
+    planner.large_cloud_planner.last_left_dist = 1.5
+    planner.large_cloud_planner.last_track_width = 2.5
+    planner.large_cloud_planner.last_heading_error = 0.2
+    planner.large_cloud_planner.plan = (  # type: ignore[method-assign]
+        lambda *_args, **_kwargs: Action(steer=1.0, speed=6.0)
+    )
+    planner._blend_features = (  # type: ignore[method-assign]
+        lambda _obs, _ego_idx, _features, tier: (
+            Action(steer=0.3, speed=2.5)
+            if tier == CloudTier.MEDIUM
+            else Action(steer=0.8, speed=5.0)
+        )
+    )
+
+    action0 = planner.plan(copy.deepcopy(reactive_obs))
+    action1 = planner.plan(copy.deepcopy(reactive_obs))
+    action2 = planner.plan(copy.deepcopy(reactive_obs))
+    action3 = planner.plan(copy.deepcopy(reactive_obs))
+
+    assert action0 == Action(steer=0.2, speed=2.0)
+    assert action1 == Action(steer=0.3, speed=2.5)
+    assert action2 == Action(steer=0.3, speed=2.5)
+    assert action3 == Action(steer=0.8, speed=5.0)
+    assert planner.last_cloud_tier_called is None

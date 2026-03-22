@@ -3,11 +3,17 @@ Unit tests for planning utility functions.
 """
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
 
-from f110_planning.utils import get_vehicle_state, load_waypoints, nearest_point
+from f110_planning.utils import (
+    get_vehicle_state,
+    load_waypoints,
+    nearest_point,
+    resolve_start_pose,
+)
 
 
 def test_load_waypoints() -> None:
@@ -93,3 +99,24 @@ def test_load_waypoints_bad_path() -> None:
         assert result is None or (hasattr(result, "size") and result.size == 0)
     except (FileNotFoundError, OSError):
         pass  # also acceptable behaviour
+
+
+def test_resolve_start_pose_reads_yaml_theta(tmp_path: Path) -> None:
+    """resolve_start_pose should use a map YAML start_pose when theta is omitted."""
+    map_stem = tmp_path / "sample_map"
+    (tmp_path / "sample_map.yaml").write_text(
+        "start_pose: [0.0, 0.0, 1.2345]\n",
+        encoding="utf-8",
+    )
+
+    class Args:  # pylint: disable=too-few-public-methods
+        map = str(map_stem)
+        start_x = 0.0
+        start_y = 0.0
+        start_theta = None
+        randomize = False
+
+    sx, sy, st = resolve_start_pose(Args())
+    assert sx == pytest.approx(0.0)
+    assert sy == pytest.approx(0.0)
+    assert st == pytest.approx(1.2345)

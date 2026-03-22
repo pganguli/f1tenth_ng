@@ -42,7 +42,9 @@ class RLScheduler(CloudScheduler):
         step: int,
         obs: dict[str, Any],
         latest_cloud_action: Action | None,
+        context: dict[str, Any] | None = None,
     ) -> bool:
+        del step, obs, latest_cloud_action, context  # action comes from set_action()
         # ``_call_next`` may be ``None`` if the env never set an action
         # (e.g. before reset).  Treat that as ``False``.
         return bool(self._call_next)
