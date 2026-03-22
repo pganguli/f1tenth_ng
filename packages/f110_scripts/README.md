@@ -180,8 +180,8 @@ ppo_<reward>_k1_aL<alpha_left>_aT<alpha_track>_aH<alpha_heading>_lat<latency>.zi
 
 ## Step 7 — Test RL agents
 
-Runs all scheduler variants (round-robin, sensitivity-proportional, and the 6
-RL policies) on four held-out maps (MexicoCity, Monza, Silverstone, Spa) at
+Runs all scheduler variants (fixed-interval, logistic deviation-aware, and the
+6 RL policies) on four held-out maps (MexicoCity, Monza, Silverstone, Spa) at
 both latency settings:
 
 ```bash

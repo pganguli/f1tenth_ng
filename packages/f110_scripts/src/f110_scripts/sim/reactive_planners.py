@@ -144,6 +144,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
             "always",
             "hybrid",
             "interval",
+            "round_robin",
             "rl",
             "deterministic",
             "fixed_bernoulli",
@@ -158,12 +159,13 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         help=(
             "Cloud calling strategy: 'always' issues a request every step, "
             "'hybrid' also requests cloud every step, "
-            "'interval' uses --cloud-interval spacing, and 'rl' loads a "
+            "'interval' uses --cloud-interval spacing, "
+            "'round_robin' is a deprecated alias for 'interval', and 'rl' loads a "
             "policy specified by --rl-scheduler. Safety strategies include "
             "'deterministic', 'fixed_bernoulli', 'bernoulli_max_miss', "
             "'logistic', 'exponential', and 'piecewise_ramp'. "
             "Multi-tier strategies include "
-            "'tiered_probabilistic' and 'tiered_threshold'."
+            "'tiered_probabilistic' and oracle-style 'tiered_threshold'."
         ),
     )
 
@@ -254,6 +256,24 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         help="Cloud weight for speed (0 = edge only, 1 = cloud only).",
     )
     ec.add_argument(
+        "--alpha-left",
+        type=float,
+        default=None,
+        help="Deprecated compatibility alias for the cloud left-feature blend weight.",
+    )
+    ec.add_argument(
+        "--alpha-track",
+        type=float,
+        default=None,
+        help="Deprecated compatibility alias for the cloud track-feature blend weight.",
+    )
+    ec.add_argument(
+        "--alpha-heading",
+        type=float,
+        default=None,
+        help="Deprecated compatibility alias for the cloud heading-feature blend weight.",
+    )
+    ec.add_argument(
         "--cloud-interval",
         type=int,
         default=1,
@@ -304,6 +324,19 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         type=int,
         default=7,
         help="Random seed for probabilistic strategies.",
+    )
+    ec.add_argument(
+        "--top-k",
+        type=int,
+        default=None,
+        help="Deprecated compatibility flag retained for older RL experiment scripts.",
+    )
+    ec.add_argument(
+        "--call-weights",
+        type=float,
+        nargs=3,
+        default=None,
+        help="Deprecated compatibility flag retained for older sensitivity-based scripts.",
     )
     ec.add_argument(
         "--fixed-bernoulli-p",
@@ -570,7 +603,10 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         parents=[_build_reactive_parser()],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    return parser.parse_args(args)
+    parsed = parser.parse_args(args)
+    if parsed.cloud_strategy == "round_robin":
+        parsed.cloud_strategy = "interval"
+    return parsed
 
 
 def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # pylint: disable=too-many-branches,too-many-statements

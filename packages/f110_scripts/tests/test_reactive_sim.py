@@ -14,7 +14,7 @@ from f110_planning.schedulers import (
     PolicyDrivenScheduler,
     TieredPolicyDrivenScheduler,
 )
-from f110_scripts.sim.reactive_planners import _create_planner, main
+from f110_scripts.sim.reactive_planners import _create_planner, main, parse_args
 
 
 def _sim_obs() -> dict[str, Any]:
@@ -197,6 +197,35 @@ def test_edge_cloud_strategy_construction() -> None:
             assert isinstance(planner.scheduler, AlwaysCloudScheduler)
         else:
             assert isinstance(planner.scheduler, PolicyDrivenScheduler)
+
+
+def test_parse_args_supports_legacy_cli_aliases() -> None:
+    """Parser should accept older compatibility flags and aliases."""
+    args = parse_args(
+        [
+            "--cloud-strategy",
+            "round_robin",
+            "--alpha-left",
+            "0.2",
+            "--alpha-track",
+            "0.3",
+            "--alpha-heading",
+            "0.7",
+            "--top-k",
+            "1",
+            "--call-weights",
+            "1",
+            "1",
+            "1",
+        ]
+    )
+
+    assert args.cloud_strategy == "interval"
+    assert args.alpha_left == 0.2
+    assert args.alpha_track == 0.3
+    assert args.alpha_heading == 0.7
+    assert args.top_k == 1
+    assert args.call_weights == [1.0, 1.0, 1.0]
 
 
 def test_fixed_bernoulli_strategy_config() -> None:

@@ -24,7 +24,7 @@ WAYPOINTS=(
 LATENCIES=(0 10)
 
 # Strategies
-STRATEGIES=("round_robin" "sensitivity" "rl_simple" "rl_boot")
+STRATEGIES=("interval" "logistic" "rl_simple" "rl_boot")
 
 # =========================
 # INIT
@@ -58,11 +58,11 @@ for idx in ${!MAPS[@]}; do
                 # -------------------------
                 EXTRA_ARGS=""
 
-                if [ "$STRAT" == "round_robin" ]; then
-                    EXTRA_ARGS="--cloud-strategy round_robin"
+                if [ "$STRAT" == "interval" ]; then
+                    EXTRA_ARGS="--cloud-strategy interval"
 
-                elif [ "$STRAT" == "sensitivity" ]; then
-                    EXTRA_ARGS="--cloud-strategy sensitivity --call-weights 1 1 1"
+                elif [ "$STRAT" == "logistic" ]; then
+                    EXTRA_ARGS="--cloud-strategy logistic --logistic-center 0.03 --logistic-slope 40"
 
                 elif [ "$STRAT" == "rl_simple" ]; then
                     MODEL="data/models/ppo_cte_k1_as0.7_asp0.2_lat${LAT}.zip"
@@ -83,7 +83,6 @@ for idx in ${!MAPS[@]}; do
                     --cloud-latency $LAT \
                     --render-mode None \
                     --max-laps 2 \
-                    --top-k 1 \
                     --randomize \
                     $EXTRA_ARGS 2>/dev/null)
 

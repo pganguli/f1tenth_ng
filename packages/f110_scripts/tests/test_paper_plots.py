@@ -9,6 +9,10 @@ import sys
 import pandas as pd
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from paper_plot_test_data import write_plot_fixture_csvs
+
 
 def _load_plot_module():
     root = Path(__file__).resolve().parents[3]
@@ -227,10 +231,8 @@ def test_attach_oracle_baseline_computes_competitive_ratio(tmp_path: Path) -> No
 def test_paper_plot_smoke_generates_png_and_pdf(tmp_path: Path) -> None:
     """The paper plot script should render the full corrected 10-map figure suite."""
     module = _load_plot_module()
-    root = Path(__file__).resolve().parents[3]
-    single_summary = pd.read_csv(
-        root / "data/benchmarks/single_tier_paper_strategies_10maps_summary.csv"
-    )
+    fixture_paths = write_plot_fixture_csvs(tmp_path)
+    single_summary = pd.read_csv(fixture_paths["single"])
     always = (
         single_summary[single_summary["strategy"] == "always"][
             ["map_name", "crosstrack_rmse_m_mean"]
@@ -243,15 +245,9 @@ def test_paper_plot_smoke_generates_png_and_pdf(tmp_path: Path) -> None:
     always.to_csv(oracle_path, index=False)
 
     outputs = module.run(
-        single_summary_csv=str(
-            root / "data/benchmarks/single_tier_paper_strategies_10maps_summary.csv"
-        ),
-        single_target_csv=str(
-            root / "data/benchmarks/single_tier_paper_strategies_10maps_best_target_band.csv"
-        ),
-        multi_summary_csv=str(
-            root / "data/benchmarks/multi_tier_cloud_benchmark_10maps_corrected_summary.csv"
-        ),
+        single_summary_csv=str(fixture_paths["single"]),
+        single_target_csv=str(fixture_paths["target"]),
+        multi_summary_csv=str(fixture_paths["multi"]),
         oracle_summary_csv=str(oracle_path),
         output_dir=str(tmp_path),
         dpi=72,

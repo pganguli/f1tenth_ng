@@ -6,6 +6,10 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from paper_plot_test_data import write_plot_fixture_csvs
+
 
 def _load_module():
     root = Path(__file__).resolve().parents[3]
@@ -23,11 +27,9 @@ def _load_module():
 def test_curated_plot_smoke_generates_png_and_pdf(tmp_path: Path) -> None:
     """The curated plot script should render the reduced figure suite."""
     module = _load_module()
-    root = Path(__file__).resolve().parents[3]
+    fixture_paths = write_plot_fixture_csvs(tmp_path)
     outputs = module.run(
-        single_summary_csv=str(
-            root / "data/benchmarks/single_tier_paper_strategies_10maps_summary.csv"
-        ),
+        single_summary_csv=str(fixture_paths["single"]),
         output_dir=str(tmp_path),
         dpi=72,
         formats=["png", "pdf"],
