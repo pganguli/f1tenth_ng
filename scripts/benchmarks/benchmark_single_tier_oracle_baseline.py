@@ -115,6 +115,16 @@ def parse_args() -> argparse.Namespace:
         default=1.0,
         help="Weight on speed disagreement when forming scheduler deviation.",
     )
+    parser.add_argument(
+        "--experiment-name",
+        type=str,
+        default=None,
+        help=(
+            "Optional experiment label override. Defaults to "
+            "'zero_latency_full_cloud_reference' for the canonical "
+            "latency-0/full-cloud setup and 'reference_anchor' otherwise."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -135,7 +145,20 @@ def main() -> None:
         deviation_steer_weight=args.deviation_steer_weight,
         deviation_speed_weight=args.deviation_speed_weight,
     )
-    experiment = Experiment("zero_latency_full_cloud_reference", "always", {})
+    experiment_name = args.experiment_name
+    if experiment_name is None:
+        is_canonical_reference = (
+            args.cloud_latency == 0
+            and args.alpha_left == 1.0
+            and args.alpha_track == 1.0
+            and args.alpha_heading == 1.0
+        )
+        experiment_name = (
+            "zero_latency_full_cloud_reference"
+            if is_canonical_reference
+            else "reference_anchor"
+        )
+    experiment = Experiment(experiment_name, "always", {})
 
     results = [
         run_episode(

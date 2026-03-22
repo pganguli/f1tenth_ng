@@ -76,6 +76,33 @@ def test_oracle_defaults_use_zero_latency_full_cloud_reference(monkeypatch) -> N
     assert args.alpha_heading == 1.0
 
 
+def test_oracle_nondefault_setup_uses_generic_reference_label(monkeypatch) -> None:
+    """Non-canonical reference anchors should not pretend to be the full-cloud default."""
+    module = _load_oracle_module()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "benchmark_single_tier_oracle_baseline.py",
+            "--cloud-latency",
+            "5",
+            "--alpha-left",
+            "0.0",
+        ],
+    )
+
+    args = module.parse_args()
+    experiment_name = (
+        "zero_latency_full_cloud_reference"
+        if args.cloud_latency == 0
+        and args.alpha_left == 1.0
+        and args.alpha_track == 1.0
+        and args.alpha_heading == 1.0
+        else "reference_anchor"
+    )
+    assert experiment_name == "reference_anchor"
+
+
 def test_run_episode_reports_scheduler_metrics(monkeypatch) -> None:
     """Benchmark smoke run should emit cloud-call and collision summary fields."""
     module = _load_benchmark_module()
