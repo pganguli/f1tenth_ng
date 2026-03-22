@@ -1,0 +1,6326 @@
+=== Job ID: 38435596 ===
+=== Node: c151407.ll.unc.edu ===
+=== Working dir: /nas/longleaf/home/tingan/f1tenth_ng ===
+=== Working directory ===
+/nas/longleaf/home/tingan/f1tenth_ng
+PYTHONPATH: /nas/longleaf/home/tingan/f1tenth_ng/packages:
+=== Starting experiments ===
+Running in: /nas/longleaf/home/tingan/f1tenth_ng
+IMPORT METRICS OK
+['f110_gym', 'f110_planning', 'f110_scripts']
+RUN SCRIPT PYTHON: /nas/longleaf/home/tingan/f1tenth_ng/.venv/bin/python
+Python 3.12.4
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.36,
+    "steps": 22536.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1259,
+    "crosstrack_mean_m": 0.083,
+    "crosstrack_max_m": 0.398,
+    "crosstrack_std_m": 0.0946
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7427,
+    "heading_error_rmse_deg": 3.0578,
+    "heading_error_std_deg": 3.0577,
+    "heading_error_max_deg": 36.936
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7567,
+    "wall_mean_distance_m": 1.102,
+    "wall_std_distance_m": 0.0929
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3835,
+    "steering_rate_max_rad_s": 7.8922,
+    "steering_rate_std_rad_s": 0.4381
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.004,
+    "speed_max_m_s": 4.8608,
+    "speed_std_m_s": 0.7955
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22536.0,
+    "left_wall_calls": 7512.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7512.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7512.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    23.665s
+RT-Factor:         9.52x
+Extracted RMSE: 0.1259
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 230.64,
+    "steps": 23064.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1281,
+    "crosstrack_mean_m": 0.0919,
+    "crosstrack_max_m": 0.4015,
+    "crosstrack_std_m": 0.0892
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7442,
+    "heading_error_rmse_deg": 2.8283,
+    "heading_error_std_deg": 2.8268,
+    "heading_error_max_deg": 18.3714
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7427,
+    "wall_mean_distance_m": 1.0962,
+    "wall_std_distance_m": 0.0904
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3876,
+    "steering_rate_max_rad_s": 7.3698,
+    "steering_rate_std_rad_s": 0.4417
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9142,
+    "speed_max_m_s": 4.8226,
+    "speed_std_m_s": 0.7216
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23064.0,
+    "left_wall_calls": 7688.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7688.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7688.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    19.945s
+RT-Factor:         11.56x
+Extracted RMSE: 0.1281
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.42,
+    "steps": 22542.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1264,
+    "crosstrack_mean_m": 0.0836,
+    "crosstrack_max_m": 0.4051,
+    "crosstrack_std_m": 0.0948
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7011,
+    "heading_error_rmse_deg": 2.7859,
+    "heading_error_std_deg": 2.7844,
+    "heading_error_max_deg": 17.6963
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.744,
+    "wall_mean_distance_m": 1.1014,
+    "wall_std_distance_m": 0.0935
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3854,
+    "steering_rate_max_rad_s": 7.0686,
+    "steering_rate_std_rad_s": 0.4396
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.004,
+    "speed_max_m_s": 4.8674,
+    "speed_std_m_s": 0.7957
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22542.0,
+    "left_wall_calls": 7514.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7514.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7514.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.176s
+RT-Factor:         11.17x
+Extracted RMSE: 0.1264
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.1,
+    "steps": 22510.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1255,
+    "crosstrack_mean_m": 0.0824,
+    "crosstrack_max_m": 0.4063,
+    "crosstrack_std_m": 0.0947
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.69,
+    "heading_error_rmse_deg": 2.7638,
+    "heading_error_std_deg": 2.7628,
+    "heading_error_max_deg": 17.8492
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7383,
+    "wall_mean_distance_m": 1.1024,
+    "wall_std_distance_m": 0.0933
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3866,
+    "steering_rate_max_rad_s": 8.1158,
+    "steering_rate_std_rad_s": 0.4403
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0093,
+    "speed_max_m_s": 4.8625,
+    "speed_std_m_s": 0.7935
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22510.0,
+    "left_wall_calls": 7504.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7503.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7503.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    19.227s
+RT-Factor:         11.71x
+Extracted RMSE: 0.1255
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 230.5,
+    "steps": 23050.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1273,
+    "crosstrack_mean_m": 0.0912,
+    "crosstrack_max_m": 0.3968,
+    "crosstrack_std_m": 0.0887
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7729,
+    "heading_error_rmse_deg": 3.0944,
+    "heading_error_std_deg": 3.0942,
+    "heading_error_max_deg": 40.3051
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.753,
+    "wall_mean_distance_m": 1.0967,
+    "wall_std_distance_m": 0.0902
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3878,
+    "steering_rate_max_rad_s": 7.9151,
+    "steering_rate_std_rad_s": 0.4379
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9156,
+    "speed_max_m_s": 4.8317,
+    "speed_std_m_s": 0.7249
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23050.0,
+    "left_wall_calls": 7684.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7683.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7683.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.192s
+RT-Factor:         11.42x
+Extracted RMSE: 0.1273
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 231.19,
+    "steps": 23119.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1288,
+    "crosstrack_mean_m": 0.0963,
+    "crosstrack_max_m": 0.4045,
+    "crosstrack_std_m": 0.0855
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7241,
+    "heading_error_rmse_deg": 2.8853,
+    "heading_error_std_deg": 2.8841,
+    "heading_error_max_deg": 27.0579
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.746,
+    "wall_mean_distance_m": 1.0927,
+    "wall_std_distance_m": 0.0877
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3867,
+    "steering_rate_max_rad_s": 6.7985,
+    "steering_rate_std_rad_s": 0.4336
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9046,
+    "speed_max_m_s": 4.825,
+    "speed_std_m_s": 0.709
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23119.0,
+    "left_wall_calls": 7706.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7707.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 7706.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.052s
+RT-Factor:         11.53x
+Extracted RMSE: 0.1288
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 231.06,
+    "steps": 23106.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1351,
+    "crosstrack_mean_m": 0.0937,
+    "crosstrack_max_m": 0.7762,
+    "crosstrack_std_m": 0.0974
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8226,
+    "heading_error_rmse_deg": 3.3476,
+    "heading_error_std_deg": 3.3455,
+    "heading_error_max_deg": 37.2651
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.3768,
+    "wall_mean_distance_m": 1.0942,
+    "wall_std_distance_m": 0.0976
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3916,
+    "steering_rate_max_rad_s": 7.228,
+    "steering_rate_std_rad_s": 0.4514
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9092,
+    "speed_max_m_s": 4.8111,
+    "speed_std_m_s": 0.7381
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23106.0,
+    "left_wall_calls": 7702.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7702.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7702.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.095s
+RT-Factor:         11.50x
+Extracted RMSE: 0.1351
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.76,
+    "steps": 22576.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1265,
+    "crosstrack_mean_m": 0.0835,
+    "crosstrack_max_m": 0.412,
+    "crosstrack_std_m": 0.095
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7967,
+    "heading_error_rmse_deg": 3.3282,
+    "heading_error_std_deg": 3.3237,
+    "heading_error_max_deg": 43.4509
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7441,
+    "wall_mean_distance_m": 1.1016,
+    "wall_std_distance_m": 0.0933
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3883,
+    "steering_rate_max_rad_s": 17.7106,
+    "steering_rate_std_rad_s": 0.4538
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.996,
+    "speed_max_m_s": 4.8657,
+    "speed_std_m_s": 0.7974
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22576.0,
+    "left_wall_calls": 7525.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7526.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 7525.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    19.571s
+RT-Factor:         11.54x
+Extracted RMSE: 0.1265
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.32,
+    "steps": 22532.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1261,
+    "crosstrack_mean_m": 0.0833,
+    "crosstrack_max_m": 0.4005,
+    "crosstrack_std_m": 0.0947
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.691,
+    "heading_error_rmse_deg": 2.7637,
+    "heading_error_std_deg": 2.7629,
+    "heading_error_max_deg": 17.8763
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7507,
+    "wall_mean_distance_m": 1.1016,
+    "wall_std_distance_m": 0.0933
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3836,
+    "steering_rate_max_rad_s": 6.5128,
+    "steering_rate_std_rad_s": 0.4321
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0057,
+    "speed_max_m_s": 4.8621,
+    "speed_std_m_s": 0.7923
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22532.0,
+    "left_wall_calls": 7511.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7511.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7510.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    19.755s
+RT-Factor:         11.41x
+Extracted RMSE: 0.1261
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.39,
+    "steps": 22539.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1265,
+    "crosstrack_mean_m": 0.0835,
+    "crosstrack_max_m": 0.4194,
+    "crosstrack_std_m": 0.095
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7376,
+    "heading_error_rmse_deg": 2.9363,
+    "heading_error_std_deg": 2.9363,
+    "heading_error_max_deg": 20.4383
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7485,
+    "wall_mean_distance_m": 1.1013,
+    "wall_std_distance_m": 0.0936
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3847,
+    "steering_rate_max_rad_s": 8.1548,
+    "steering_rate_std_rad_s": 0.4326
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0039,
+    "speed_max_m_s": 4.8678,
+    "speed_std_m_s": 0.7966
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22539.0,
+    "left_wall_calls": 7513.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7513.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7513.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    19.652s
+RT-Factor:         11.47x
+Extracted RMSE: 0.1265
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 232.62,
+    "steps": 23262.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1418,
+    "crosstrack_mean_m": 0.1038,
+    "crosstrack_max_m": 0.516,
+    "crosstrack_std_m": 0.0965
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.798,
+    "heading_error_rmse_deg": 2.9993,
+    "heading_error_std_deg": 2.9992,
+    "heading_error_max_deg": 19.2139
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6643,
+    "wall_mean_distance_m": 1.0845,
+    "wall_std_distance_m": 0.0979
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3068,
+    "steering_rate_max_rad_s": 7.7635,
+    "steering_rate_std_rad_s": 0.314
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8863,
+    "speed_max_m_s": 4.8495,
+    "speed_std_m_s": 0.7332
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23262.0,
+    "left_wall_calls": 23262.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23262.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23262.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.718s
+RT-Factor:         8.71x
+Extracted RMSE: 0.1418
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.7,
+    "steps": 22570.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1386,
+    "crosstrack_mean_m": 0.0913,
+    "crosstrack_max_m": 0.4545,
+    "crosstrack_std_m": 0.1043
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7857,
+    "heading_error_rmse_deg": 2.9165,
+    "heading_error_std_deg": 2.9148,
+    "heading_error_max_deg": 19.6467
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7038,
+    "wall_mean_distance_m": 1.0934,
+    "wall_std_distance_m": 0.1026
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2907,
+    "steering_rate_max_rad_s": 6.7907,
+    "steering_rate_std_rad_s": 0.3078
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0042,
+    "speed_max_m_s": 4.9013,
+    "speed_std_m_s": 0.8283
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22570.0,
+    "left_wall_calls": 22570.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22570.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22570.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.276s
+RT-Factor:         8.59x
+Extracted RMSE: 0.1386
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.61,
+    "steps": 22561.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1381,
+    "crosstrack_mean_m": 0.091,
+    "crosstrack_max_m": 0.4525,
+    "crosstrack_std_m": 0.1039
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7699,
+    "heading_error_rmse_deg": 2.8908,
+    "heading_error_std_deg": 2.89,
+    "heading_error_max_deg": 19.2111
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6916,
+    "wall_mean_distance_m": 1.0936,
+    "wall_std_distance_m": 0.1023
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2908,
+    "steering_rate_max_rad_s": 5.3141,
+    "steering_rate_std_rad_s": 0.3015
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0057,
+    "speed_max_m_s": 4.8991,
+    "speed_std_m_s": 0.8261
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22561.0,
+    "left_wall_calls": 22561.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22561.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22561.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.757s
+RT-Factor:         8.76x
+Extracted RMSE: 0.1381
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 232.39,
+    "steps": 23239.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1406,
+    "crosstrack_mean_m": 0.1046,
+    "crosstrack_max_m": 0.451,
+    "crosstrack_std_m": 0.094
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8083,
+    "heading_error_rmse_deg": 3.044,
+    "heading_error_std_deg": 3.0434,
+    "heading_error_max_deg": 31.3322
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7121,
+    "wall_mean_distance_m": 1.0844,
+    "wall_std_distance_m": 0.096
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2998,
+    "steering_rate_max_rad_s": 6.2656,
+    "steering_rate_std_rad_s": 0.2985
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8897,
+    "speed_max_m_s": 4.8301,
+    "speed_std_m_s": 0.7254
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23239.0,
+    "left_wall_calls": 23239.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23239.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23239.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.069s
+RT-Factor:         8.59x
+Extracted RMSE: 0.1406
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.95,
+    "steps": 22595.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1391,
+    "crosstrack_mean_m": 0.0916,
+    "crosstrack_max_m": 0.4983,
+    "crosstrack_std_m": 0.1046
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8418,
+    "heading_error_rmse_deg": 3.2139,
+    "heading_error_std_deg": 3.2105,
+    "heading_error_max_deg": 29.6794
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6882,
+    "wall_mean_distance_m": 1.0933,
+    "wall_std_distance_m": 0.1027
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2906,
+    "steering_rate_max_rad_s": 7.5429,
+    "steering_rate_std_rad_s": 0.3184
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9989,
+    "speed_max_m_s": 4.8981,
+    "speed_std_m_s": 0.8281
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22595.0,
+    "left_wall_calls": 22595.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22595.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22595.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.453s
+RT-Factor:         8.88x
+Extracted RMSE: 0.1391
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.63,
+    "steps": 22563.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1383,
+    "crosstrack_mean_m": 0.0911,
+    "crosstrack_max_m": 0.4576,
+    "crosstrack_std_m": 0.104
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7675,
+    "heading_error_rmse_deg": 2.9393,
+    "heading_error_std_deg": 2.9389,
+    "heading_error_max_deg": 21.7258
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7112,
+    "wall_mean_distance_m": 1.0935,
+    "wall_std_distance_m": 0.1024
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.287,
+    "steering_rate_max_rad_s": 5.7662,
+    "steering_rate_std_rad_s": 0.3018
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0055,
+    "speed_max_m_s": 4.9029,
+    "speed_std_m_s": 0.8272
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22563.0,
+    "left_wall_calls": 22563.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22563.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22563.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.551s
+RT-Factor:         8.83x
+Extracted RMSE: 0.1383
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 232.48,
+    "steps": 23248.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1407,
+    "crosstrack_mean_m": 0.1049,
+    "crosstrack_max_m": 0.4537,
+    "crosstrack_std_m": 0.0938
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7896,
+    "heading_error_rmse_deg": 2.9812,
+    "heading_error_std_deg": 2.9808,
+    "heading_error_max_deg": 24.0686
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7125,
+    "wall_mean_distance_m": 1.0841,
+    "wall_std_distance_m": 0.0957
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3026,
+    "steering_rate_max_rad_s": 6.2613,
+    "steering_rate_std_rad_s": 0.3045
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8884,
+    "speed_max_m_s": 4.8461,
+    "speed_std_m_s": 0.7231
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23248.0,
+    "left_wall_calls": 23248.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23248.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23248.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.531s
+RT-Factor:         8.76x
+Extracted RMSE: 0.1407
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 233.13,
+    "steps": 23313.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.145,
+    "crosstrack_mean_m": 0.1068,
+    "crosstrack_max_m": 0.6772,
+    "crosstrack_std_m": 0.0981
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8584,
+    "heading_error_rmse_deg": 3.2421,
+    "heading_error_std_deg": 3.2421,
+    "heading_error_max_deg": 30.8755
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5034,
+    "wall_mean_distance_m": 1.0823,
+    "wall_std_distance_m": 0.0996
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3043,
+    "steering_rate_max_rad_s": 9.705,
+    "steering_rate_std_rad_s": 0.3136
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8788,
+    "speed_max_m_s": 4.833,
+    "speed_std_m_s": 0.7287
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23313.0,
+    "left_wall_calls": 23313.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23313.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23313.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.517s
+RT-Factor:         8.47x
+Extracted RMSE: 0.145
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 227.99,
+    "steps": 22799.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.138,
+    "crosstrack_mean_m": 0.0929,
+    "crosstrack_max_m": 0.4567,
+    "crosstrack_std_m": 0.1021
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8271,
+    "heading_error_rmse_deg": 3.2495,
+    "heading_error_std_deg": 3.2495,
+    "heading_error_max_deg": 42.6447
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7014,
+    "wall_mean_distance_m": 1.093,
+    "wall_std_distance_m": 0.1017
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2999,
+    "steering_rate_max_rad_s": 5.8516,
+    "steering_rate_std_rad_s": 0.3034
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9634,
+    "speed_max_m_s": 4.8712,
+    "speed_std_m_s": 0.7946
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22799.0,
+    "left_wall_calls": 22799.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22799.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22799.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.328s
+RT-Factor:         8.66x
+Extracted RMSE: 0.138
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 225.69,
+    "steps": 22569.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1383,
+    "crosstrack_mean_m": 0.0911,
+    "crosstrack_max_m": 0.4517,
+    "crosstrack_std_m": 0.1041
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.8186,
+    "heading_error_rmse_deg": 3.1852,
+    "heading_error_std_deg": 3.1852,
+    "heading_error_max_deg": 36.0703
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7144,
+    "wall_mean_distance_m": 1.0935,
+    "wall_std_distance_m": 0.1021
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.2907,
+    "steering_rate_max_rad_s": 6.6453,
+    "steering_rate_std_rad_s": 0.2981
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0033,
+    "speed_max_m_s": 4.8863,
+    "speed_std_m_s": 0.8306
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 22569.0,
+    "left_wall_calls": 22569.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 22569.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 22569.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.970s
+RT-Factor:         8.69x
+Extracted RMSE: 0.1383
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.17,
+    "steps": 23517.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1298,
+    "crosstrack_mean_m": 0.0916,
+    "crosstrack_max_m": 0.5567,
+    "crosstrack_std_m": 0.092
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1502,
+    "heading_error_rmse_deg": 3.5827,
+    "heading_error_std_deg": 3.5795,
+    "heading_error_max_deg": 26.5366
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6065,
+    "wall_mean_distance_m": 1.0962,
+    "wall_std_distance_m": 0.0928
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5918,
+    "steering_rate_max_rad_s": 15.7633,
+    "steering_rate_std_rad_s": 0.9154
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8378,
+    "speed_max_m_s": 4.8444,
+    "speed_std_m_s": 0.7586
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23517.0,
+    "left_wall_calls": 7839.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7839.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7839.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.454s
+RT-Factor:         11.50x
+Extracted RMSE: 0.1298
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.84,
+    "steps": 23584.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1288,
+    "crosstrack_mean_m": 0.0928,
+    "crosstrack_max_m": 0.5282,
+    "crosstrack_std_m": 0.0893
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1402,
+    "heading_error_rmse_deg": 3.5726,
+    "heading_error_std_deg": 3.5723,
+    "heading_error_max_deg": 27.022
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6372,
+    "wall_mean_distance_m": 1.0955,
+    "wall_std_distance_m": 0.0904
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5835,
+    "steering_rate_max_rad_s": 15.4855,
+    "steering_rate_std_rad_s": 0.8943
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8261,
+    "speed_max_m_s": 4.8635,
+    "speed_std_m_s": 0.7382
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23584.0,
+    "left_wall_calls": 7862.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7861.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7861.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.456s
+RT-Factor:         11.53x
+Extracted RMSE: 0.1288
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.79,
+    "steps": 23479.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.128,
+    "crosstrack_mean_m": 0.0898,
+    "crosstrack_max_m": 0.5255,
+    "crosstrack_std_m": 0.0912
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1205,
+    "heading_error_rmse_deg": 3.5138,
+    "heading_error_std_deg": 3.5133,
+    "heading_error_max_deg": 26.8063
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.63,
+    "wall_mean_distance_m": 1.0977,
+    "wall_std_distance_m": 0.0919
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5821,
+    "steering_rate_max_rad_s": 16.2497,
+    "steering_rate_std_rad_s": 0.9023
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8434,
+    "speed_max_m_s": 4.847,
+    "speed_std_m_s": 0.7579
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23479.0,
+    "left_wall_calls": 7827.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7826.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7826.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.306s
+RT-Factor:         11.56x
+Extracted RMSE: 0.128
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 236.07,
+    "steps": 23607.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1302,
+    "crosstrack_mean_m": 0.0936,
+    "crosstrack_max_m": 0.538,
+    "crosstrack_std_m": 0.0905
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1914,
+    "heading_error_rmse_deg": 3.6204,
+    "heading_error_std_deg": 3.6171,
+    "heading_error_max_deg": 26.5844
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.622,
+    "wall_mean_distance_m": 1.0951,
+    "wall_std_distance_m": 0.0919
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5855,
+    "steering_rate_max_rad_s": 17.5227,
+    "steering_rate_std_rad_s": 0.8865
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8229,
+    "speed_max_m_s": 4.7952,
+    "speed_std_m_s": 0.7419
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23607.0,
+    "left_wall_calls": 7869.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7869.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7869.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.325s
+RT-Factor:         11.61x
+Extracted RMSE: 0.1302
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.54,
+    "steps": 23554.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1297,
+    "crosstrack_mean_m": 0.0916,
+    "crosstrack_max_m": 0.5378,
+    "crosstrack_std_m": 0.0918
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2194,
+    "heading_error_rmse_deg": 3.8699,
+    "heading_error_std_deg": 3.868,
+    "heading_error_max_deg": 44.8076
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6152,
+    "wall_mean_distance_m": 1.0966,
+    "wall_std_distance_m": 0.0922
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5906,
+    "steering_rate_max_rad_s": 22.9295,
+    "steering_rate_std_rad_s": 0.9113
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8323,
+    "speed_max_m_s": 4.8382,
+    "speed_std_m_s": 0.7637
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23554.0,
+    "left_wall_calls": 7852.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7851.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7851.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.264s
+RT-Factor:         11.62x
+Extracted RMSE: 0.1297
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.31,
+    "steps": 23431.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1287,
+    "crosstrack_mean_m": 0.0897,
+    "crosstrack_max_m": 0.5289,
+    "crosstrack_std_m": 0.0924
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1465,
+    "heading_error_rmse_deg": 3.5487,
+    "heading_error_std_deg": 3.5484,
+    "heading_error_max_deg": 27.0249
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6191,
+    "wall_mean_distance_m": 1.0979,
+    "wall_std_distance_m": 0.0931
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5896,
+    "steering_rate_max_rad_s": 25.5456,
+    "steering_rate_std_rad_s": 0.9274
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8517,
+    "speed_max_m_s": 4.8245,
+    "speed_std_m_s": 0.7657
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23431.0,
+    "left_wall_calls": 7810.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7811.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 7810.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.403s
+RT-Factor:         11.48x
+Extracted RMSE: 0.1287
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 236.18,
+    "steps": 23618.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1286,
+    "crosstrack_mean_m": 0.0927,
+    "crosstrack_max_m": 0.5454,
+    "crosstrack_std_m": 0.0892
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1595,
+    "heading_error_rmse_deg": 3.5751,
+    "heading_error_std_deg": 3.573,
+    "heading_error_max_deg": 29.0869
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6024,
+    "wall_mean_distance_m": 1.0957,
+    "wall_std_distance_m": 0.0905
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5805,
+    "steering_rate_max_rad_s": 16.8776,
+    "steering_rate_std_rad_s": 0.8843
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8213,
+    "speed_max_m_s": 4.826,
+    "speed_std_m_s": 0.7335
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23618.0,
+    "left_wall_calls": 7873.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7873.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7872.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.687s
+RT-Factor:         11.42x
+Extracted RMSE: 0.1286
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.65,
+    "steps": 23465.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1295,
+    "crosstrack_mean_m": 0.0902,
+    "crosstrack_max_m": 0.5342,
+    "crosstrack_std_m": 0.0928
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1217,
+    "heading_error_rmse_deg": 3.5427,
+    "heading_error_std_deg": 3.5408,
+    "heading_error_max_deg": 26.2238
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6256,
+    "wall_mean_distance_m": 1.0965,
+    "wall_std_distance_m": 0.0928
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5859,
+    "steering_rate_max_rad_s": 16.3538,
+    "steering_rate_std_rad_s": 0.8992
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8468,
+    "speed_max_m_s": 4.8592,
+    "speed_std_m_s": 0.7667
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23465.0,
+    "left_wall_calls": 7822.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7822.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7821.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.498s
+RT-Factor:         11.45x
+Extracted RMSE: 0.1295
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.85,
+    "steps": 23585.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1295,
+    "crosstrack_mean_m": 0.0929,
+    "crosstrack_max_m": 0.5538,
+    "crosstrack_std_m": 0.0903
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2013,
+    "heading_error_rmse_deg": 3.8701,
+    "heading_error_std_deg": 3.8701,
+    "heading_error_max_deg": 37.45
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6171,
+    "wall_mean_distance_m": 1.0955,
+    "wall_std_distance_m": 0.0908
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5789,
+    "steering_rate_max_rad_s": 17.2753,
+    "steering_rate_std_rad_s": 0.8723
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8251,
+    "speed_max_m_s": 4.8552,
+    "speed_std_m_s": 0.7397
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23585.0,
+    "left_wall_calls": 7862.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7862.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7861.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.491s
+RT-Factor:         11.51x
+Extracted RMSE: 0.1295
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.18,
+    "steps": 23518.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1306,
+    "crosstrack_mean_m": 0.0922,
+    "crosstrack_max_m": 0.5757,
+    "crosstrack_std_m": 0.0924
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1222,
+    "heading_error_rmse_deg": 3.5815,
+    "heading_error_std_deg": 3.5812,
+    "heading_error_max_deg": 25.9923
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6118,
+    "wall_mean_distance_m": 1.0957,
+    "wall_std_distance_m": 0.0932
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5866,
+    "steering_rate_max_rad_s": 16.0876,
+    "steering_rate_std_rad_s": 0.8904
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8381,
+    "speed_max_m_s": 4.8411,
+    "speed_std_m_s": 0.7549
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23518.0,
+    "left_wall_calls": 7839.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7840.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 7839.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.494s
+RT-Factor:         11.48x
+Extracted RMSE: 0.1306
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.42,
+    "steps": 23442.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1369,
+    "crosstrack_mean_m": 0.0942,
+    "crosstrack_max_m": 0.4433,
+    "crosstrack_std_m": 0.0993
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3574,
+    "heading_error_rmse_deg": 3.5165,
+    "heading_error_std_deg": 3.5161,
+    "heading_error_max_deg": 31.1196
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.714,
+    "wall_mean_distance_m": 1.0924,
+    "wall_std_distance_m": 0.0991
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3191,
+    "steering_rate_max_rad_s": 11.3855,
+    "steering_rate_std_rad_s": 0.334
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8591,
+    "speed_max_m_s": 4.8065,
+    "speed_std_m_s": 0.7606
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23442.0,
+    "left_wall_calls": 23442.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23442.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23442.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.513s
+RT-Factor:         8.52x
+Extracted RMSE: 0.1369
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 232.74,
+    "steps": 23274.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1365,
+    "crosstrack_mean_m": 0.0922,
+    "crosstrack_max_m": 0.4456,
+    "crosstrack_std_m": 0.1006
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2612,
+    "heading_error_rmse_deg": 3.4389,
+    "heading_error_std_deg": 3.4378,
+    "heading_error_max_deg": 29.4996
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7044,
+    "wall_mean_distance_m": 1.0937,
+    "wall_std_distance_m": 0.0997
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3169,
+    "steering_rate_max_rad_s": 7.3291,
+    "steering_rate_std_rad_s": 0.3469
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8863,
+    "speed_max_m_s": 4.8422,
+    "speed_std_m_s": 0.7766
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23274.0,
+    "left_wall_calls": 23274.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23274.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23274.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.530s
+RT-Factor:         8.77x
+Extracted RMSE: 0.1365
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.25,
+    "steps": 23425.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1373,
+    "crosstrack_mean_m": 0.0965,
+    "crosstrack_max_m": 0.4394,
+    "crosstrack_std_m": 0.0976
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2022,
+    "heading_error_rmse_deg": 3.3246,
+    "heading_error_std_deg": 3.3234,
+    "heading_error_max_deg": 27.344
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7181,
+    "wall_mean_distance_m": 1.0906,
+    "wall_std_distance_m": 0.098
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3211,
+    "steering_rate_max_rad_s": 31.9142,
+    "steering_rate_std_rad_s": 0.4785
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8614,
+    "speed_max_m_s": 4.8636,
+    "speed_std_m_s": 0.754
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23425.0,
+    "left_wall_calls": 23425.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23425.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23425.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.630s
+RT-Factor:         8.80x
+Extracted RMSE: 0.1373
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 232.64,
+    "steps": 23264.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1363,
+    "crosstrack_mean_m": 0.0918,
+    "crosstrack_max_m": 0.4375,
+    "crosstrack_std_m": 0.1007
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2401,
+    "heading_error_rmse_deg": 3.3498,
+    "heading_error_std_deg": 3.349,
+    "heading_error_max_deg": 26.6251
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7071,
+    "wall_mean_distance_m": 1.0937,
+    "wall_std_distance_m": 0.0997
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.312,
+    "steering_rate_max_rad_s": 7.7169,
+    "steering_rate_std_rad_s": 0.3449
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8881,
+    "speed_max_m_s": 4.8302,
+    "speed_std_m_s": 0.7753
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23264.0,
+    "left_wall_calls": 23264.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23264.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23264.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.814s
+RT-Factor:         8.68x
+Extracted RMSE: 0.1363
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.9,
+    "steps": 23490.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1388,
+    "crosstrack_mean_m": 0.0967,
+    "crosstrack_max_m": 0.5078,
+    "crosstrack_std_m": 0.0995
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3015,
+    "heading_error_rmse_deg": 3.5059,
+    "heading_error_std_deg": 3.5045,
+    "heading_error_max_deg": 26.0627
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6654,
+    "wall_mean_distance_m": 1.0903,
+    "wall_std_distance_m": 0.0996
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3213,
+    "steering_rate_max_rad_s": 12.0697,
+    "steering_rate_std_rad_s": 0.3504
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8516,
+    "speed_max_m_s": 4.8621,
+    "speed_std_m_s": 0.7559
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23490.0,
+    "left_wall_calls": 23490.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23490.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23490.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.990s
+RT-Factor:         8.70x
+Extracted RMSE: 0.1388
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.83,
+    "steps": 23583.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1394,
+    "crosstrack_mean_m": 0.1003,
+    "crosstrack_max_m": 0.492,
+    "crosstrack_std_m": 0.0967
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2388,
+    "heading_error_rmse_deg": 3.4639,
+    "heading_error_std_deg": 3.4622,
+    "heading_error_max_deg": 24.4741
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6619,
+    "wall_mean_distance_m": 1.0879,
+    "wall_std_distance_m": 0.098
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3169,
+    "steering_rate_max_rad_s": 12.1396,
+    "steering_rate_std_rad_s": 0.3306
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8365,
+    "speed_max_m_s": 4.8635,
+    "speed_std_m_s": 0.7411
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23583.0,
+    "left_wall_calls": 23583.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23583.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23583.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.426s
+RT-Factor:         8.60x
+Extracted RMSE: 0.1394
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 235.36,
+    "steps": 23536.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1358,
+    "crosstrack_mean_m": 0.096,
+    "crosstrack_max_m": 0.4456,
+    "crosstrack_std_m": 0.096
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3665,
+    "heading_error_rmse_deg": 3.6953,
+    "heading_error_std_deg": 3.6953,
+    "heading_error_max_deg": 44.7001
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.7075,
+    "wall_mean_distance_m": 1.0919,
+    "wall_std_distance_m": 0.0972
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3229,
+    "steering_rate_max_rad_s": 37.93,
+    "steering_rate_std_rad_s": 0.4914
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8422,
+    "speed_max_m_s": 4.8387,
+    "speed_std_m_s": 0.7314
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23536.0,
+    "left_wall_calls": 23536.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23536.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23536.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.389s
+RT-Factor:         8.59x
+Extracted RMSE: 0.1358
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 233.22,
+    "steps": 23322.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1375,
+    "crosstrack_mean_m": 0.0948,
+    "crosstrack_max_m": 0.4576,
+    "crosstrack_std_m": 0.0996
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2062,
+    "heading_error_rmse_deg": 3.3909,
+    "heading_error_std_deg": 3.3908,
+    "heading_error_max_deg": 28.1544
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6857,
+    "wall_mean_distance_m": 1.0916,
+    "wall_std_distance_m": 0.0994
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3197,
+    "steering_rate_max_rad_s": 18.4538,
+    "steering_rate_std_rad_s": 0.4252
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8785,
+    "speed_max_m_s": 4.9045,
+    "speed_std_m_s": 0.7771
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23322.0,
+    "left_wall_calls": 23322.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23322.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23322.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.047s
+RT-Factor:         8.62x
+Extracted RMSE: 0.1375
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.37,
+    "steps": 23437.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1362,
+    "crosstrack_mean_m": 0.0952,
+    "crosstrack_max_m": 0.4594,
+    "crosstrack_std_m": 0.0974
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3114,
+    "heading_error_rmse_deg": 3.4752,
+    "heading_error_std_deg": 3.4749,
+    "heading_error_max_deg": 27.4831
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6857,
+    "wall_mean_distance_m": 1.092,
+    "wall_std_distance_m": 0.0976
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.324,
+    "steering_rate_max_rad_s": 22.5963,
+    "steering_rate_std_rad_s": 0.4499
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8592,
+    "speed_max_m_s": 4.8809,
+    "speed_std_m_s": 0.7523
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23437.0,
+    "left_wall_calls": 23437.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23437.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23437.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.211s
+RT-Factor:         8.61x
+Extracted RMSE: 0.1362
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 234.11,
+    "steps": 23411.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1394,
+    "crosstrack_mean_m": 0.096,
+    "crosstrack_max_m": 0.5846,
+    "crosstrack_std_m": 0.1011
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2913,
+    "heading_error_rmse_deg": 3.5969,
+    "heading_error_std_deg": 3.5969,
+    "heading_error_max_deg": 27.4499
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5756,
+    "wall_mean_distance_m": 1.0906,
+    "wall_std_distance_m": 0.1006
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.321,
+    "steering_rate_max_rad_s": 21.0464,
+    "steering_rate_std_rad_s": 0.426
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8647,
+    "speed_max_m_s": 4.8712,
+    "speed_std_m_s": 0.7708
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23411.0,
+    "left_wall_calls": 23411.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23411.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23411.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.339s
+RT-Factor:         8.56x
+Extracted RMSE: 0.1394
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 236.66,
+    "steps": 23666.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1166,
+    "crosstrack_mean_m": 0.0737,
+    "crosstrack_max_m": 0.3519,
+    "crosstrack_std_m": 0.0903
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3955,
+    "heading_error_rmse_deg": 4.1448,
+    "heading_error_std_deg": 4.1408,
+    "heading_error_max_deg": 33.4221
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6713,
+    "wall_mean_distance_m": 0.9888,
+    "wall_std_distance_m": 0.087
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4033,
+    "steering_rate_max_rad_s": 6.2519,
+    "steering_rate_std_rad_s": 0.4894
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9564,
+    "speed_max_m_s": 4.8315,
+    "speed_std_m_s": 0.8293
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23666.0,
+    "left_wall_calls": 7889.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7889.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7888.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.863s
+RT-Factor:         11.34x
+Extracted RMSE: 0.1166
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 240.44,
+    "steps": 24044.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1165,
+    "crosstrack_mean_m": 0.0805,
+    "crosstrack_max_m": 0.349,
+    "crosstrack_std_m": 0.0843
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3624,
+    "heading_error_rmse_deg": 4.1088,
+    "heading_error_std_deg": 4.1039,
+    "heading_error_max_deg": 33.5337
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6729,
+    "wall_mean_distance_m": 0.9858,
+    "wall_std_distance_m": 0.0845
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4015,
+    "steering_rate_max_rad_s": 6.9733,
+    "steering_rate_std_rad_s": 0.4844
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8936,
+    "speed_max_m_s": 4.8292,
+    "speed_std_m_s": 0.7628
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24044.0,
+    "left_wall_calls": 8015.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8015.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8014.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.058s
+RT-Factor:         11.42x
+Extracted RMSE: 0.1165
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.1,
+    "steps": 23710.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1167,
+    "crosstrack_mean_m": 0.0739,
+    "crosstrack_max_m": 0.3596,
+    "crosstrack_std_m": 0.0904
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4137,
+    "heading_error_rmse_deg": 4.1984,
+    "heading_error_std_deg": 4.1936,
+    "heading_error_max_deg": 35.0015
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6637,
+    "wall_mean_distance_m": 0.9885,
+    "wall_std_distance_m": 0.0869
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4043,
+    "steering_rate_max_rad_s": 9.1226,
+    "steering_rate_std_rad_s": 0.4827
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9487,
+    "speed_max_m_s": 4.8524,
+    "speed_std_m_s": 0.8237
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23710.0,
+    "left_wall_calls": 7904.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 7903.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7903.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.862s
+RT-Factor:         11.37x
+Extracted RMSE: 0.1167
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 236.66,
+    "steps": 23666.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1168,
+    "crosstrack_mean_m": 0.0739,
+    "crosstrack_max_m": 0.359,
+    "crosstrack_std_m": 0.0905
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.368,
+    "heading_error_rmse_deg": 4.0551,
+    "heading_error_std_deg": 4.0525,
+    "heading_error_max_deg": 32.6226
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6656,
+    "wall_mean_distance_m": 0.9884,
+    "wall_std_distance_m": 0.0868
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4024,
+    "steering_rate_max_rad_s": 5.9564,
+    "steering_rate_std_rad_s": 0.4792
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9566,
+    "speed_max_m_s": 4.8574,
+    "speed_std_m_s": 0.826
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23666.0,
+    "left_wall_calls": 7889.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7889.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 7888.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.910s
+RT-Factor:         11.32x
+Extracted RMSE: 0.1168
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 241.86,
+    "steps": 24186.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1191,
+    "crosstrack_mean_m": 0.0849,
+    "crosstrack_max_m": 0.356,
+    "crosstrack_std_m": 0.0834
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3806,
+    "heading_error_rmse_deg": 4.1961,
+    "heading_error_std_deg": 4.1931,
+    "heading_error_max_deg": 41.1532
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6634,
+    "wall_mean_distance_m": 0.9826,
+    "wall_std_distance_m": 0.0841
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.411,
+    "steering_rate_max_rad_s": 14.1483,
+    "steering_rate_std_rad_s": 0.4894
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8726,
+    "speed_max_m_s": 4.752,
+    "speed_std_m_s": 0.751
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24186.0,
+    "left_wall_calls": 8062.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8062.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8062.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.204s
+RT-Factor:         11.41x
+Extracted RMSE: 0.1191
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 242.19,
+    "steps": 24219.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1223,
+    "crosstrack_mean_m": 0.086,
+    "crosstrack_max_m": 0.5558,
+    "crosstrack_std_m": 0.0869
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4274,
+    "heading_error_rmse_deg": 4.352,
+    "heading_error_std_deg": 4.3501,
+    "heading_error_max_deg": 44.8915
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5049,
+    "wall_mean_distance_m": 0.9816,
+    "wall_std_distance_m": 0.0868
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4146,
+    "steering_rate_max_rad_s": 16.0371,
+    "steering_rate_std_rad_s": 0.5022
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8684,
+    "speed_max_m_s": 4.8035,
+    "speed_std_m_s": 0.7575
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24219.0,
+    "left_wall_calls": 8073.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8073.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8073.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.574s
+RT-Factor:         11.23x
+Extracted RMSE: 0.1223
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 240.93,
+    "steps": 24093.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1178,
+    "crosstrack_mean_m": 0.0822,
+    "crosstrack_max_m": 0.3825,
+    "crosstrack_std_m": 0.0844
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3831,
+    "heading_error_rmse_deg": 4.1352,
+    "heading_error_std_deg": 4.1325,
+    "heading_error_max_deg": 34.3365
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6577,
+    "wall_mean_distance_m": 0.9841,
+    "wall_std_distance_m": 0.0842
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4053,
+    "steering_rate_max_rad_s": 7.1757,
+    "steering_rate_std_rad_s": 0.4873
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8861,
+    "speed_max_m_s": 4.8394,
+    "speed_std_m_s": 0.7664
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24093.0,
+    "left_wall_calls": 8031.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8031.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8031.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.281s
+RT-Factor:         11.32x
+Extracted RMSE: 0.1178
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 241.4,
+    "steps": 24140.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1178,
+    "crosstrack_mean_m": 0.0827,
+    "crosstrack_max_m": 0.3485,
+    "crosstrack_std_m": 0.084
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3969,
+    "heading_error_rmse_deg": 4.1512,
+    "heading_error_std_deg": 4.1468,
+    "heading_error_max_deg": 33.9415
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6735,
+    "wall_mean_distance_m": 0.9838,
+    "wall_std_distance_m": 0.084
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4033,
+    "steering_rate_max_rad_s": 6.9315,
+    "steering_rate_std_rad_s": 0.489
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8787,
+    "speed_max_m_s": 4.8464,
+    "speed_std_m_s": 0.76
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24140.0,
+    "left_wall_calls": 8047.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8047.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8046.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.553s
+RT-Factor:         11.20x
+Extracted RMSE: 0.1178
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.07,
+    "steps": 23707.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1171,
+    "crosstrack_mean_m": 0.0741,
+    "crosstrack_max_m": 0.3596,
+    "crosstrack_std_m": 0.0907
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4194,
+    "heading_error_rmse_deg": 4.2347,
+    "heading_error_std_deg": 4.2306,
+    "heading_error_max_deg": 38.2058
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.655,
+    "wall_mean_distance_m": 0.9882,
+    "wall_std_distance_m": 0.0873
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4071,
+    "steering_rate_max_rad_s": 12.6849,
+    "steering_rate_std_rad_s": 0.494
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9494,
+    "speed_max_m_s": 4.8689,
+    "speed_std_m_s": 0.8278
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23707.0,
+    "left_wall_calls": 7902.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 7903.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 7902.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.759s
+RT-Factor:         11.42x
+Extracted RMSE: 0.1171
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 240.23,
+    "steps": 24023.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1157,
+    "crosstrack_mean_m": 0.0798,
+    "crosstrack_max_m": 0.354,
+    "crosstrack_std_m": 0.0838
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4291,
+    "heading_error_rmse_deg": 4.3264,
+    "heading_error_std_deg": 4.3246,
+    "heading_error_max_deg": 42.4008
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6628,
+    "wall_mean_distance_m": 0.9866,
+    "wall_std_distance_m": 0.0841
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3995,
+    "steering_rate_max_rad_s": 8.8549,
+    "steering_rate_std_rad_s": 0.4827
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.896,
+    "speed_max_m_s": 4.834,
+    "speed_std_m_s": 0.7636
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24023.0,
+    "left_wall_calls": 8008.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8008.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8007.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    20.825s
+RT-Factor:         11.54x
+Extracted RMSE: 0.1157
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 241.83,
+    "steps": 24183.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1227,
+    "crosstrack_mean_m": 0.086,
+    "crosstrack_max_m": 0.3628,
+    "crosstrack_std_m": 0.0875
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3814,
+    "heading_error_rmse_deg": 4.1901,
+    "heading_error_std_deg": 4.1871,
+    "heading_error_max_deg": 34.3155
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6746,
+    "wall_mean_distance_m": 0.981,
+    "wall_std_distance_m": 0.0874
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3383,
+    "steering_rate_max_rad_s": 7.0315,
+    "steering_rate_std_rad_s": 0.3667
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8751,
+    "speed_max_m_s": 4.8066,
+    "speed_std_m_s": 0.7611
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24183.0,
+    "left_wall_calls": 24183.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24183.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24183.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.037s
+RT-Factor:         8.63x
+Extracted RMSE: 0.1227
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.2,
+    "steps": 23720.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1247,
+    "crosstrack_mean_m": 0.0802,
+    "crosstrack_max_m": 0.4315,
+    "crosstrack_std_m": 0.0955
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3693,
+    "heading_error_rmse_deg": 4.0739,
+    "heading_error_std_deg": 4.0732,
+    "heading_error_max_deg": 32.2083
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6362,
+    "wall_mean_distance_m": 0.9826,
+    "wall_std_distance_m": 0.0912
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3451,
+    "steering_rate_max_rad_s": 6.3164,
+    "steering_rate_std_rad_s": 0.3653
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9515,
+    "speed_max_m_s": 4.8817,
+    "speed_std_m_s": 0.8453
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23720.0,
+    "left_wall_calls": 23720.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23720.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23720.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.744s
+RT-Factor:         8.55x
+Extracted RMSE: 0.1247
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.13,
+    "steps": 23713.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1244,
+    "crosstrack_mean_m": 0.08,
+    "crosstrack_max_m": 0.3695,
+    "crosstrack_std_m": 0.0953
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3591,
+    "heading_error_rmse_deg": 4.0349,
+    "heading_error_std_deg": 4.0315,
+    "heading_error_max_deg": 32.0037
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6644,
+    "wall_mean_distance_m": 0.9826,
+    "wall_std_distance_m": 0.0912
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3451,
+    "steering_rate_max_rad_s": 6.4839,
+    "steering_rate_std_rad_s": 0.3666
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9533,
+    "speed_max_m_s": 4.8767,
+    "speed_std_m_s": 0.8461
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23713.0,
+    "left_wall_calls": 23713.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23713.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23713.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.802s
+RT-Factor:         8.53x
+Extracted RMSE: 0.1244
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.3,
+    "steps": 23730.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1249,
+    "crosstrack_mean_m": 0.0805,
+    "crosstrack_max_m": 0.4522,
+    "crosstrack_std_m": 0.0956
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4186,
+    "heading_error_rmse_deg": 4.2861,
+    "heading_error_std_deg": 4.2859,
+    "heading_error_max_deg": 34.9617
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6532,
+    "wall_mean_distance_m": 0.9823,
+    "wall_std_distance_m": 0.0913
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3428,
+    "steering_rate_max_rad_s": 6.2192,
+    "steering_rate_std_rad_s": 0.3569
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9491,
+    "speed_max_m_s": 4.8938,
+    "speed_std_m_s": 0.8466
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23730.0,
+    "left_wall_calls": 23730.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23730.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23730.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.825s
+RT-Factor:         8.53x
+Extracted RMSE: 0.1249
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.44,
+    "steps": 23744.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.124,
+    "crosstrack_mean_m": 0.0799,
+    "crosstrack_max_m": 0.3695,
+    "crosstrack_std_m": 0.0948
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.4196,
+    "heading_error_rmse_deg": 4.3053,
+    "heading_error_std_deg": 4.3006,
+    "heading_error_max_deg": 44.3092
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6549,
+    "wall_mean_distance_m": 0.983,
+    "wall_std_distance_m": 0.0909
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3454,
+    "steering_rate_max_rad_s": 6.3688,
+    "steering_rate_std_rad_s": 0.3611
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9468,
+    "speed_max_m_s": 4.8844,
+    "speed_std_m_s": 0.8465
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23744.0,
+    "left_wall_calls": 23744.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23744.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23744.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.794s
+RT-Factor:         8.54x
+Extracted RMSE: 0.124
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.15,
+    "steps": 23715.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1242,
+    "crosstrack_mean_m": 0.08,
+    "crosstrack_max_m": 0.37,
+    "crosstrack_std_m": 0.095
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3763,
+    "heading_error_rmse_deg": 4.1126,
+    "heading_error_std_deg": 4.1118,
+    "heading_error_max_deg": 31.9449
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6619,
+    "wall_mean_distance_m": 0.9828,
+    "wall_std_distance_m": 0.0909
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3423,
+    "steering_rate_max_rad_s": 6.5814,
+    "steering_rate_std_rad_s": 0.3616
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9521,
+    "speed_max_m_s": 4.8952,
+    "speed_std_m_s": 0.845
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23715.0,
+    "left_wall_calls": 23715.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23715.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23715.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.815s
+RT-Factor:         8.53x
+Extracted RMSE: 0.1242
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 242.78,
+    "steps": 24278.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1272,
+    "crosstrack_mean_m": 0.0903,
+    "crosstrack_max_m": 0.5463,
+    "crosstrack_std_m": 0.0896
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.436,
+    "heading_error_rmse_deg": 4.3591,
+    "heading_error_std_deg": 4.3564,
+    "heading_error_max_deg": 36.0166
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.4811,
+    "wall_mean_distance_m": 0.977,
+    "wall_std_distance_m": 0.0893
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3399,
+    "steering_rate_max_rad_s": 6.8181,
+    "steering_rate_std_rad_s": 0.3677
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8616,
+    "speed_max_m_s": 4.8588,
+    "speed_std_m_s": 0.77
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24278.0,
+    "left_wall_calls": 24278.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24278.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24278.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.933s
+RT-Factor:         8.69x
+Extracted RMSE: 0.1272
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 243.57,
+    "steps": 24357.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1279,
+    "crosstrack_mean_m": 0.0929,
+    "crosstrack_max_m": 0.4451,
+    "crosstrack_std_m": 0.0879
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3713,
+    "heading_error_rmse_deg": 4.1659,
+    "heading_error_std_deg": 4.1641,
+    "heading_error_max_deg": 38.2707
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.588,
+    "wall_mean_distance_m": 0.9752,
+    "wall_std_distance_m": 0.0882
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3448,
+    "steering_rate_max_rad_s": 7.3285,
+    "steering_rate_std_rad_s": 0.3652
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8505,
+    "speed_max_m_s": 4.7444,
+    "speed_std_m_s": 0.7531
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24357.0,
+    "left_wall_calls": 24357.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24357.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24357.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.359s
+RT-Factor:         8.59x
+Extracted RMSE: 0.1279
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 237.23,
+    "steps": 23723.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1246,
+    "crosstrack_mean_m": 0.0802,
+    "crosstrack_max_m": 0.3767,
+    "crosstrack_std_m": 0.0954
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3615,
+    "heading_error_rmse_deg": 4.0472,
+    "heading_error_std_deg": 4.0463,
+    "heading_error_max_deg": 32.5616
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.662,
+    "wall_mean_distance_m": 0.9824,
+    "wall_std_distance_m": 0.0913
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3448,
+    "steering_rate_max_rad_s": 7.0981,
+    "steering_rate_std_rad_s": 0.3618
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9513,
+    "speed_max_m_s": 4.8903,
+    "speed_std_m_s": 0.8455
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 23723.0,
+    "left_wall_calls": 23723.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 23723.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 23723.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.519s
+RT-Factor:         8.62x
+Extracted RMSE: 0.1246
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 243.61,
+    "steps": 24361.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1266,
+    "crosstrack_mean_m": 0.0926,
+    "crosstrack_max_m": 0.3735,
+    "crosstrack_std_m": 0.0864
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.3685,
+    "heading_error_rmse_deg": 4.2106,
+    "heading_error_std_deg": 4.2079,
+    "heading_error_max_deg": 44.2315
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6604,
+    "wall_mean_distance_m": 0.9755,
+    "wall_std_distance_m": 0.0871
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3479,
+    "steering_rate_max_rad_s": 7.5837,
+    "steering_rate_std_rad_s": 0.372
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8491,
+    "speed_max_m_s": 4.8102,
+    "speed_std_m_s": 0.7486
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24361.0,
+    "left_wall_calls": 24361.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24361.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24361.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.596s
+RT-Factor:         8.52x
+Extracted RMSE: 0.1266
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 243.89,
+    "steps": 24389.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1214,
+    "crosstrack_mean_m": 0.0766,
+    "crosstrack_max_m": 0.4221,
+    "crosstrack_std_m": 0.0942
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9718,
+    "heading_error_rmse_deg": 5.2594,
+    "heading_error_std_deg": 5.2576,
+    "heading_error_max_deg": 46.5666
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6175,
+    "wall_mean_distance_m": 0.9875,
+    "wall_std_distance_m": 0.0906
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6682,
+    "steering_rate_max_rad_s": 37.451,
+    "steering_rate_std_rad_s": 1.1454
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8382,
+    "speed_max_m_s": 4.8316,
+    "speed_std_m_s": 0.8112
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24389.0,
+    "left_wall_calls": 8130.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8130.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8129.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.519s
+RT-Factor:         11.33x
+Extracted RMSE: 0.1214
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 243.73,
+    "steps": 24373.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1211,
+    "crosstrack_mean_m": 0.0761,
+    "crosstrack_max_m": 0.4186,
+    "crosstrack_std_m": 0.0941
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9525,
+    "heading_error_rmse_deg": 5.201,
+    "heading_error_std_deg": 5.1993,
+    "heading_error_max_deg": 46.2424
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6195,
+    "wall_mean_distance_m": 0.9878,
+    "wall_std_distance_m": 0.0908
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6685,
+    "steering_rate_max_rad_s": 26.5833,
+    "steering_rate_std_rad_s": 1.1368
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8406,
+    "speed_max_m_s": 4.8521,
+    "speed_std_m_s": 0.808
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24373.0,
+    "left_wall_calls": 8125.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 8124.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8124.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.474s
+RT-Factor:         11.35x
+Extracted RMSE: 0.1211
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.06,
+    "steps": 24606.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1229,
+    "crosstrack_mean_m": 0.0825,
+    "crosstrack_max_m": 0.4319,
+    "crosstrack_std_m": 0.0911
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9531,
+    "heading_error_rmse_deg": 5.1634,
+    "heading_error_std_deg": 5.1598,
+    "heading_error_max_deg": 46.6982
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5871,
+    "wall_mean_distance_m": 0.9845,
+    "wall_std_distance_m": 0.0898
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6618,
+    "steering_rate_max_rad_s": 24.2443,
+    "steering_rate_std_rad_s": 1.0918
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8053,
+    "speed_max_m_s": 4.8071,
+    "speed_std_m_s": 0.7742
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24606.0,
+    "left_wall_calls": 8202.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8202.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8202.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.793s
+RT-Factor:         11.29x
+Extracted RMSE: 0.1229
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.66,
+    "steps": 24566.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1223,
+    "crosstrack_mean_m": 0.081,
+    "crosstrack_max_m": 0.4339,
+    "crosstrack_std_m": 0.0916
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9491,
+    "heading_error_rmse_deg": 5.1624,
+    "heading_error_std_deg": 5.1589,
+    "heading_error_max_deg": 46.2595
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5967,
+    "wall_mean_distance_m": 0.9854,
+    "wall_std_distance_m": 0.09
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6553,
+    "steering_rate_max_rad_s": 25.1439,
+    "steering_rate_std_rad_s": 1.0762
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8112,
+    "speed_max_m_s": 4.7953,
+    "speed_std_m_s": 0.7741
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24566.0,
+    "left_wall_calls": 8189.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8189.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8188.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.726s
+RT-Factor:         11.31x
+Extracted RMSE: 0.1223
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.86,
+    "steps": 24586.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1276,
+    "crosstrack_mean_m": 0.0818,
+    "crosstrack_max_m": 0.6381,
+    "crosstrack_std_m": 0.098
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.0436,
+    "heading_error_rmse_deg": 5.3632,
+    "heading_error_std_deg": 5.3609,
+    "heading_error_max_deg": 46.2825
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.4022,
+    "wall_mean_distance_m": 0.984,
+    "wall_std_distance_m": 0.095
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6688,
+    "steering_rate_max_rad_s": 25.5242,
+    "steering_rate_std_rad_s": 1.1203
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8102,
+    "speed_max_m_s": 4.8225,
+    "speed_std_m_s": 0.7999
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24586.0,
+    "left_wall_calls": 8196.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 8195.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8195.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    22.710s
+RT-Factor:         10.83x
+Extracted RMSE: 0.1276
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.89,
+    "steps": 24689.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1243,
+    "crosstrack_mean_m": 0.0833,
+    "crosstrack_max_m": 0.5551,
+    "crosstrack_std_m": 0.0924
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9879,
+    "heading_error_rmse_deg": 5.1971,
+    "heading_error_std_deg": 5.1916,
+    "heading_error_max_deg": 46.0454
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.4779,
+    "wall_mean_distance_m": 0.9838,
+    "wall_std_distance_m": 0.0912
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6628,
+    "steering_rate_max_rad_s": 32.4192,
+    "steering_rate_std_rad_s": 1.1068
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.7927,
+    "speed_max_m_s": 4.7836,
+    "speed_std_m_s": 0.7684
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24689.0,
+    "left_wall_calls": 8230.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8230.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8229.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.222s
+RT-Factor:         11.63x
+Extracted RMSE: 0.1243
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 244.48,
+    "steps": 24448.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1217,
+    "crosstrack_mean_m": 0.0785,
+    "crosstrack_max_m": 0.4271,
+    "crosstrack_std_m": 0.093
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9518,
+    "heading_error_rmse_deg": 5.1958,
+    "heading_error_std_deg": 5.1909,
+    "heading_error_max_deg": 45.8737
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6182,
+    "wall_mean_distance_m": 0.9866,
+    "wall_std_distance_m": 0.0905
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6603,
+    "steering_rate_max_rad_s": 22.5434,
+    "steering_rate_std_rad_s": 1.0987
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.829,
+    "speed_max_m_s": 4.8156,
+    "speed_std_m_s": 0.7989
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24448.0,
+    "left_wall_calls": 8149.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8150.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 8149.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.354s
+RT-Factor:         11.45x
+Extracted RMSE: 0.1217
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 244.98,
+    "steps": 24498.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1231,
+    "crosstrack_mean_m": 0.0796,
+    "crosstrack_max_m": 0.4304,
+    "crosstrack_std_m": 0.0938
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.0236,
+    "heading_error_rmse_deg": 5.3254,
+    "heading_error_std_deg": 5.3233,
+    "heading_error_max_deg": 47.0216
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6192,
+    "wall_mean_distance_m": 0.9862,
+    "wall_std_distance_m": 0.0915
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6607,
+    "steering_rate_max_rad_s": 26.1079,
+    "steering_rate_std_rad_s": 1.088
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8223,
+    "speed_max_m_s": 4.806,
+    "speed_std_m_s": 0.7974
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24498.0,
+    "left_wall_calls": 8166.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8166.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8166.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.713s
+RT-Factor:         11.28x
+Extracted RMSE: 0.1231
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.14,
+    "steps": 24514.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1213,
+    "crosstrack_mean_m": 0.0796,
+    "crosstrack_max_m": 0.4169,
+    "crosstrack_std_m": 0.0916
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.9406,
+    "heading_error_rmse_deg": 5.1222,
+    "heading_error_std_deg": 5.1194,
+    "heading_error_max_deg": 46.5725
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6178,
+    "wall_mean_distance_m": 0.986,
+    "wall_std_distance_m": 0.0895
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6614,
+    "steering_rate_max_rad_s": 24.0012,
+    "steering_rate_std_rad_s": 1.1038
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8189,
+    "speed_max_m_s": 4.8093,
+    "speed_std_m_s": 0.7813
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24514.0,
+    "left_wall_calls": 8171.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8172.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 8171.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    22.175s
+RT-Factor:         11.05x
+Extracted RMSE: 0.1213
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.15,
+    "steps": 24515.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1249,
+    "crosstrack_mean_m": 0.08,
+    "crosstrack_max_m": 0.5138,
+    "crosstrack_std_m": 0.096
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.992,
+    "heading_error_rmse_deg": 5.3303,
+    "heading_error_std_deg": 5.3276,
+    "heading_error_max_deg": 47.1071
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5156,
+    "wall_mean_distance_m": 0.9852,
+    "wall_std_distance_m": 0.093
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6702,
+    "steering_rate_max_rad_s": 30.0769,
+    "steering_rate_std_rad_s": 1.1158
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8205,
+    "speed_max_m_s": 4.8213,
+    "speed_std_m_s": 0.8029
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24515.0,
+    "left_wall_calls": 8172.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 8172.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 8171.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    21.755s
+RT-Factor:         11.27x
+Extracted RMSE: 0.1249
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.57,
+    "steps": 24657.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1281,
+    "crosstrack_mean_m": 0.0839,
+    "crosstrack_max_m": 0.4741,
+    "crosstrack_std_m": 0.0968
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1469,
+    "heading_error_rmse_deg": 5.0813,
+    "heading_error_std_deg": 5.0792,
+    "heading_error_max_deg": 38.7539
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5581,
+    "wall_mean_distance_m": 0.9812,
+    "wall_std_distance_m": 0.0943
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3887,
+    "steering_rate_max_rad_s": 10.0257,
+    "steering_rate_std_rad_s": 0.5012
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8097,
+    "speed_max_m_s": 4.8535,
+    "speed_std_m_s": 0.8043
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24657.0,
+    "left_wall_calls": 24657.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24657.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24657.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.724s
+RT-Factor:         8.58x
+Extracted RMSE: 0.1281
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.73,
+    "steps": 24573.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1281,
+    "crosstrack_mean_m": 0.0817,
+    "crosstrack_max_m": 0.4941,
+    "crosstrack_std_m": 0.0987
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1814,
+    "heading_error_rmse_deg": 5.1641,
+    "heading_error_std_deg": 5.1641,
+    "heading_error_max_deg": 40.052
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5611,
+    "wall_mean_distance_m": 0.9825,
+    "wall_std_distance_m": 0.0951
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3846,
+    "steering_rate_max_rad_s": 9.4926,
+    "steering_rate_std_rad_s": 0.496
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8225,
+    "speed_max_m_s": 4.8356,
+    "speed_std_m_s": 0.82
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24573.0,
+    "left_wall_calls": 24573.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24573.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24573.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.853s
+RT-Factor:         8.52x
+Extracted RMSE: 0.1281
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 247.68,
+    "steps": 24768.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1363,
+    "crosstrack_mean_m": 0.0874,
+    "crosstrack_max_m": 0.7147,
+    "crosstrack_std_m": 0.1046
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.3479,
+    "heading_error_rmse_deg": 5.9155,
+    "heading_error_std_deg": 5.9151,
+    "heading_error_max_deg": 61.581
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.3168,
+    "wall_mean_distance_m": 0.9793,
+    "wall_std_distance_m": 0.1065
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3937,
+    "steering_rate_max_rad_s": 21.801,
+    "steering_rate_std_rad_s": 0.5794
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.7963,
+    "speed_max_m_s": 4.832,
+    "speed_std_m_s": 0.8212
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24768.0,
+    "left_wall_calls": 24768.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24768.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24768.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.045s
+RT-Factor:         8.53x
+Extracted RMSE: 0.1363
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.6,
+    "steps": 24660.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1307,
+    "crosstrack_mean_m": 0.0845,
+    "crosstrack_max_m": 0.5279,
+    "crosstrack_std_m": 0.0997
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1785,
+    "heading_error_rmse_deg": 5.0799,
+    "heading_error_std_deg": 5.0799,
+    "heading_error_max_deg": 39.9528
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5089,
+    "wall_mean_distance_m": 0.9803,
+    "wall_std_distance_m": 0.0966
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3868,
+    "steering_rate_max_rad_s": 15.8453,
+    "steering_rate_std_rad_s": 0.4992
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8107,
+    "speed_max_m_s": 4.8364,
+    "speed_std_m_s": 0.8088
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24660.0,
+    "left_wall_calls": 24660.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24660.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24660.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.957s
+RT-Factor:         8.52x
+Extracted RMSE: 0.1307
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 247.19,
+    "steps": 24719.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1295,
+    "crosstrack_mean_m": 0.0849,
+    "crosstrack_max_m": 0.4915,
+    "crosstrack_std_m": 0.0978
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.189,
+    "heading_error_rmse_deg": 5.13,
+    "heading_error_std_deg": 5.1293,
+    "heading_error_max_deg": 38.5852
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5395,
+    "wall_mean_distance_m": 0.9801,
+    "wall_std_distance_m": 0.0947
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3887,
+    "steering_rate_max_rad_s": 12.1745,
+    "steering_rate_std_rad_s": 0.5098
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8016,
+    "speed_max_m_s": 4.8398,
+    "speed_std_m_s": 0.8072
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24719.0,
+    "left_wall_calls": 24719.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24719.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24719.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.215s
+RT-Factor:         8.46x
+Extracted RMSE: 0.1295
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 245.93,
+    "steps": 24593.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1281,
+    "crosstrack_mean_m": 0.084,
+    "crosstrack_max_m": 0.4938,
+    "crosstrack_std_m": 0.0967
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.0654,
+    "heading_error_rmse_deg": 4.9514,
+    "heading_error_std_deg": 4.9499,
+    "heading_error_max_deg": 36.3948
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5516,
+    "wall_mean_distance_m": 0.9812,
+    "wall_std_distance_m": 0.0941
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3798,
+    "steering_rate_max_rad_s": 11.4524,
+    "steering_rate_std_rad_s": 0.4828
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.82,
+    "speed_max_m_s": 4.8531,
+    "speed_std_m_s": 0.8021
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24593.0,
+    "left_wall_calls": 24593.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24593.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24593.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    28.732s
+RT-Factor:         8.56x
+Extracted RMSE: 0.1281
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.36,
+    "steps": 24636.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1288,
+    "crosstrack_mean_m": 0.0835,
+    "crosstrack_max_m": 0.5051,
+    "crosstrack_std_m": 0.098
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1714,
+    "heading_error_rmse_deg": 5.0782,
+    "heading_error_std_deg": 5.0768,
+    "heading_error_max_deg": 43.9095
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5444,
+    "wall_mean_distance_m": 0.9814,
+    "wall_std_distance_m": 0.0951
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3879,
+    "steering_rate_max_rad_s": 11.6132,
+    "steering_rate_std_rad_s": 0.5009
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8134,
+    "speed_max_m_s": 4.7992,
+    "speed_std_m_s": 0.807
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24636.0,
+    "left_wall_calls": 24636.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24636.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24636.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.067s
+RT-Factor:         8.48x
+Extracted RMSE: 0.1288
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.41,
+    "steps": 24641.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1283,
+    "crosstrack_mean_m": 0.0841,
+    "crosstrack_max_m": 0.4951,
+    "crosstrack_std_m": 0.0968
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1329,
+    "heading_error_rmse_deg": 5.1322,
+    "heading_error_std_deg": 5.13,
+    "heading_error_max_deg": 43.748
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5443,
+    "wall_mean_distance_m": 0.9811,
+    "wall_std_distance_m": 0.0942
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3825,
+    "steering_rate_max_rad_s": 10.3893,
+    "steering_rate_std_rad_s": 0.4962
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8118,
+    "speed_max_m_s": 4.8532,
+    "speed_std_m_s": 0.8027
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24641.0,
+    "left_wall_calls": 24641.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24641.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24641.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.338s
+RT-Factor:         8.40x
+Extracted RMSE: 0.1283
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.42,
+    "steps": 24642.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1299,
+    "crosstrack_mean_m": 0.0844,
+    "crosstrack_max_m": 0.5952,
+    "crosstrack_std_m": 0.0987
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.1616,
+    "heading_error_rmse_deg": 5.173,
+    "heading_error_std_deg": 5.1704,
+    "heading_error_max_deg": 36.4562
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5112,
+    "wall_mean_distance_m": 0.9806,
+    "wall_std_distance_m": 0.0954
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3856,
+    "steering_rate_max_rad_s": 16.5038,
+    "steering_rate_std_rad_s": 0.5028
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8123,
+    "speed_max_m_s": 4.8519,
+    "speed_std_m_s": 0.8055
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24642.0,
+    "left_wall_calls": 24642.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24642.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24642.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.724s
+RT-Factor:         8.29x
+Extracted RMSE: 0.1299
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 246.45,
+    "steps": 24645.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1301,
+    "crosstrack_mean_m": 0.0839,
+    "crosstrack_max_m": 0.5062,
+    "crosstrack_std_m": 0.0994
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 3.2012,
+    "heading_error_rmse_deg": 5.2326,
+    "heading_error_std_deg": 5.2307,
+    "heading_error_max_deg": 41.7304
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5208,
+    "wall_mean_distance_m": 0.981,
+    "wall_std_distance_m": 0.0959
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3896,
+    "steering_rate_max_rad_s": 19.4729,
+    "steering_rate_std_rad_s": 0.5326
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8122,
+    "speed_max_m_s": 4.837,
+    "speed_std_m_s": 0.8058
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 24645.0,
+    "left_wall_calls": 24645.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 24645.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 24645.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    29.027s
+RT-Factor:         8.49x
+Extracted RMSE: 0.1301
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.01,
+    "steps": 27701.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.107,
+    "crosstrack_mean_m": 0.0685,
+    "crosstrack_max_m": 0.4013,
+    "crosstrack_std_m": 0.0822
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6797,
+    "heading_error_rmse_deg": 3.4055,
+    "heading_error_std_deg": 3.4053,
+    "heading_error_max_deg": 40.1835
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6188,
+    "wall_mean_distance_m": 0.9804,
+    "wall_std_distance_m": 0.078
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4658,
+    "steering_rate_max_rad_s": 18.1869,
+    "steering_rate_std_rad_s": 0.7411
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0353,
+    "speed_max_m_s": 4.8316,
+    "speed_std_m_s": 0.7478
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27701.0,
+    "left_wall_calls": 9234.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9234.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9233.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.167s
+RT-Factor:         11.01x
+Extracted RMSE: 0.107
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 276.88,
+    "steps": 27688.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1071,
+    "crosstrack_mean_m": 0.0684,
+    "crosstrack_max_m": 0.3978,
+    "crosstrack_std_m": 0.0824
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6793,
+    "heading_error_rmse_deg": 3.4252,
+    "heading_error_std_deg": 3.425,
+    "heading_error_max_deg": 38.7859
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6203,
+    "wall_mean_distance_m": 0.9803,
+    "wall_std_distance_m": 0.0778
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4621,
+    "steering_rate_max_rad_s": 20.2888,
+    "steering_rate_std_rad_s": 0.7398
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0368,
+    "speed_max_m_s": 4.8183,
+    "speed_std_m_s": 0.749
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27688.0,
+    "left_wall_calls": 9230.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 9229.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9229.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    24.872s
+RT-Factor:         11.13x
+Extracted RMSE: 0.1071
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 276.9,
+    "steps": 27690.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1069,
+    "crosstrack_mean_m": 0.0687,
+    "crosstrack_max_m": 0.4051,
+    "crosstrack_std_m": 0.0819
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6229,
+    "heading_error_rmse_deg": 3.1227,
+    "heading_error_std_deg": 3.1224,
+    "heading_error_max_deg": 34.3506
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6184,
+    "wall_mean_distance_m": 0.9801,
+    "wall_std_distance_m": 0.0779
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4602,
+    "steering_rate_max_rad_s": 24.372,
+    "steering_rate_std_rad_s": 0.7329
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0375,
+    "speed_max_m_s": 4.834,
+    "speed_std_m_s": 0.7432
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27690.0,
+    "left_wall_calls": 9230.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9230.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9230.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.270s
+RT-Factor:         10.96x
+Extracted RMSE: 0.1069
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 283.71,
+    "steps": 28371.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1104,
+    "crosstrack_mean_m": 0.0818,
+    "crosstrack_max_m": 0.4112,
+    "crosstrack_std_m": 0.0741
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6573,
+    "heading_error_rmse_deg": 3.1937,
+    "heading_error_std_deg": 3.1935,
+    "heading_error_max_deg": 35.1851
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6148,
+    "wall_mean_distance_m": 0.9725,
+    "wall_std_distance_m": 0.0747
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4534,
+    "steering_rate_max_rad_s": 21.9422,
+    "steering_rate_std_rad_s": 0.7512
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9414,
+    "speed_max_m_s": 4.8385,
+    "speed_std_m_s": 0.6709
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28371.0,
+    "left_wall_calls": 9457.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9457.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9457.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.800s
+RT-Factor:         11.00x
+Extracted RMSE: 0.1104
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.08,
+    "steps": 27708.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1067,
+    "crosstrack_mean_m": 0.0685,
+    "crosstrack_max_m": 0.4046,
+    "crosstrack_std_m": 0.0818
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6433,
+    "heading_error_rmse_deg": 3.2345,
+    "heading_error_std_deg": 3.2345,
+    "heading_error_max_deg": 34.9794
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6179,
+    "wall_mean_distance_m": 0.9801,
+    "wall_std_distance_m": 0.0779
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4616,
+    "steering_rate_max_rad_s": 17.8163,
+    "steering_rate_std_rad_s": 0.7336
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0348,
+    "speed_max_m_s": 4.8313,
+    "speed_std_m_s": 0.744
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27708.0,
+    "left_wall_calls": 9236.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9236.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9236.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.181s
+RT-Factor:         11.00x
+Extracted RMSE: 0.1067
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.25,
+    "steps": 27725.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1089,
+    "crosstrack_mean_m": 0.0695,
+    "crosstrack_max_m": 0.5045,
+    "crosstrack_std_m": 0.0838
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7153,
+    "heading_error_rmse_deg": 3.5754,
+    "heading_error_std_deg": 3.575,
+    "heading_error_max_deg": 40.8384
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6208,
+    "wall_mean_distance_m": 0.9793,
+    "wall_std_distance_m": 0.0791
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4672,
+    "steering_rate_max_rad_s": 18.7982,
+    "steering_rate_std_rad_s": 0.7435
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0314,
+    "speed_max_m_s": 4.8405,
+    "speed_std_m_s": 0.7519
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27725.0,
+    "left_wall_calls": 9242.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9242.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9241.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.583s
+RT-Factor:         10.84x
+Extracted RMSE: 0.1089
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 282.8,
+    "steps": 28280.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1106,
+    "crosstrack_mean_m": 0.0808,
+    "crosstrack_max_m": 0.4025,
+    "crosstrack_std_m": 0.0755
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6145,
+    "heading_error_rmse_deg": 3.1851,
+    "heading_error_std_deg": 3.1848,
+    "heading_error_max_deg": 34.7863
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6213,
+    "wall_mean_distance_m": 0.973,
+    "wall_std_distance_m": 0.0757
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4542,
+    "steering_rate_max_rad_s": 29.3977,
+    "steering_rate_std_rad_s": 0.7572
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9544,
+    "speed_max_m_s": 4.8284,
+    "speed_std_m_s": 0.6808
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28280.0,
+    "left_wall_calls": 9427.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9427.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9426.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.980s
+RT-Factor:         10.89x
+Extracted RMSE: 0.1106
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 276.84,
+    "steps": 27684.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1073,
+    "crosstrack_mean_m": 0.0686,
+    "crosstrack_max_m": 0.4057,
+    "crosstrack_std_m": 0.0825
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6374,
+    "heading_error_rmse_deg": 3.1438,
+    "heading_error_std_deg": 3.1437,
+    "heading_error_max_deg": 34.8137
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6212,
+    "wall_mean_distance_m": 0.9801,
+    "wall_std_distance_m": 0.0786
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.4598,
+    "steering_rate_max_rad_s": 23.6596,
+    "steering_rate_std_rad_s": 0.7363
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0385,
+    "speed_max_m_s": 4.827,
+    "speed_std_m_s": 0.7466
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27684.0,
+    "left_wall_calls": 9228.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9228.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9228.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.935s
+RT-Factor:         10.67x
+Extracted RMSE: 0.1073
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 276.9,
+    "steps": 27690.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1075,
+    "crosstrack_mean_m": 0.0688,
+    "crosstrack_max_m": 0.4003,
+    "crosstrack_std_m": 0.0826
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6563,
+    "heading_error_rmse_deg": 3.2148,
+    "heading_error_std_deg": 3.2145,
+    "heading_error_max_deg": 34.8515
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6302,
+    "wall_mean_distance_m": 0.98,
+    "wall_std_distance_m": 0.0784
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.463,
+    "steering_rate_max_rad_s": 18.703,
+    "steering_rate_std_rad_s": 0.7322
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0378,
+    "speed_max_m_s": 4.8316,
+    "speed_std_m_s": 0.7496
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27690.0,
+    "left_wall_calls": 9230.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9230.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9230.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    25.509s
+RT-Factor:         10.85x
+Extracted RMSE: 0.1075
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 283.55,
+    "steps": 28355.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1114,
+    "crosstrack_mean_m": 0.0825,
+    "crosstrack_max_m": 0.4087,
+    "crosstrack_std_m": 0.0748
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6624,
+    "heading_error_rmse_deg": 3.3266,
+    "heading_error_std_deg": 3.3265,
+    "heading_error_max_deg": 36.757
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5995,
+    "wall_mean_distance_m": 0.9724,
+    "wall_std_distance_m": 0.0758
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.455,
+    "steering_rate_max_rad_s": 24.2836,
+    "steering_rate_std_rad_s": 0.7408
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9444,
+    "speed_max_m_s": 4.765,
+    "speed_std_m_s": 0.6718
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28355.0,
+    "left_wall_calls": 9452.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9452.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9451.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.474s
+RT-Factor:         10.71x
+Extracted RMSE: 0.1114
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.1,
+    "steps": 27710.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1182,
+    "crosstrack_mean_m": 0.0765,
+    "crosstrack_max_m": 0.4167,
+    "crosstrack_std_m": 0.0902
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6766,
+    "heading_error_rmse_deg": 3.2308,
+    "heading_error_std_deg": 3.23,
+    "heading_error_max_deg": 34.517
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6166,
+    "wall_mean_distance_m": 0.9723,
+    "wall_std_distance_m": 0.0858
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.356,
+    "steering_rate_max_rad_s": 9.825,
+    "steering_rate_std_rad_s": 0.3757
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0388,
+    "speed_max_m_s": 4.8531,
+    "speed_std_m_s": 0.7854
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27710.0,
+    "left_wall_calls": 27710.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 27710.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 27710.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.657s
+RT-Factor:         8.00x
+Extracted RMSE: 0.1182
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.03,
+    "steps": 27703.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1182,
+    "crosstrack_mean_m": 0.0764,
+    "crosstrack_max_m": 0.4195,
+    "crosstrack_std_m": 0.0902
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6708,
+    "heading_error_rmse_deg": 3.184,
+    "heading_error_std_deg": 3.1837,
+    "heading_error_max_deg": 34.4187
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5985,
+    "wall_mean_distance_m": 0.9724,
+    "wall_std_distance_m": 0.0858
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3555,
+    "steering_rate_max_rad_s": 9.9148,
+    "steering_rate_std_rad_s": 0.3767
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0402,
+    "speed_max_m_s": 4.8486,
+    "speed_std_m_s": 0.7842
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27703.0,
+    "left_wall_calls": 27703.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 27703.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 27703.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    33.301s
+RT-Factor:         8.32x
+Extracted RMSE: 0.1182
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.29,
+    "steps": 28529.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1211,
+    "crosstrack_mean_m": 0.0897,
+    "crosstrack_max_m": 0.4343,
+    "crosstrack_std_m": 0.0814
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6578,
+    "heading_error_rmse_deg": 3.1985,
+    "heading_error_std_deg": 3.1981,
+    "heading_error_max_deg": 34.6944
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5886,
+    "wall_mean_distance_m": 0.9648,
+    "wall_std_distance_m": 0.0818
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3473,
+    "steering_rate_max_rad_s": 11.9283,
+    "steering_rate_std_rad_s": 0.3755
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9238,
+    "speed_max_m_s": 4.8153,
+    "speed_std_m_s": 0.6777
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28529.0,
+    "left_wall_calls": 28529.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28529.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28529.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    35.351s
+RT-Factor:         8.07x
+Extracted RMSE: 0.1211
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.04,
+    "steps": 28504.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1208,
+    "crosstrack_mean_m": 0.0919,
+    "crosstrack_max_m": 0.412,
+    "crosstrack_std_m": 0.0785
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6029,
+    "heading_error_rmse_deg": 3.1567,
+    "heading_error_std_deg": 3.1566,
+    "heading_error_max_deg": 34.4862
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6129,
+    "wall_mean_distance_m": 0.9641,
+    "wall_std_distance_m": 0.0803
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3479,
+    "steering_rate_max_rad_s": 14.0476,
+    "steering_rate_std_rad_s": 0.3765
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9273,
+    "speed_max_m_s": 4.7689,
+    "speed_std_m_s": 0.6709
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28504.0,
+    "left_wall_calls": 28504.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28504.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28504.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.843s
+RT-Factor:         8.18x
+Extracted RMSE: 0.1208
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 284.53,
+    "steps": 28453.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1201,
+    "crosstrack_mean_m": 0.0888,
+    "crosstrack_max_m": 0.4218,
+    "crosstrack_std_m": 0.0809
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6602,
+    "heading_error_rmse_deg": 3.2169,
+    "heading_error_std_deg": 3.2167,
+    "heading_error_max_deg": 34.5892
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6082,
+    "wall_mean_distance_m": 0.9653,
+    "wall_std_distance_m": 0.081
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3497,
+    "steering_rate_max_rad_s": 9.6545,
+    "steering_rate_std_rad_s": 0.3761
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.934,
+    "speed_max_m_s": 4.8271,
+    "speed_std_m_s": 0.6851
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28453.0,
+    "left_wall_calls": 28453.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28453.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28453.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.430s
+RT-Factor:         8.26x
+Extracted RMSE: 0.1201
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 284.84,
+    "steps": 28484.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1218,
+    "crosstrack_mean_m": 0.0895,
+    "crosstrack_max_m": 0.5888,
+    "crosstrack_std_m": 0.0826
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.6562,
+    "heading_error_rmse_deg": 3.2645,
+    "heading_error_std_deg": 3.2644,
+    "heading_error_max_deg": 34.6007
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.4718,
+    "wall_mean_distance_m": 0.9646,
+    "wall_std_distance_m": 0.0826
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3481,
+    "steering_rate_max_rad_s": 14.6747,
+    "steering_rate_std_rad_s": 0.3742
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9298,
+    "speed_max_m_s": 4.8413,
+    "speed_std_m_s": 0.6875
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28484.0,
+    "left_wall_calls": 28484.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28484.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28484.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.160s
+RT-Factor:         8.34x
+Extracted RMSE: 0.1218
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.43,
+    "steps": 27743.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.119,
+    "crosstrack_mean_m": 0.0772,
+    "crosstrack_max_m": 0.4226,
+    "crosstrack_std_m": 0.0906
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7012,
+    "heading_error_rmse_deg": 3.2615,
+    "heading_error_std_deg": 3.2604,
+    "heading_error_max_deg": 34.4852
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6102,
+    "wall_mean_distance_m": 0.9719,
+    "wall_std_distance_m": 0.0863
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.357,
+    "steering_rate_max_rad_s": 16.4307,
+    "steering_rate_std_rad_s": 0.4125
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0342,
+    "speed_max_m_s": 4.8446,
+    "speed_std_m_s": 0.7855
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27743.0,
+    "left_wall_calls": 27743.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 27743.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 27743.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.589s
+RT-Factor:         8.02x
+Extracted RMSE: 0.119
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.13,
+    "steps": 28513.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1221,
+    "crosstrack_mean_m": 0.0919,
+    "crosstrack_max_m": 0.4598,
+    "crosstrack_std_m": 0.0804
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.653,
+    "heading_error_rmse_deg": 3.3224,
+    "heading_error_std_deg": 3.3222,
+    "heading_error_max_deg": 37.8659
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5687,
+    "wall_mean_distance_m": 0.9639,
+    "wall_std_distance_m": 0.0818
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3478,
+    "steering_rate_max_rad_s": 12.2975,
+    "steering_rate_std_rad_s": 0.3784
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9266,
+    "speed_max_m_s": 4.7187,
+    "speed_std_m_s": 0.68
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28513.0,
+    "left_wall_calls": 28513.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28513.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28513.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.790s
+RT-Factor:         8.20x
+Extracted RMSE: 0.1221
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.01,
+    "steps": 28501.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1205,
+    "crosstrack_mean_m": 0.0915,
+    "crosstrack_max_m": 0.4216,
+    "crosstrack_std_m": 0.0783
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.5988,
+    "heading_error_rmse_deg": 3.108,
+    "heading_error_std_deg": 3.1076,
+    "heading_error_max_deg": 34.5479
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6103,
+    "wall_mean_distance_m": 0.9642,
+    "wall_std_distance_m": 0.0801
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3485,
+    "steering_rate_max_rad_s": 11.044,
+    "steering_rate_std_rad_s": 0.3785
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9276,
+    "speed_max_m_s": 4.7653,
+    "speed_std_m_s": 0.6708
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28501.0,
+    "left_wall_calls": 28501.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28501.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28501.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.864s
+RT-Factor:         8.17x
+Extracted RMSE: 0.1205
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 277.3,
+    "steps": 27730.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1182,
+    "crosstrack_mean_m": 0.0767,
+    "crosstrack_max_m": 0.4212,
+    "crosstrack_std_m": 0.0899
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.7046,
+    "heading_error_rmse_deg": 3.4405,
+    "heading_error_std_deg": 3.4405,
+    "heading_error_max_deg": 44.3123
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.6009,
+    "wall_mean_distance_m": 0.9721,
+    "wall_std_distance_m": 0.0858
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3547,
+    "steering_rate_max_rad_s": 8.9427,
+    "steering_rate_std_rad_s": 0.3763
+  },
+  "Speed": {
+    "speed_mean_m_s": 4.0355,
+    "speed_max_m_s": 4.8699,
+    "speed_std_m_s": 0.7883
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 27730.0,
+    "left_wall_calls": 27730.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 27730.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 27730.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.358s
+RT-Factor:         8.07x
+Extracted RMSE: 0.1182
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 288.12,
+    "steps": 28812.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1135,
+    "crosstrack_mean_m": 0.0776,
+    "crosstrack_max_m": 0.5295,
+    "crosstrack_std_m": 0.0829
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0374,
+    "heading_error_rmse_deg": 3.9006,
+    "heading_error_std_deg": 3.9006,
+    "heading_error_max_deg": 40.5765
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5152,
+    "wall_mean_distance_m": 0.9752,
+    "wall_std_distance_m": 0.0807
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6219,
+    "steering_rate_max_rad_s": 103.0896,
+    "steering_rate_std_rad_s": 1.7101
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8821,
+    "speed_max_m_s": 4.793,
+    "speed_std_m_s": 0.7063
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28812.0,
+    "left_wall_calls": 9604.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9604.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9604.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.679s
+RT-Factor:         10.41x
+Extracted RMSE: 0.1135
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 286.24,
+    "steps": 28624.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1125,
+    "crosstrack_mean_m": 0.0743,
+    "crosstrack_max_m": 0.522,
+    "crosstrack_std_m": 0.0844
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0226,
+    "heading_error_rmse_deg": 3.8375,
+    "heading_error_std_deg": 3.8374,
+    "heading_error_max_deg": 36.6753
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.519,
+    "wall_mean_distance_m": 0.9769,
+    "wall_std_distance_m": 0.0813
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6255,
+    "steering_rate_max_rad_s": 150.5226,
+    "steering_rate_std_rad_s": 1.8188
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9074,
+    "speed_max_m_s": 4.8063,
+    "speed_std_m_s": 0.7255
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28624.0,
+    "left_wall_calls": 9542.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 9541.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9541.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.066s
+RT-Factor:         10.58x
+Extracted RMSE: 0.1125
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 288.43,
+    "steps": 28843.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1167,
+    "crosstrack_mean_m": 0.0786,
+    "crosstrack_max_m": 0.6184,
+    "crosstrack_std_m": 0.0862
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0792,
+    "heading_error_rmse_deg": 4.0627,
+    "heading_error_std_deg": 4.0627,
+    "heading_error_max_deg": 44.1942
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.4328,
+    "wall_mean_distance_m": 0.9744,
+    "wall_std_distance_m": 0.0837
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6226,
+    "steering_rate_max_rad_s": 90.8639,
+    "steering_rate_std_rad_s": 1.5576
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8794,
+    "speed_max_m_s": 4.7551,
+    "speed_std_m_s": 0.71
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28843.0,
+    "left_wall_calls": 9615.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 9614.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9614.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.241s
+RT-Factor:         10.59x
+Extracted RMSE: 0.1167
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 287.44,
+    "steps": 28744.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1126,
+    "crosstrack_mean_m": 0.0769,
+    "crosstrack_max_m": 0.516,
+    "crosstrack_std_m": 0.0822
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0062,
+    "heading_error_rmse_deg": 3.8373,
+    "heading_error_std_deg": 3.8371,
+    "heading_error_max_deg": 36.0148
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5211,
+    "wall_mean_distance_m": 0.976,
+    "wall_std_distance_m": 0.0804
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6272,
+    "steering_rate_max_rad_s": 148.7783,
+    "steering_rate_std_rad_s": 1.822
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8905,
+    "speed_max_m_s": 4.7836,
+    "speed_std_m_s": 0.7056
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28744.0,
+    "left_wall_calls": 9582.0,
+    "left_wall_call_rate": 0.3334,
+    "track_width_calls": 9581.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9581.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.606s
+RT-Factor:         10.41x
+Extracted RMSE: 0.1126
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 287.73,
+    "steps": 28773.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1123,
+    "crosstrack_mean_m": 0.0776,
+    "crosstrack_max_m": 0.5128,
+    "crosstrack_std_m": 0.0813
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0063,
+    "heading_error_rmse_deg": 3.8894,
+    "heading_error_std_deg": 3.8886,
+    "heading_error_max_deg": 38.6816
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5245,
+    "wall_mean_distance_m": 0.9752,
+    "wall_std_distance_m": 0.0791
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6119,
+    "steering_rate_max_rad_s": 114.7651,
+    "steering_rate_std_rad_s": 1.4358
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8854,
+    "speed_max_m_s": 4.8021,
+    "speed_std_m_s": 0.7009
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28773.0,
+    "left_wall_calls": 9591.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9591.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9591.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.539s
+RT-Factor:         10.84x
+Extracted RMSE: 0.1123
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 288.65,
+    "steps": 28865.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1141,
+    "crosstrack_mean_m": 0.0796,
+    "crosstrack_max_m": 0.5321,
+    "crosstrack_std_m": 0.0817
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0187,
+    "heading_error_rmse_deg": 3.8344,
+    "heading_error_std_deg": 3.8339,
+    "heading_error_max_deg": 37.5819
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5116,
+    "wall_mean_distance_m": 0.9739,
+    "wall_std_distance_m": 0.0804
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6211,
+    "steering_rate_max_rad_s": 171.1036,
+    "steering_rate_std_rad_s": 1.7891
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8743,
+    "speed_max_m_s": 4.7807,
+    "speed_std_m_s": 0.6917
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28865.0,
+    "left_wall_calls": 9622.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9622.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9621.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.261s
+RT-Factor:         10.59x
+Extracted RMSE: 0.1141
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 287.95,
+    "steps": 28795.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1132,
+    "crosstrack_mean_m": 0.0778,
+    "crosstrack_max_m": 0.5344,
+    "crosstrack_std_m": 0.0823
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0057,
+    "heading_error_rmse_deg": 3.7764,
+    "heading_error_std_deg": 3.7763,
+    "heading_error_max_deg": 39.3444
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.508,
+    "wall_mean_distance_m": 0.9749,
+    "wall_std_distance_m": 0.0805
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6154,
+    "steering_rate_max_rad_s": 94.0444,
+    "steering_rate_std_rad_s": 1.5637
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8841,
+    "speed_max_m_s": 4.7868,
+    "speed_std_m_s": 0.6995
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28795.0,
+    "left_wall_calls": 9598.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9599.0,
+    "track_width_call_rate": 0.3334,
+    "heading_calls": 9598.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.658s
+RT-Factor:         10.80x
+Extracted RMSE: 0.1132
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.9,
+    "steps": 28590.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1122,
+    "crosstrack_mean_m": 0.0737,
+    "crosstrack_max_m": 0.5324,
+    "crosstrack_std_m": 0.0846
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0021,
+    "heading_error_rmse_deg": 3.8448,
+    "heading_error_std_deg": 3.8444,
+    "heading_error_max_deg": 34.0176
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5117,
+    "wall_mean_distance_m": 0.9774,
+    "wall_std_distance_m": 0.0815
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6134,
+    "steering_rate_max_rad_s": 153.1503,
+    "steering_rate_std_rad_s": 1.578
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9115,
+    "speed_max_m_s": 4.7782,
+    "speed_std_m_s": 0.7271
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28590.0,
+    "left_wall_calls": 9530.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9530.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9530.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    27.121s
+RT-Factor:         10.54x
+Extracted RMSE: 0.1122
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 288.03,
+    "steps": 28803.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1133,
+    "crosstrack_mean_m": 0.0777,
+    "crosstrack_max_m": 0.5295,
+    "crosstrack_std_m": 0.0825
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.0277,
+    "heading_error_rmse_deg": 3.8186,
+    "heading_error_std_deg": 3.8183,
+    "heading_error_max_deg": 34.6238
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.519,
+    "wall_mean_distance_m": 0.9749,
+    "wall_std_distance_m": 0.0805
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.5959,
+    "steering_rate_max_rad_s": 36.7091,
+    "steering_rate_std_rad_s": 1.0171
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8824,
+    "speed_max_m_s": 4.7614,
+    "speed_std_m_s": 0.7032
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28803.0,
+    "left_wall_calls": 9601.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9601.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9601.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.711s
+RT-Factor:         10.78x
+Extracted RMSE: 0.1133
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 286.14,
+    "steps": 28614.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.112,
+    "crosstrack_mean_m": 0.0739,
+    "crosstrack_max_m": 0.5211,
+    "crosstrack_std_m": 0.0842
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 1.978,
+    "heading_error_rmse_deg": 3.7061,
+    "heading_error_std_deg": 3.7061,
+    "heading_error_max_deg": 35.2837
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5221,
+    "wall_mean_distance_m": 0.9771,
+    "wall_std_distance_m": 0.0811
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.6306,
+    "steering_rate_max_rad_s": 147.1577,
+    "steering_rate_std_rad_s": 1.9415
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9087,
+    "speed_max_m_s": 4.836,
+    "speed_std_m_s": 0.7252
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28614.0,
+    "left_wall_calls": 9538.0,
+    "left_wall_call_rate": 0.3333,
+    "track_width_calls": 9538.0,
+    "track_width_call_rate": 0.3333,
+    "heading_calls": 9538.0,
+    "heading_call_rate": 0.3333
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    26.027s
+RT-Factor:         10.99x
+Extracted RMSE: 0.112
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.62,
+    "steps": 28562.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1168,
+    "crosstrack_mean_m": 0.0782,
+    "crosstrack_max_m": 0.478,
+    "crosstrack_std_m": 0.0867
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2004,
+    "heading_error_rmse_deg": 3.6146,
+    "heading_error_std_deg": 3.613,
+    "heading_error_max_deg": 38.2784
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5592,
+    "wall_mean_distance_m": 0.9725,
+    "wall_std_distance_m": 0.0833
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3976,
+    "steering_rate_max_rad_s": 90.559,
+    "steering_rate_std_rad_s": 0.9302
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9218,
+    "speed_max_m_s": 4.828,
+    "speed_std_m_s": 0.7331
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28562.0,
+    "left_wall_calls": 28562.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28562.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28562.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.204s
+RT-Factor:         8.35x
+Extracted RMSE: 0.1168
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 287.52,
+    "steps": 28752.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1177,
+    "crosstrack_mean_m": 0.0816,
+    "crosstrack_max_m": 0.4888,
+    "crosstrack_std_m": 0.0848
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2057,
+    "heading_error_rmse_deg": 3.7004,
+    "heading_error_std_deg": 3.7002,
+    "heading_error_max_deg": 37.068
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5375,
+    "wall_mean_distance_m": 0.9705,
+    "wall_std_distance_m": 0.0825
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3927,
+    "steering_rate_max_rad_s": 45.9951,
+    "steering_rate_std_rad_s": 0.7428
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8964,
+    "speed_max_m_s": 4.8103,
+    "speed_std_m_s": 0.7225
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28752.0,
+    "left_wall_calls": 28752.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28752.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28752.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    47.710s
+RT-Factor:         6.03x
+Extracted RMSE: 0.1177
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 286.83,
+    "steps": 28683.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1174,
+    "crosstrack_mean_m": 0.08,
+    "crosstrack_max_m": 0.4834,
+    "crosstrack_std_m": 0.0859
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.238,
+    "heading_error_rmse_deg": 3.7173,
+    "heading_error_std_deg": 3.7172,
+    "heading_error_max_deg": 38.5024
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5436,
+    "wall_mean_distance_m": 0.9717,
+    "wall_std_distance_m": 0.083
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3903,
+    "steering_rate_max_rad_s": 89.2649,
+    "steering_rate_std_rad_s": 0.8682
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9053,
+    "speed_max_m_s": 4.8029,
+    "speed_std_m_s": 0.7281
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28683.0,
+    "left_wall_calls": 28683.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28683.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28683.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.640s
+RT-Factor:         8.28x
+Extracted RMSE: 0.1174
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.83,
+    "steps": 28583.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1167,
+    "crosstrack_mean_m": 0.0785,
+    "crosstrack_max_m": 0.4767,
+    "crosstrack_std_m": 0.0863
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1828,
+    "heading_error_rmse_deg": 3.5651,
+    "heading_error_std_deg": 3.5639,
+    "heading_error_max_deg": 38.1084
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5595,
+    "wall_mean_distance_m": 0.9723,
+    "wall_std_distance_m": 0.0833
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3932,
+    "steering_rate_max_rad_s": 65.5595,
+    "steering_rate_std_rad_s": 0.8117
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9192,
+    "speed_max_m_s": 4.8002,
+    "speed_std_m_s": 0.725
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28583.0,
+    "left_wall_calls": 28583.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28583.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28583.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.566s
+RT-Factor:         8.27x
+Extracted RMSE: 0.1167
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 286.07,
+    "steps": 28607.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1171,
+    "crosstrack_mean_m": 0.0791,
+    "crosstrack_max_m": 0.4873,
+    "crosstrack_std_m": 0.0864
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2023,
+    "heading_error_rmse_deg": 3.5994,
+    "heading_error_std_deg": 3.5985,
+    "heading_error_max_deg": 37.9781
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5537,
+    "wall_mean_distance_m": 0.9722,
+    "wall_std_distance_m": 0.0831
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3905,
+    "steering_rate_max_rad_s": 87.9264,
+    "steering_rate_std_rad_s": 0.8494
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9162,
+    "speed_max_m_s": 4.7726,
+    "speed_std_m_s": 0.733
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28607.0,
+    "left_wall_calls": 28607.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28607.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28607.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    37.858s
+RT-Factor:         7.56x
+Extracted RMSE: 0.1171
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.76,
+    "steps": 28576.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1169,
+    "crosstrack_mean_m": 0.0782,
+    "crosstrack_max_m": 0.4888,
+    "crosstrack_std_m": 0.0869
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2025,
+    "heading_error_rmse_deg": 3.6306,
+    "heading_error_std_deg": 3.6302,
+    "heading_error_max_deg": 37.1627
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5508,
+    "wall_mean_distance_m": 0.9725,
+    "wall_std_distance_m": 0.0833
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3924,
+    "steering_rate_max_rad_s": 91.4796,
+    "steering_rate_std_rad_s": 0.8443
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9204,
+    "speed_max_m_s": 4.8135,
+    "speed_std_m_s": 0.7346
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28576.0,
+    "left_wall_calls": 28576.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28576.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28576.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    47.565s
+RT-Factor:         6.01x
+Extracted RMSE: 0.1169
+Run 2
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 286.45,
+    "steps": 28645.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1187,
+    "crosstrack_mean_m": 0.0791,
+    "crosstrack_max_m": 0.4991,
+    "crosstrack_std_m": 0.0885
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.263,
+    "heading_error_rmse_deg": 3.7676,
+    "heading_error_std_deg": 3.7674,
+    "heading_error_max_deg": 37.8335
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5287,
+    "wall_mean_distance_m": 0.9719,
+    "wall_std_distance_m": 0.0849
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3972,
+    "steering_rate_max_rad_s": 81.1972,
+    "steering_rate_std_rad_s": 0.8435
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9114,
+    "speed_max_m_s": 4.7562,
+    "speed_std_m_s": 0.7412
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28645.0,
+    "left_wall_calls": 28645.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28645.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28645.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.461s
+RT-Factor:         8.31x
+Extracted RMSE: 0.1187
+Run 3
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 287.65,
+    "steps": 28765.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1174,
+    "crosstrack_mean_m": 0.0821,
+    "crosstrack_max_m": 0.4847,
+    "crosstrack_std_m": 0.0839
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.1714,
+    "heading_error_rmse_deg": 3.5724,
+    "heading_error_std_deg": 3.5717,
+    "heading_error_max_deg": 38.2608
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5559,
+    "wall_mean_distance_m": 0.9703,
+    "wall_std_distance_m": 0.0819
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.387,
+    "steering_rate_max_rad_s": 55.4236,
+    "steering_rate_std_rad_s": 0.7989
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.8945,
+    "speed_max_m_s": 4.8259,
+    "speed_std_m_s": 0.7128
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28765.0,
+    "left_wall_calls": 28765.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28765.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28765.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.581s
+RT-Factor:         8.32x
+Extracted RMSE: 0.1174
+Run 4
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.54,
+    "steps": 28554.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1167,
+    "crosstrack_mean_m": 0.078,
+    "crosstrack_max_m": 0.4956,
+    "crosstrack_std_m": 0.0868
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2423,
+    "heading_error_rmse_deg": 3.854,
+    "heading_error_std_deg": 3.8525,
+    "heading_error_max_deg": 43.8904
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5327,
+    "wall_mean_distance_m": 0.9729,
+    "wall_std_distance_m": 0.0836
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3944,
+    "steering_rate_max_rad_s": 51.5764,
+    "steering_rate_std_rad_s": 0.7648
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9228,
+    "speed_max_m_s": 4.8034,
+    "speed_std_m_s": 0.7408
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28554.0,
+    "left_wall_calls": 28554.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28554.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28554.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.692s
+RT-Factor:         8.23x
+Extracted RMSE: 0.1167
+Run 5
+Executing edge_cloud simulation loop...
+{
+  "Lap Time": {
+    "lap_time_s": 285.4,
+    "steps": 28540.0,
+    "collision": 0.0,
+    "laps_completed": 2.0
+  },
+  "Cross-Track Error": {
+    "crosstrack_rmse_m": 0.1166,
+    "crosstrack_mean_m": 0.0777,
+    "crosstrack_max_m": 0.4929,
+    "crosstrack_std_m": 0.087
+  },
+  "Heading Error": {
+    "heading_error_mean_deg": 2.2026,
+    "heading_error_rmse_deg": 3.6461,
+    "heading_error_std_deg": 3.6454,
+    "heading_error_max_deg": 38.2956
+  },
+  "Wall Proximity": {
+    "wall_min_distance_m": 0.5323,
+    "wall_mean_distance_m": 0.973,
+    "wall_std_distance_m": 0.0833
+  },
+  "Smoothness": {
+    "steering_rate_mean_rad_s": 0.3941,
+    "steering_rate_max_rad_s": 57.7641,
+    "steering_rate_std_rad_s": 0.7349
+  },
+  "Speed": {
+    "speed_mean_m_s": 3.9251,
+    "speed_max_m_s": 4.8025,
+    "speed_std_m_s": 0.74
+  },
+  "Cloud DNN Calls": {
+    "total_steps": 28540.0,
+    "left_wall_calls": 28540.0,
+    "left_wall_call_rate": 1.0,
+    "track_width_calls": 28540.0,
+    "track_width_call_rate": 1.0,
+    "heading_calls": 28540.0,
+    "heading_call_rate": 1.0
+  }
+}
+
+--- Simulation Summary ---
+Planner:           edge_cloud
+Real Wall Time:    34.811s
+RT-Factor:         8.20x
+Extracted RMSE: 0.1166
+All experiments completed.
+=== Finished ===

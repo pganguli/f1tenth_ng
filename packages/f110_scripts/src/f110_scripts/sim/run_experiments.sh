@@ -5,7 +5,7 @@
 # =========================
 PY_SCRIPT="packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py"
 OUTPUT_DIR="results"
-N_RUNS=1   # keep small for debugging
+N_RUNS=5   # keep small for debugging
 
 # Maps + waypoints (paired by index)
 MAPS=(
@@ -31,7 +31,10 @@ STRATEGIES=("round_robin" "sensitivity" "rl_simple" "rl_boot")
 # =========================
 mkdir -p ${OUTPUT_DIR}
 echo "Running in: $(pwd)"
-
+python -c "import f110_planning.metrics; print('IMPORT METRICS OK')"
+python -c "import os; print(os.listdir('$SLURM_SUBMIT_DIR/packages'))"
+echo "RUN SCRIPT PYTHON: $(which python)"
+python --version
 # =========================
 # MAIN LOOP
 # =========================
@@ -76,7 +79,9 @@ for idx in ${!MAPS[@]}; do
                 # -------------------------
                 # Run simulation
                 # -------------------------
-                OUTPUT=$(python $PY_SCRIPT \
+                TMPFILE=$(mktemp)
+
+                python $PY_SCRIPT \
                     --map $MAP \
                     --waypoints $WP \
                     --planner edge_cloud \
@@ -85,19 +90,24 @@ for idx in ${!MAPS[@]}; do
                     --max-laps 2 \
                     --top-k 1 \
                     --randomize \
-                    $EXTRA_ARGS 2>/dev/null)
+                    $EXTRA_ARGS | tee $TMPFILE
 
                 # -------------------------
                 # Extract RMSE
                 # -------------------------
-                RMSE=$(echo "$OUTPUT" | grep '"crosstrack_rmse_m"' | sed -E 's/.*: ([0-9.]+).*/\1/')
+                RMSE=$(grep '"crosstrack_rmse_m"' $TMPFILE | sed -E 's/.*: ([0-9.]+).*/\1/')
 
                 if [ -z "$RMSE" ]; then
-                    echo "Warning: RMSE not found"
+                    echo "⚠️ Warning: RMSE not found"
                     RMSE="NaN"
+                else
+                    echo "Extracted RMSE: $RMSE"
                 fi
 
                 echo "$i,$RMSE" >> $OUTPUT_FILE
+
+                # cleanup
+                rm $TMPFILE
             done
 
         done

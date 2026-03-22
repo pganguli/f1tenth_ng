@@ -1,0 +1,2 @@
+/usr/bin/bash: run_experiment.sh: No such file or directory
+srun: error: c151408: task 0: Exited with exit code 127

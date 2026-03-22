@@ -1,0 +1,130 @@
+=== Job ID: 38414058 ===
+=== Node: c0412.ll.unc.edu ===
+=== Working dir: /nas/longleaf/home/tingan/f1tenth_ng ===
+=== Working directory ===
+/nas/longleaf/home/tingan/f1tenth_ng
+PYTHONPATH: /nas/longleaf/home/tingan/f1tenth_ng/packages::/nas/longleaf/home/tingan/f1tenth_ng/packages
+=== Starting experiments ===
+Running in: /nas/longleaf/home/tingan/f1tenth_ng
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Nuerburgring_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Sochi_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 0 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: round_robin
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: sensitivity
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: rl_simple
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+----------------------------------------
+Map: Spa_map | Latency: 10 | Strategy: rl_boot
+----------------------------------------
+Run 1
+⚠️ Warning: RMSE not found
+All experiments completed.
+=== Finished ===

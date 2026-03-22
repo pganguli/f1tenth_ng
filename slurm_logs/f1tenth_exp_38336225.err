@@ -1,0 +1,2 @@
+/usr/bin/bash: /nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/run_experiment.sh: No such file or directory
+srun: error: c130402: task 0: Exited with exit code 127

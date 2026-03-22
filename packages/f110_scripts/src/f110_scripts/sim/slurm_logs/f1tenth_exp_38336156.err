@@ -1,0 +1,3 @@
+/var/spool/slurmd/job38336156/slurm_script: line 30: .venv/bin/activate: No such file or directory
+/nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/: /nas/longleaf/home/tingan/f1tenth_ng/packages/f110_scripts/src/f110_scripts/sim/: Is a directory
+srun: error: c130407: task 0: Exited with exit code 126

@@ -1,0 +1,2 @@
+/usr/bin/bash: ./packages/f110_scripts/src/f110_scripts/sim/run_experiment.sh: No such file or directory
+srun: error: c151404: task 0: Exited with exit code 127

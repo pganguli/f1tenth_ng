@@ -1,0 +1,3 @@
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+[2026-03-22T16:33:59.414] error: *** JOB 38433889 ON c130403 CANCELLED AT 2026-03-22T16:33:59 DUE to SIGNAL Terminated ***
+[2026-03-22T16:33:59.415] error: *** STEP 38433889.0 ON c130403 CANCELLED AT 2026-03-22T16:33:59 DUE to SIGNAL Terminated ***

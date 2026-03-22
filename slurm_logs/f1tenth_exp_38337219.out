@@ -1,0 +1,19 @@
+=== Job ID: 38337219 ===
+=== Node: c151404.ll.unc.edu ===
+=== Working dir: /nas/longleaf/home/tingan/f1tenth_ng ===
+=== Working directory ===
+/nas/longleaf/home/tingan/f1tenth_ng
+=== Debug: list sim directory ===
+total 64K
+drwxr-xr-x 3 tingan users 4.0K Mar 22 00:42 .
+drwxr-xr-x 6 tingan users 4.0K Mar 10 15:29 ..
+-rw-r--r-- 1 tingan users    0 Mar 10 15:29 __init__.py
+-rwxr-xr-x 1 tingan users  29K Mar 20 23:39 reactive_planners.py
+-rw-r--r-- 1 tingan users 3.2K Mar 20 23:42 run_experiments.sh
+-rw-r--r-- 1 tingan users 1.1K Mar 22 00:42 run_experiments.sl
+drwxr-xr-x 2 tingan users 4.0K Mar 22 00:19 slurm_logs
+-rwxr-xr-x 1 tingan users 6.6K Mar 20 23:38 tracking_planners.py
+=== Debug: check script path ===
+-rw-r--r-- 1 tingan users 3.2K Mar 20 23:42 packages/f110_scripts/src/f110_scripts/sim/run_experiments.sh
+=== Starting experiments ===
+=== Finished ===
