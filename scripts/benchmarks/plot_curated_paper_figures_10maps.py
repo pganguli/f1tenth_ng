@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a small, paper-focused figure set for the corrected 10-map results."""
+"""Canonical plot: curated three-figure paper set for the corrected 10-map study.
+
+Reads: canonical corrected benchmark summaries from ``data/benchmarks``.
+Writes: the recommended publication-facing figures under ``paper_figures_10maps_curated``.
+"""
 
 from __future__ import annotations
 
@@ -40,7 +44,12 @@ TARGET_FAMILIES = ["fixed_bernoulli", "bernoulli_max_miss"]
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Generate a curated three-figure set for the corrected 10-map results."
+        description="Generate the canonical curated paper figures for the corrected 10-map study.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: canonical plotter. Example: "
+            "python scripts/benchmarks/plot_curated_paper_figures_10maps.py"
+        ),
     )
     parser.add_argument(
         "--single-summary-csv",

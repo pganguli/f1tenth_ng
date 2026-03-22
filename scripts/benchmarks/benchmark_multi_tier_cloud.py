@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Benchmark multi-tier cloud routing with fixed default delay settings."""
+"""Supplemental benchmark: corrected 10-map multi-tier routing study.
+
+Reads: F1 map assets, per-map start poses, and the tiered model checkpoints.
+Writes: optional supporting multi-tier artifacts under ``data/benchmarks``.
+"""
 
 from __future__ import annotations
 
@@ -78,7 +82,18 @@ def available_map_names() -> list[str]:
     )
 
 
-DEFAULT_MAPS = available_map_names()
+DEFAULT_MAPS = [
+    "Austin",
+    "BrandsHatch",
+    "Hockenheim",
+    "MexicoCity",
+    "Montreal",
+    "Monza",
+    "Oschersleben",
+    "Shanghai",
+    "Spa",
+    "Spielberg",
+]
 
 
 class FixedTierScheduler(TieredCloudScheduler):  # pylint: disable=too-few-public-methods
@@ -101,7 +116,12 @@ class FixedTierScheduler(TieredCloudScheduler):  # pylint: disable=too-few-publi
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
-        description="Benchmark threshold and probabilistic multi-tier cloud routing."
+        description="Optional corrected multi-tier benchmark for the 10-map paper workflow.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: canonical optional appendix benchmark. Example: "
+            "python scripts/benchmarks/benchmark_multi_tier_cloud.py"
+        ),
     )
     parser.add_argument(
         "--maps",
@@ -130,7 +150,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-stem",
         type=str,
-        default="multi_tier_cloud_benchmark_feature_fusion",
+        default="multi_tier_cloud_benchmark_10maps_corrected",
         help="Base filename stem for benchmark outputs in data/benchmarks.",
     )
     return parser.parse_args()

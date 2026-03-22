@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate publication-grade figures for the corrected 10-map benchmark results."""
+"""Exploratory plot: broader 10-map figure suite for internal analysis.
+
+Reads: corrected benchmark summaries from ``data/benchmarks``.
+Writes: non-canonical analysis figures under an internal output directory.
+"""
 
 from __future__ import annotations
 
@@ -101,7 +105,13 @@ BAD = "#b5524e"
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Generate paper-ready figures from the corrected 10-map results."
+        description="Generate the broader internal figure suite for the corrected 10-map study.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: exploratory/internal only. Example: "
+            "python scripts/benchmarks/plot_paper_results_10maps.py "
+            "--output-dir data/benchmarks/internal_paper_figures_10maps"
+        ),
     )
     parser.add_argument(
         "--single-summary-csv",
@@ -130,7 +140,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="data/benchmarks/paper_figures_10maps",
+        default="data/benchmarks/internal_paper_figures_10maps",
         help="Directory where figure files should be written.",
     )
     parser.add_argument(

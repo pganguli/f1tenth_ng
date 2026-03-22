@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate polished, high-signal summary plots for single-tier paper-strategy benchmarks."""
+"""Exploratory plot: legacy single-tier analysis views for internal use.
+
+Reads: single-tier benchmark summaries from ``data/benchmarks``.
+Writes: non-canonical diagnostic plots under an internal output directory.
+"""
 
 from __future__ import annotations
 
@@ -90,7 +94,13 @@ SUCCESS_CMAP = LinearSegmentedColormap.from_list(
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
-        description="Plot the single-tier paper-strategy benchmark results."
+        description="Generate legacy exploratory single-tier analysis plots.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: exploratory/internal only. Example: "
+            "python scripts/benchmarks/plot_single_tier_paper_strategies.py "
+            "--output-dir data/benchmarks/internal_single_tier_plots"
+        ),
     )
     parser.add_argument(
         "--summary-csv",
@@ -101,7 +111,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="data/benchmarks",
+        default="data/benchmarks/internal_single_tier_plots",
         help="Directory for the generated plot files.",
     )
     parser.add_argument(

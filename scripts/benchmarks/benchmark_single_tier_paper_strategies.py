@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Benchmark paper-correct single-tier cloud strategies at fixed latency."""
+"""Canonical benchmark: corrected 10-map single-tier Strategy 1-5 sweep.
+
+Reads: F1 map assets, per-map start poses, and the edge/cloud model checkpoints.
+Writes: canonical single-tier benchmark artifacts under ``data/benchmarks``.
+"""
 
 from __future__ import annotations
 
@@ -50,7 +54,18 @@ def available_map_names() -> list[str]:
     return sorted(path.name for path in root.iterdir() if path.is_dir())
 
 
-DEFAULT_MAPS = available_map_names()
+DEFAULT_MAPS = [
+    "Austin",
+    "BrandsHatch",
+    "Hockenheim",
+    "MexicoCity",
+    "Montreal",
+    "Monza",
+    "Oschersleben",
+    "Shanghai",
+    "Spa",
+    "Spielberg",
+]
 DEFAULT_CLOUD_LATENCY = 5
 DEFAULT_TRIALS = 3
 DEFAULT_MAX_STEPS = 15000
@@ -105,7 +120,12 @@ def _json_default(value: Any) -> Any:
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
-        description="Benchmark paper-correct single-tier edge/cloud strategies."
+        description="Canonical single-tier Strategy 1-5 benchmark for the corrected 10-map workflow.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: canonical. Example: "
+            "python scripts/benchmarks/benchmark_single_tier_paper_strategies.py"
+        ),
     )
     parser.add_argument(
         "--maps",
@@ -140,7 +160,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-stem",
         type=str,
-        default="single_tier_paper_strategies",
+        default="single_tier_paper_strategies_10maps",
         help="Base filename stem for outputs under data/benchmarks.",
     )
     parser.add_argument(

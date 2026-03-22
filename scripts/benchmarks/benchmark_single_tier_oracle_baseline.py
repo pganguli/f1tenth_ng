@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Benchmark the idealized always-hit latency-0 oracle baseline for selected maps."""
+"""Canonical reference benchmark: idealized always-hit latency-0 baseline.
+
+Reads: the same corrected 10-map setup as the single-tier benchmark.
+Writes: optional idealized-reference artifacts under ``data/benchmarks``.
+"""
 
 from __future__ import annotations
 
@@ -38,7 +42,12 @@ DEFAULT_MAPS = [
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
-        description="Benchmark the always-hit latency-0 oracle baseline."
+        description="Optional idealized reference benchmark for the corrected 10-map workflow.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        epilog=(
+            "Status: canonical optional reference. Example: "
+            "python scripts/benchmarks/benchmark_single_tier_oracle_baseline.py"
+        ),
     )
     parser.add_argument(
         "--maps",

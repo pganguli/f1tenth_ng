@@ -39,6 +39,18 @@ def test_default_experiments_cover_paper_strategies() -> None:
     }
 
 
+def test_canonical_defaults_target_corrected_10_map_workflow(monkeypatch) -> None:
+    """The canonical single-tier benchmark defaults should match the 10-map workflow."""
+    module = _load_benchmark_module()
+    monkeypatch.setattr(sys, "argv", ["benchmark_single_tier_paper_strategies.py"])
+
+    args = module.parse_args()
+
+    assert args.output_stem == "single_tier_paper_strategies_10maps"
+    assert args.cloud_latency == module.DEFAULT_CLOUD_LATENCY == 5
+    assert args.maps.split(",") == module.DEFAULT_MAPS
+
+
 def test_run_episode_reports_scheduler_metrics(monkeypatch) -> None:
     """Benchmark smoke run should emit cloud-call and collision summary fields."""
     module = _load_benchmark_module()

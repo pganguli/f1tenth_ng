@@ -80,6 +80,21 @@ python packages/f110_scripts/src/f110_scripts/sim/tracking_planners.py --map dat
 python packages/f110_scripts/src/f110_scripts/sim/reactive_planners.py --planner dnn --map data/maps/F1/Oschersleben/Oschersleben_map
 ```
 
+## `feature-alpha-coins` Research Workflow
+
+On the `feature-alpha-coins` branch, the simulator baseline comes from
+`feature_alpha` and is extended with:
+
+- corrected Strategy 1-5 scheduler implementations
+- the weighted action-disagreement deviation signal
+- corrected spawn-aware benchmark scripts
+- curated paper-figure generation
+
+The recommended evaluation workflow for this branch lives in
+[scripts/benchmarks/README.md](scripts/benchmarks/README.md). Generated
+benchmark artifacts stay local under `data/benchmarks/` and are intentionally
+not committed.
+
 ## Quickstart: Waypoint Following
 
 This example demonstrates how to use `f110_gym` with a planner from `f110_planning` to follow a pre-defined raceline.

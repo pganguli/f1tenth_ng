@@ -1,6 +1,7 @@
 ## Repository specific
 packages/f110_scripts/src/f110_scripts/train/slurm_logs/
-data/benchmarks/
+data/benchmarks/*
+!data/benchmarks/README.md
 
 ## https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
 # General
