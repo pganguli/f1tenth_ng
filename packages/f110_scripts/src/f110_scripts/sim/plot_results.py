@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # =========================
 # CONFIG
 # =========================
-RESULTS_DIR = "results"
+RESULTS_DIR = "results_extracted"
 OUTPUT_DIR = "figures"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -25,7 +25,7 @@ def load_csv(map_name, strategy, latency):
         return None
 
     df = pd.read_csv(path)
-    return df["crosstrack_rmse_m"].values
+    return df["crosstrack_max_m"].values
 
 
 # =========================
@@ -51,7 +51,7 @@ for map_name in MAPS:
 
         plt.title(f"{map_name} | Latency = {lat}")
         plt.xlabel("Strategy")
-        plt.ylabel("Cross-track RMSE (m)")
+        plt.ylabel("max. CTE (m)")
 
         plt.grid(True)
 
