@@ -57,7 +57,7 @@ for map_name in MAPS:
 
         # Save figure
         out_path = os.path.join(
-            OUTPUT_DIR, f"{map_name}_lat{lat}.png"
+            OUTPUT_DIR, f"{map_name}_lat{lat}.pdf"
         )
         plt.savefig(out_path)
         plt.close()
