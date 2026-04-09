@@ -240,7 +240,7 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--cloud-latency",
         type=int,
-        default=10,
+        default=5,
         help="Round-trip latency in simulation steps for cloud inference.",
     )
     ec.add_argument(
@@ -272,6 +272,33 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Deprecated compatibility alias for the cloud heading-feature blend weight.",
+    )
+    ec.add_argument(
+        "--sigma-proc-left",
+        type=float,
+        default=None,
+        help="Optional left-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    ec.add_argument(
+        "--sigma-proc-track",
+        type=float,
+        default=None,
+        help="Optional track-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    ec.add_argument(
+        "--sigma-proc-heading",
+        type=float,
+        default=None,
+        help="Optional heading-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    ec.add_argument(
+        "--age-decay-lambda",
+        type=float,
+        default=0.0,
+        help=(
+            "Global anchored age-decay scale for stale cloud features "
+            "(0.0 keeps static feature alphas)."
+        ),
     )
     ec.add_argument(
         "--cloud-interval",
@@ -431,25 +458,25 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--edge-track-width-model",
         type=str,
-        default="data/models/track_width_arch1.pt",
+        default="data/models/track_width_arch2.pt",
         help="Path to self-sufficient TorchScript .pt edge track width model.",
     )
     ec.add_argument(
         "--edge-heading-model",
         type=str,
-        default="data/models/heading_error_arch1.pt",
+        default="data/models/heading_error_arch2.pt",
         help="Path to self-sufficient TorchScript .pt edge heading-error model.",
     )
     ec.add_argument(
         "--cloud-left-wall-model",
         type=str,
-        default="data/models/left_wall_dist_arch6.pt",
+        default="data/models/left_wall_dist_arch5.pt",
         help="Path to self-sufficient TorchScript .pt cloud left wall distance model.",
     )
     ec.add_argument(
         "--cloud-track-width-model",
         type=str,
-        default="data/models/track_width_arch6.pt",
+        default="data/models/track_width_arch7.pt",
         help="Path to self-sufficient TorchScript .pt cloud track width model.",
     )
     ec.add_argument(
@@ -461,13 +488,13 @@ def _build_reactive_parser() -> argparse.ArgumentParser:
     ec.add_argument(
         "--medium-cloud-latency",
         type=int,
-        default=6,
+        default=3,
         help="Round-trip latency in simulation steps for medium cloud inference.",
     )
     ec.add_argument(
         "--large-cloud-latency",
         type=int,
-        default=10,
+        default=5,
         help="Round-trip latency in simulation steps for large cloud inference.",
     )
     ec.add_argument(
@@ -782,6 +809,11 @@ def _create_planner(args: argparse.Namespace, waypoints: np.ndarray) -> Any:  # 
         for name in ("alpha_left", "alpha_track", "alpha_heading"):
             if hasattr(args, name):
                 kwargs[name] = getattr(args, name)
+        for name in ("sigma_proc_left", "sigma_proc_track", "sigma_proc_heading"):
+            if hasattr(args, name):
+                kwargs[name] = getattr(args, name)
+        if hasattr(args, "age_decay_lambda"):
+            kwargs["age_decay_lambda"] = args.age_decay_lambda
         if args.speed is not None:
             kwargs["max_speed"] = args.speed
         return EdgeCloudPlanner(**kwargs)

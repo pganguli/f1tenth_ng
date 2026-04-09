@@ -87,15 +87,27 @@ class SimTrace:
         for :class:`SelectiveEdgeCloudPlanner`, or ``None`` for the binary
         :class:`EdgeCloudPlanner`.  Only steps where at least one DNN was
         called are recorded.
+    cloud_event_steps:
+        Simulator step indices aligned with :attr:`cloud_events`.
+    total_steps:
+        Total number of recorded simulation steps in the episode.
     """
 
     positions: list[tuple[float, float]] = dataclasses.field(default_factory=list)
     cloud_events: list[tuple[float, float, list[bool] | None]] = dataclasses.field(
         default_factory=list
     )
+    cloud_event_steps: list[int] = dataclasses.field(default_factory=list)
+    total_steps: int = 0
 
 
-def collect_step(trace: SimTrace, obs: dict, planner: object, agent_idx: int = 0) -> None:
+def collect_step(
+    trace: SimTrace,
+    obs: dict,
+    planner: object,
+    agent_idx: int = 0,
+    step_idx: int | None = None,
+) -> None:
     """Record one simulation step into *trace*.
 
     Parameters
@@ -109,18 +121,24 @@ def collect_step(trace: SimTrace, obs: dict, planner: object, agent_idx: int = 0
         ``last_cloud_call``).
     agent_idx:
         Which agent to track (default 0 = ego).
+    step_idx:
+        Optional simulator step index for timeline-aware post-processing.
     """
     x = float(obs["poses_x"][agent_idx])
     y = float(obs["poses_y"][agent_idx])
     trace.positions.append((x, y))
+    effective_step = int(step_idx) if step_idx is not None else max(len(trace.positions) - 1, 0)
+    trace.total_steps = max(trace.total_steps, effective_step + 1)
 
     call_mask = getattr(planner, "last_call_mask", None)
     if call_mask is not None:
         mask: list[bool] = list(call_mask)
         if any(mask):
             trace.cloud_events.append((x, y, mask))
+            trace.cloud_event_steps.append(effective_step)
     elif getattr(planner, "last_cloud_call", False):
         trace.cloud_events.append((x, y, None))
+        trace.cloud_event_steps.append(effective_step)
 
 
 # ── Rendering ─────────────────────────────────────────────────────────────────

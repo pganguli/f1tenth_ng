@@ -170,6 +170,10 @@ def test_edge_cloud_strategy_construction() -> None:
         exp_p_max=1.0,
         ramp_d_low=0.01,
         ramp_d_high=0.05,
+        sigma_proc_left=0.04,
+        sigma_proc_track=0.05,
+        sigma_proc_heading=0.03,
+        age_decay_lambda=2.0,
         deviation_steer_weight=1.0,
         deviation_speed_weight=1.0,
         edge_left_wall_model=None,
@@ -193,6 +197,8 @@ def test_edge_cloud_strategy_construction() -> None:
         args = Namespace(**base, cloud_strategy=strategy)
         planner = _create_planner(args, waypoints)
         assert planner is not None
+        assert planner._sigma_proc == [0.04, 0.05, 0.03]  # pylint: disable=protected-access
+        assert planner._age_decay_lambda == 2.0  # pylint: disable=protected-access
         if strategy in {"always", "hybrid"}:
             assert isinstance(planner.scheduler, AlwaysCloudScheduler)
         else:
@@ -217,6 +223,8 @@ def test_parse_args_supports_legacy_cli_aliases() -> None:
             "1",
             "1",
             "1",
+            "--age-decay-lambda",
+            "2.5",
         ]
     )
 
@@ -224,6 +232,10 @@ def test_parse_args_supports_legacy_cli_aliases() -> None:
     assert args.alpha_left == 0.2
     assert args.alpha_track == 0.3
     assert args.alpha_heading == 0.7
+    assert args.sigma_proc_left is None
+    assert args.sigma_proc_track is None
+    assert args.sigma_proc_heading is None
+    assert args.age_decay_lambda == 2.5
     assert args.top_k == 1
     assert args.call_weights == [1.0, 1.0, 1.0]
 

@@ -24,8 +24,10 @@ import pandas as pd
 
 STRATEGY_COLORS = {
     "always": "#1c1917",
+    "fixed_interval": "#8b6914",
     "fixed_bernoulli": "#157a6e",
     "bernoulli_max_miss": "#517c2c",
+    "self_normalizing_momentum": "#0f766e",
     "logistic": "#6c5b9c",
     "exponential": "#bf4d74",
     "piecewise_ramp": "#b55d28",
@@ -34,8 +36,10 @@ STRATEGY_COLORS = {
 
 STRATEGY_MARKERS = {
     "always": "o",
+    "fixed_interval": "h",
     "fixed_bernoulli": "s",
     "bernoulli_max_miss": "D",
+    "self_normalizing_momentum": "P",
     "logistic": "^",
     "exponential": "v",
     "piecewise_ramp": "P",
@@ -44,8 +48,10 @@ STRATEGY_MARKERS = {
 
 STRATEGY_DISPLAY = {
     "always": "Always",
+    "fixed_interval": "Fixed Interval",
     "fixed_bernoulli": "Bernoulli",
     "bernoulli_max_miss": "Bernoulli+Guard",
+    "self_normalizing_momentum": "SRP (Ours)",
     "logistic": "Logistic",
     "exponential": "Exponential",
     "piecewise_ramp": "Piecewise",
@@ -366,7 +372,7 @@ def short_label(strategy: str) -> str:
 def short_experiment_label(record: pd.Series) -> str:
     """Return a compact experiment label for annotations."""
     strategy = record["strategy"]
-    name = str(record["experiment"])
+    name = str(record["experiment"]).split("__lambda_", maxsplit=1)[0]
     if strategy == "always":
         return "Always"
     if strategy == "fixed_bernoulli":
@@ -381,6 +387,12 @@ def short_experiment_label(record: pd.Series) -> str:
         tail = name.split("piecewise_ramp_", maxsplit=1)[-1]
         low, high = tail.split("_", maxsplit=1)
         return f"{low.replace('p', '.')} to {high.replace('p', '.')}"
+    if strategy == "self_normalizing_momentum":
+        tail = name.split("self_norm_tau", maxsplit=1)[-1]
+        if "_n" in tail:
+            tau, nmax = tail.split("_n", maxsplit=1)
+            return f"tau={tau.replace('p', '.')} n={nmax}"
+        return "SRP"
     if strategy == "logistic":
         tail = name.split("logistic_", maxsplit=1)[-1]
         center, slope = tail.split("_s", maxsplit=1)

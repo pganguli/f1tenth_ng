@@ -21,8 +21,10 @@ import pandas as pd
 
 STRATEGY_COLORS = {
     "always": "#24221d",
+    "fixed_interval": "#8b6914",
     "fixed_bernoulli": "#1f8a70",
     "bernoulli_max_miss": "#5b8c2a",
+    "self_normalizing_momentum": "#0f766e",
     "logistic": "#6e59a5",
     "exponential": "#d4538c",
     "piecewise_ramp": "#cf6a32",
@@ -31,8 +33,10 @@ STRATEGY_COLORS = {
 
 STRATEGY_MARKERS = {
     "always": "o",
+    "fixed_interval": "h",
     "fixed_bernoulli": "s",
     "bernoulli_max_miss": "D",
+    "self_normalizing_momentum": "P",
     "logistic": "^",
     "exponential": "v",
     "piecewise_ramp": "P",
@@ -41,8 +45,10 @@ STRATEGY_MARKERS = {
 
 STRATEGY_DISPLAY = {
     "always": "Always",
+    "fixed_interval": "Fixed Interval",
     "fixed_bernoulli": "Fixed Bernoulli",
     "bernoulli_max_miss": "Bernoulli + Guard",
+    "self_normalizing_momentum": "SRP (Ours)",
     "logistic": "Logistic",
     "exponential": "Exponential",
     "piecewise_ramp": "Piecewise Ramp",
@@ -191,7 +197,7 @@ def blend_with_white(color: str, amount: float) -> tuple[float, float, float]:
 def short_experiment_label(record: pd.Series) -> str:
     """Return a compact label for an experiment configuration."""
     strategy = record["strategy"]
-    name = str(record["experiment"])
+    name = str(record["experiment"]).split("__lambda_", maxsplit=1)[0]
 
     if strategy == "always":
         return "always-hit"
@@ -210,6 +216,12 @@ def short_experiment_label(record: pd.Series) -> str:
         tail = name.split("piecewise_ramp_", maxsplit=1)[-1]
         low, high = tail.split("_", maxsplit=1)
         return f"ramp {low.replace('p', '.')} to {high.replace('p', '.')}"
+    if strategy == "self_normalizing_momentum":
+        tail = name.split("self_norm_tau", maxsplit=1)[-1]
+        if "_n" in tail:
+            tau, nmax = tail.split("_n", maxsplit=1)
+            return f"SRP tau={tau.replace('p', '.')} n={nmax}"
+        return "SRP"
     if strategy == "logistic":
         tail = name.split("logistic_", maxsplit=1)[-1]
         center, slope = tail.split("_s", maxsplit=1)

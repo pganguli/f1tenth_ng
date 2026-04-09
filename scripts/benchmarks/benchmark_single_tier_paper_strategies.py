@@ -8,8 +8,9 @@ Writes: canonical single-tier benchmark artifacts under ``data/benchmarks``.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import contextlib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import io
 import json
 from pathlib import Path
@@ -29,15 +30,21 @@ from f110_planning.schedulers import (
     BernoulliMaxMissPolicy,
     DeterministicDeviationConfig,
     DeterministicDeviationPolicy,
+    DualSignalPeriodicConfig,
+    DualSignalPeriodicScheduler,
     ExponentialRiskConfig,
     ExponentialRiskPolicy,
     FixedBernoulliConfig,
     FixedBernoulliPolicy,
+    FixedIntervalScheduler,
     LogisticRiskConfig,
     LogisticRiskPolicy,
+    NeverCloudScheduler,
     PiecewiseLinearRampConfig,
     PiecewiseLinearRampPolicy,
     PolicyDrivenScheduler,
+    ShiftResponsePolicyConfig,
+    ShiftResponsePolicyScheduler,
 )
 from f110_planning.utils import load_waypoints
 from f110_planning.utils.sim_utils import (
@@ -95,6 +102,10 @@ class PlannerSettings:
     alpha_left: float = DEFAULT_ALPHA_LEFT
     alpha_track: float = DEFAULT_ALPHA_TRACK
     alpha_heading: float = DEFAULT_ALPHA_HEADING
+    sigma_proc_left: float | None = None
+    sigma_proc_track: float | None = None
+    sigma_proc_heading: float | None = None
+    age_decay_lambda: float = 0.0
     deviation_steer_weight: float = DEFAULT_DEVIATION_STEER_WEIGHT
     deviation_speed_weight: float = DEFAULT_DEVIATION_SPEED_WEIGHT
 
@@ -182,6 +193,33 @@ def parse_args() -> argparse.Namespace:
         help="Cloud blend weight for the heading-error feature.",
     )
     parser.add_argument(
+        "--sigma-proc-left",
+        type=float,
+        default=None,
+        help="Optional left-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    parser.add_argument(
+        "--sigma-proc-track",
+        type=float,
+        default=None,
+        help="Optional track-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    parser.add_argument(
+        "--sigma-proc-heading",
+        type=float,
+        default=None,
+        help="Optional heading-feature process-noise sigma for age-dependent alpha decay.",
+    )
+    parser.add_argument(
+        "--age-decay-lambda",
+        type=float,
+        default=0.0,
+        help=(
+            "Global anchored age-decay scale for stale cloud features "
+            "(0.0 keeps static feature alphas)."
+        ),
+    )
+    parser.add_argument(
         "--deviation-steer-weight",
         type=float,
         default=DEFAULT_DEVIATION_STEER_WEIGHT,
@@ -192,6 +230,18 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=DEFAULT_DEVIATION_SPEED_WEIGHT,
         help="Weight on speed disagreement when forming scheduler deviation.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel workers (parallelizes across maps only).",
+    )
+    parser.add_argument(
+        "--selection-metric",
+        choices=("rmse", "max_cte"),
+        default="rmse",
+        help="Primary ranking metric used when ordering configurations within each map.",
     )
     return parser.parse_args()
 
@@ -227,6 +277,15 @@ def start_pose_for_track(track: TrackConfig) -> np.ndarray:
 def default_experiments() -> list[Experiment]:
     """Return the default paper-strategy sweep."""
     experiments = [Experiment("always_hit", "always", {})]
+
+    for interval in (2, 3, 5):
+        experiments.append(
+            Experiment(
+                f"fixed_interval_k{interval}",
+                "fixed_interval",
+                {"interval": interval},
+            )
+        )
 
     for probability in (0.55, 0.60, 0.65):
         suffix = int(round(probability * 100))
@@ -319,9 +378,26 @@ def build_planner(
     run_idx: int = 0,
 ) -> EdgeCloudPlanner:
     """Instantiate the single-tier planner for one benchmark configuration."""
-    edge = base_model_paths(2)
-    cloud = base_model_paths(6)
+    # Per-feature optimal architectures from the MSE evaluation spreadsheet.
+    # Edge: arch1 (left), arch2 (track_width), arch2 (heading_error)
+    # Cloud: arch5 (left), arch7 (track_width), arch6 (heading_error)
+    edge = {
+        "left": "data/models/left_wall_dist_arch1.pt",
+        "track_width": "data/models/track_width_arch2.pt",
+        "heading": "data/models/heading_error_arch2.pt",
+    }
+    cloud = {
+        "left": "data/models/left_wall_dist_arch5.pt",
+        "track_width": "data/models/track_width_arch7.pt",
+        "heading": "data/models/heading_error_arch6.pt",
+    }
     seed = trial_seed(exp, run_idx)
+    planner_settings = settings
+    if "age_decay_lambda" in exp.params:
+        planner_settings = replace(
+            planner_settings,
+            age_decay_lambda=float(exp.params["age_decay_lambda"]),
+        )
 
     if exp.strategy == "always":
         scheduler = AlwaysCloudScheduler()
@@ -404,17 +480,66 @@ def build_planner(
                 )
             )
         )
+    elif exp.strategy == "fixed_interval":
+        scheduler = FixedIntervalScheduler(interval=int(exp.params["interval"]))
+    elif exp.strategy == "never_query":
+        scheduler = NeverCloudScheduler()
+    elif exp.strategy == "self_normalizing_momentum":
+        scheduler = ShiftResponsePolicyScheduler(
+            ShiftResponsePolicyConfig(
+                cloud_latency=cloud_latency,
+                tau=float(exp.params.get("tau", 1.0)),
+                nmax=int(exp.params.get("nmax", exp.params.get("staleness_multiplier", 3))),
+                eps=float(exp.params.get("eps", 1e-8)),
+                seed=seed,
+            )
+        )
+    elif exp.strategy == "srpv2":
+        scheduler = ShiftResponsePolicyScheduler(
+            ShiftResponsePolicyConfig(
+                cloud_latency=cloud_latency,
+                tau=float(exp.params.get("tau", 1.0)),
+                nmax=int(exp.params.get("nmax", exp.params.get("staleness_multiplier", 3))),
+                eps=float(exp.params.get("eps", 1e-8)),
+                seed=seed,
+                causal_feature_scales=True,
+                causal_baseline=True,
+            )
+        )
+    elif exp.strategy == "dual_signal_periodic":
+        scheduler = DualSignalPeriodicScheduler(
+            DualSignalPeriodicConfig(
+                cloud_latency=cloud_latency,
+                base_interval=int(exp.params.get("base_interval", 4)),
+                burst_threshold=float(exp.params.get("burst_threshold", 0.7)),
+                tau=float(exp.params.get("tau", 1.0)),
+                age_weight=float(exp.params.get("age_weight", 0.2)),
+                deviation_weight=float(exp.params.get("deviation_weight", 0.6)),
+                momentum_weight=float(exp.params.get("momentum_weight", 0.2)),
+                deviation_cap=float(exp.params.get("deviation_cap", 0.10)),
+                age_horizon_multiplier=int(exp.params.get("age_horizon_multiplier", 2)),
+                force_age_multiplier=int(exp.params.get("force_age_multiplier", 3)),
+                min_extra_gap=int(exp.params.get("min_extra_gap", 1)),
+                burst_queue_cap=int(exp.params.get("burst_queue_cap", 1)),
+                eps=float(exp.params.get("eps", 1e-8)),
+                seed=seed,
+            )
+        )
     else:
         raise ValueError(f"Unsupported strategy: {exp.strategy}")
 
     return EdgeCloudPlanner(
         cloud_latency=cloud_latency,
         scheduler=scheduler,
-        alpha_left=settings.alpha_left,
-        alpha_track=settings.alpha_track,
-        alpha_heading=settings.alpha_heading,
-        deviation_steer_weight=settings.deviation_steer_weight,
-        deviation_speed_weight=settings.deviation_speed_weight,
+        alpha_left=planner_settings.alpha_left,
+        alpha_track=planner_settings.alpha_track,
+        alpha_heading=planner_settings.alpha_heading,
+        sigma_proc_left=planner_settings.sigma_proc_left,
+        sigma_proc_track=planner_settings.sigma_proc_track,
+        sigma_proc_heading=planner_settings.sigma_proc_heading,
+        age_decay_lambda=planner_settings.age_decay_lambda,
+        deviation_steer_weight=planner_settings.deviation_steer_weight,
+        deviation_speed_weight=planner_settings.deviation_speed_weight,
         lookahead_distance=1.5,
         lateral_gain=1.0,
         edge_left_wall_model_path=edge["left"],
@@ -485,6 +610,34 @@ def run_episode(
     cloud_call_rate = total_cloud_calls / steps
     collision_count = int(report.get("collision", 0.0))
     effective_seed = trial_seed(exp, run_idx)
+    scheduler = getattr(planner, "scheduler", None)
+    if scheduler is not None and hasattr(scheduler, "debug_state"):
+        try:
+            scheduler_state = scheduler.debug_state()
+        except TypeError:
+            scheduler_state = None
+        if isinstance(scheduler_state, dict):
+            reason_counts = scheduler_state.get("call_reason_counts", {})
+            if isinstance(reason_counts, dict):
+                bootstrap_calls = float(reason_counts.get("bootstrap", 0))
+                backbone_calls = float(reason_counts.get("backbone", 0))
+                burst_calls = float(reason_counts.get("burst", 0))
+                force_age_calls = float(reason_counts.get("force_age", 0))
+                reasoned_total = bootstrap_calls + backbone_calls + burst_calls + force_age_calls
+                report.update(
+                    {
+                        "scheduler_calls_bootstrap": bootstrap_calls,
+                        "scheduler_calls_backbone": backbone_calls,
+                        "scheduler_calls_burst": burst_calls,
+                        "scheduler_calls_force_age": force_age_calls,
+                        "scheduler_calls_total": reasoned_total,
+                        "scheduler_burst_fraction": (
+                            float(burst_calls / reasoned_total)
+                            if reasoned_total > 0.0
+                            else 0.0
+                        ),
+                    }
+                )
 
     report.update(
         {
@@ -515,10 +668,76 @@ def run_episode(
     return report
 
 
-def summarize(results: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def _run_map_experiments(
+    map_name: str,
+    experiments: list[Experiment],
+    cloud_latency: int,
+    max_laps: int,
+    settings: PlannerSettings,
+    trials: int,
+    max_steps: int,
+) -> list[dict[str, Any]]:
+    """Run all benchmark experiments for one map."""
+    track = track_config(map_name)
+    results: list[dict[str, Any]] = []
+    for exp in experiments:
+        for run_idx in range(trials):
+            results.append(
+                run_episode(
+                    exp,
+                    track,
+                    cloud_latency,
+                    max_laps=max_laps,
+                    settings=settings,
+                    run_idx=run_idx,
+                    max_steps=max_steps,
+                )
+            )
+    return results
+
+
+def _binomial_ci95(rate: pd.Series, trials: pd.Series) -> pd.Series:
+    """Return a normal-approximation 95% half-width for Bernoulli rates."""
+    safe_trials = trials.clip(lower=1).astype(float)
+    variance = (rate * (1.0 - rate) / safe_trials).clip(lower=0.0)
+    return 1.96 * np.sqrt(variance)
+
+
+def _add_uncertainty_columns(summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Append standard-error and 95% confidence-interval columns."""
+    summary = summary_df.copy()
+    trial_count = summary["trials"].clip(lower=1).astype(float)
+    root_n = np.sqrt(trial_count)
+
+    for metric in ("crosstrack_rmse_m", "crosstrack_max_m", "cloud_call_rate", "lap_time_s"):
+        std_col = f"{metric}_std"
+        if std_col not in summary:
+            continue
+        stderr_col = f"{metric}_stderr"
+        ci95_col = f"{metric}_ci95"
+        summary[stderr_col] = summary[std_col] / root_n
+        summary[ci95_col] = 1.96 * summary[stderr_col]
+
+    summary["collision_rate_ci95"] = _binomial_ci95(
+        summary["collision_rate"],
+        trial_count,
+    )
+    summary["collision_free_rate_ci95"] = _binomial_ci95(
+        summary["collision_free_rate"],
+        trial_count,
+    )
+    return summary
+
+
+def summarize(
+    results: list[dict[str, Any]],
+    selection_metric: str = "rmse",
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Aggregate per-trial results and select top-ranked configurations."""
     experiments_df = pd.DataFrame(results)
     group_cols = ["map_name", "cloud_latency", "experiment", "strategy"]
+    if "age_decay_lambda" in experiments_df.columns:
+        group_cols.append("age_decay_lambda")
 
     summary_df = (
         experiments_df.groupby(group_cols, as_index=False)
@@ -530,10 +749,12 @@ def summarize(results: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame
             collision_steps_mean=("collision_steps", "mean"),
             laps_completed_mean=("laps_completed", "mean"),
             lap_time_s_mean=("lap_time_s", "mean"),
+            lap_time_s_std=("lap_time_s", "std"),
             crosstrack_rmse_m_mean=("crosstrack_rmse_m", "mean"),
             crosstrack_rmse_m_std=("crosstrack_rmse_m", "std"),
             crosstrack_mean_m_mean=("crosstrack_mean_m", "mean"),
             crosstrack_max_m_mean=("crosstrack_max_m", "mean"),
+            crosstrack_max_m_std=("crosstrack_max_m", "std"),
             heading_error_rmse_deg_mean=("heading_error_rmse_deg", "mean"),
             wall_min_distance_m_mean=("wall_min_distance_m", "mean"),
             speed_mean_m_s_mean=("speed_mean_m_s", "mean"),
@@ -553,14 +774,22 @@ def summarize(results: list[dict[str, Any]]) -> tuple[pd.DataFrame, pd.DataFrame
         TARGET_CCR_LOW,
         TARGET_CCR_HIGH,
     )
+    summary_df = _add_uncertainty_columns(summary_df)
+    metric_column = {
+        "rmse": "crosstrack_rmse_m_mean",
+        "max_cte": "crosstrack_max_m_mean",
+    }[selection_metric]
+    summary_df["selection_metric"] = selection_metric
+    summary_df["selection_metric_value"] = summary_df[metric_column]
+    summary_df["ccr_dist_target"] = (summary_df["cloud_call_rate_mean"] - 0.60).abs()
     summary_df = summary_df.sort_values(
         [
             "map_name",
             "cloud_latency",
             "collision_rate",
             "step_cap_rate",
-            "crosstrack_rmse_m_mean",
-            "cloud_call_rate_mean",
+            metric_column,
+            "ccr_dist_target",
             "experiment",
         ],
         kind="stable",
@@ -620,27 +849,65 @@ def main() -> None:
         alpha_left=args.alpha_left,
         alpha_track=args.alpha_track,
         alpha_heading=args.alpha_heading,
+        sigma_proc_left=args.sigma_proc_left,
+        sigma_proc_track=args.sigma_proc_track,
+        sigma_proc_heading=args.sigma_proc_heading,
+        age_decay_lambda=args.age_decay_lambda,
         deviation_steer_weight=args.deviation_steer_weight,
         deviation_speed_weight=args.deviation_speed_weight,
     )
     experiments = default_experiments()
+    total = len(tracks) * len(experiments) * args.trials
+    print(
+        f"Running {len(experiments)} configs x {len(tracks)} maps x {args.trials} trials "
+        f"= {total} episodes"
+    )
+    if args.workers > 1:
+        print(f"Using {args.workers} parallel workers")
 
-    results = [
-        run_episode(
-            exp,
-            track,
-            cloud_latency,
-            max_laps=args.max_laps,
-            settings=settings,
-            run_idx=run_idx,
-            max_steps=args.max_steps,
-        )
-        for track in tracks
-        for exp in experiments
-        for run_idx in range(args.trials)
-    ]
+    if args.workers > 1:
+        results: list[dict[str, Any]] = []
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=args.workers
+        ) as executor:
+            futures = {
+                executor.submit(
+                    _run_map_experiments,
+                    track.name,
+                    experiments,
+                    cloud_latency,
+                    args.max_laps,
+                    settings,
+                    args.trials,
+                    args.max_steps,
+                ): track.name
+                for track in tracks
+            }
+            for future in concurrent.futures.as_completed(futures):
+                map_name = futures[future]
+                map_results = future.result()
+                print(f"  Completed {map_name}: {len(map_results)} results")
+                results.extend(map_results)
+    else:
+        results = []
+        for index, track in enumerate(tracks, start=1):
+            print(f"  Map {index}/{len(tracks)}: {track.name}")
+            results.extend(
+                _run_map_experiments(
+                    track.name,
+                    experiments,
+                    cloud_latency,
+                    args.max_laps,
+                    settings,
+                    args.trials,
+                    args.max_steps,
+                )
+            )
 
-    experiments_df, summary_df, near_target_df = summarize(results)
+    experiments_df, summary_df, near_target_df = summarize(
+        results,
+        selection_metric=args.selection_metric,
+    )
     best_overall_df = (
         summary_df.groupby(["map_name", "cloud_latency"], as_index=False)
         .first()
@@ -662,6 +929,7 @@ def main() -> None:
         "tracks": [track.__dict__ for track in tracks],
         "cloud_latency": cloud_latency,
         "cloud_latencies": [cloud_latency],
+        "selection_metric": args.selection_metric,
         "settings": settings.__dict__,
         "experiments": results,
         "summary": summary_df.to_dict(orient="records"),

@@ -132,7 +132,7 @@ class _CaptureScheduler(CloudScheduler):
     """Record scheduler contexts for single-tier planner tests."""
 
     def __init__(self) -> None:
-        self.contexts: list[dict[str, float]] = []
+        self.contexts: list[dict[str, Any]] = []
 
     def should_call_cloud(
         self,
@@ -143,6 +143,28 @@ class _CaptureScheduler(CloudScheduler):
     ) -> bool:
         del step, obs, latest_cloud_action
         self.contexts.append(dict(context or {}))
+        return False
+
+
+class _SequenceCallScheduler(CloudScheduler):
+    """Record contexts while returning a fixed sequence of cloud decisions."""
+
+    def __init__(self, decisions: list[bool]) -> None:
+        self.decisions = decisions
+        self.contexts: list[dict[str, Any]] = []
+
+    def should_call_cloud(
+        self,
+        step: int,
+        obs: dict[str, Any],
+        latest_cloud_action: Action | None,
+        context: dict[str, Any] | None = None,
+    ) -> bool:
+        del step, obs, latest_cloud_action
+        self.contexts.append(dict(context or {}))
+        index = len(self.contexts) - 1
+        if index < len(self.decisions):
+            return self.decisions[index]
         return False
 
 
@@ -179,6 +201,36 @@ def test_edge_cloud_planner_deviation_is_action_distance(
 
     assert scheduler.contexts
     assert scheduler.contexts[-1]["deviation"] == pytest.approx(0.9)
+
+
+def test_edge_cloud_planner_context_exposes_edge_and_cloud_runtime_state(
+    reactive_obs: dict[str, Any],
+) -> None:
+    """Scheduler context should include edge features/action and cloud state."""
+    scheduler = _CaptureScheduler()
+    planner = EdgeCloudPlanner(
+        scheduler=scheduler,
+        cloud_latency=5,
+    )
+
+    def edge_plan(*_args, **_kwargs) -> Action:
+        planner.edge_planner.last_left_dist = 1.0
+        planner.edge_planner.last_track_width = 2.0
+        planner.edge_planner.last_heading_error = 0.3
+        return Action(steer=0.2, speed=3.0)
+
+    planner.edge_planner.plan = edge_plan  # type: ignore[method-assign]
+
+    planner.plan(copy.deepcopy(reactive_obs))
+
+    assert scheduler.contexts
+    context = scheduler.contexts[-1]
+    assert context["edge_features"] == pytest.approx((1.0, 2.0, 0.3))
+    assert context["edge_action"] == pytest.approx((0.2, 3.0))
+    assert context["cloud_age"] == 999
+    assert context["cloud_in_flight"] is False
+    assert context["cloud_queue_depth"] == 0
+    assert context["cloud_last_updated_step"] == -1
 
 
 def test_edge_cloud_planner_reset_clears_last_cloud_call() -> None:
@@ -230,6 +282,202 @@ def test_edge_cloud_planner_latency_zero_uses_same_step_cloud_features(
     assert planner._latest_cloud_features == pytest.approx((4.0, 6.0, 0.3))  # pylint: disable=protected-access
     assert action.steer == pytest.approx(0.25)
     assert action.speed == pytest.approx(2.5)
+
+
+def test_edge_cloud_planner_alpha_age_decreases_with_age() -> None:
+    """Sigma-based age decay should reduce cloud weight as held data gets older."""
+    se2, sc2, sp2 = 0.011366, 0.000989, 0.044961**2
+    alpha_0 = EdgeCloudPlanner._alpha_age(0, se2, sc2, sp2)  # pylint: disable=protected-access
+    alpha_5 = EdgeCloudPlanner._alpha_age(5, se2, sc2, sp2)  # pylint: disable=protected-access
+    alpha_20 = EdgeCloudPlanner._alpha_age(20, se2, sc2, sp2)  # pylint: disable=protected-access
+
+    assert alpha_0 > alpha_5 > alpha_20
+
+
+def test_edge_cloud_planner_age_zero_keeps_static_feature_alphas() -> None:
+    """Anchored decay should preserve the tuned static alpha at cloud age zero."""
+    planner = EdgeCloudPlanner(
+        alpha_left=0.2,
+        alpha_track=0.2,
+        alpha_heading=0.7,
+        sigma_proc_left=0.044961,
+        sigma_proc_track=0.067937,
+        sigma_proc_heading=0.033182,
+        age_decay_lambda=4.0,
+    )
+
+    assert planner._resolved_alphas(0) == pytest.approx((0.2, 0.2, 0.7))  # pylint: disable=protected-access
+
+
+def test_edge_cloud_planner_age_decay_lambda_zero_keeps_static_behavior() -> None:
+    """Disabling anchored decay should return the static feature alphas for any age."""
+    planner = EdgeCloudPlanner(
+        alpha_left=0.2,
+        alpha_track=0.2,
+        alpha_heading=0.7,
+        sigma_proc_left=0.044961,
+        sigma_proc_track=0.067937,
+        sigma_proc_heading=0.033182,
+        age_decay_lambda=0.0,
+    )
+
+    assert planner._resolved_alphas(5) == pytest.approx((0.2, 0.2, 0.7))  # pylint: disable=protected-access
+
+
+def test_edge_cloud_planner_anchored_alpha_decreases_with_age_and_lambda() -> None:
+    """Anchored decay should reduce cloud weights as age or lambda increases."""
+    planner = EdgeCloudPlanner(
+        alpha_left=0.2,
+        alpha_track=0.2,
+        alpha_heading=0.7,
+        sigma_proc_left=0.044961,
+        sigma_proc_track=0.067937,
+        sigma_proc_heading=0.033182,
+        age_decay_lambda=1.0,
+    )
+    low_age = planner._resolved_alphas(1)  # pylint: disable=protected-access
+    high_age = planner._resolved_alphas(5)  # pylint: disable=protected-access
+
+    faster_decay = EdgeCloudPlanner(
+        alpha_left=0.2,
+        alpha_track=0.2,
+        alpha_heading=0.7,
+        sigma_proc_left=0.044961,
+        sigma_proc_track=0.067937,
+        sigma_proc_heading=0.033182,
+        age_decay_lambda=4.0,
+    )._resolved_alphas(5)  # pylint: disable=protected-access
+
+    assert high_age[0] < low_age[0] < 0.2
+    assert high_age[1] < low_age[1] < 0.2
+    assert high_age[2] < low_age[2] < 0.7
+    assert faster_decay[0] < high_age[0]
+    assert faster_decay[1] < high_age[1]
+    assert faster_decay[2] < high_age[2]
+
+
+def test_edge_cloud_planner_missing_sigma_proc_ignores_lambda() -> None:
+    """Missing process-noise sigmas should disable anchored age decay."""
+    planner = EdgeCloudPlanner(
+        alpha_left=0.2,
+        alpha_track=0.2,
+        alpha_heading=0.7,
+        sigma_proc_left=None,
+        sigma_proc_track=None,
+        sigma_proc_heading=None,
+        age_decay_lambda=8.0,
+    )
+
+    assert planner._resolved_alphas(12) == pytest.approx((0.2, 0.2, 0.7))  # pylint: disable=protected-access
+
+
+def test_edge_cloud_planner_latency_correction_uses_current_edge_features(
+    reactive_obs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Arrived cloud features should be edge-delta corrected using current edge features."""
+    planner = EdgeCloudPlanner(cloud_latency=1, alpha_steer=1.0, alpha_speed=1.0)
+
+    edge_features = iter(((1.0, 2.0, 0.1), (1.5, 2.5, 0.15)))
+
+    def edge_plan(*_args, **_kwargs) -> Action:
+        left, track, heading = next(edge_features)
+        planner.edge_planner.last_left_dist = left
+        planner.edge_planner.last_track_width = track
+        planner.edge_planner.last_heading_error = heading
+        return Action(steer=0.0, speed=1.0)
+
+    def cloud_plan(*_args, **_kwargs) -> Action:
+        planner.cloud_planner.last_left_dist = 4.0
+        planner.cloud_planner.last_track_width = 6.0
+        planner.cloud_planner.last_heading_error = 0.3
+        return Action(steer=0.4, speed=3.0)
+
+    planner.edge_planner.plan = edge_plan  # type: ignore[method-assign]
+    planner.cloud_planner.plan = cloud_plan  # type: ignore[method-assign]
+
+    observed = []
+
+    def fake_reactive_action(*_args, **kwargs) -> Action:
+        observed.append(
+            (
+                kwargs["left_dist"],
+                kwargs["right_dist"],
+                kwargs["heading_error"],
+            )
+        )
+        return Action(steer=0.25, speed=2.5)
+
+    monkeypatch.setattr(
+        "f110_planning.reactive.edge_cloud_planner.get_reactive_action",
+        fake_reactive_action,
+    )
+
+    planner.plan(copy.deepcopy(reactive_obs))
+    planner.plan(copy.deepcopy(reactive_obs))
+
+    assert planner._latest_cloud_features == pytest.approx((4.5, 6.5, 0.35))  # pylint: disable=protected-access
+    assert observed[-1][0] == pytest.approx(4.5)
+    assert observed[-1][1] == pytest.approx(2.0)
+    assert observed[-1][2] == pytest.approx(0.35)
+
+
+def test_edge_cloud_planner_delayed_context_uses_final_returned_command(
+    reactive_obs: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Delayed-cloud scheduler context should expose the final returned action stream."""
+    scheduler = _SequenceCallScheduler([True, False])
+    planner = EdgeCloudPlanner(
+        scheduler=scheduler,
+        cloud_latency=1,
+        alpha_left=1.0,
+        alpha_track=1.0,
+        alpha_heading=1.0,
+    )
+
+    edge_features = iter(((1.0, 2.0, 0.1), (1.5, 2.5, 0.15)))
+
+    def edge_plan(*_args, **_kwargs) -> Action:
+        left, track, heading = next(edge_features)
+        planner.edge_planner.last_left_dist = left
+        planner.edge_planner.last_track_width = track
+        planner.edge_planner.last_heading_error = heading
+        return Action(steer=0.1, speed=1.0)
+
+    def cloud_plan(*_args, **_kwargs) -> Action:
+        planner.cloud_planner.last_left_dist = 4.0
+        planner.cloud_planner.last_track_width = 6.0
+        planner.cloud_planner.last_heading_error = 0.3
+        return Action(steer=0.4, speed=3.0)
+
+    planner.edge_planner.plan = edge_plan  # type: ignore[method-assign]
+    planner.cloud_planner.plan = cloud_plan  # type: ignore[method-assign]
+
+    monkeypatch.setattr(
+        "f110_planning.reactive.edge_cloud_planner.get_reactive_action",
+        lambda *_args, **_kwargs: Action(steer=0.25, speed=2.5),
+    )
+
+    first_action = planner.plan(copy.deepcopy(reactive_obs))
+    second_action = planner.plan(copy.deepcopy(reactive_obs))
+
+    assert first_action.steer == pytest.approx(0.1)
+    assert first_action.speed == pytest.approx(1.0)
+    assert second_action.steer == pytest.approx(0.25)
+    assert second_action.speed == pytest.approx(2.5)
+    assert len(scheduler.contexts) == 2
+
+    first_context = scheduler.contexts[0]
+    assert first_context["current_command"] == pytest.approx((0.1, 1.0))
+    assert first_context["prev_command"] is None
+    assert first_context["cloud_received"] is False
+
+    second_context = scheduler.contexts[1]
+    assert second_context["prev_edge_features"] == pytest.approx((1.0, 2.0, 0.1))
+    assert second_context["prev_command"] == pytest.approx((0.1, 1.0))
+    assert second_context["current_command"] == pytest.approx((0.25, 2.5))
+    assert second_context["cloud_received"] is True
 
 
 def test_multi_tier_edge_cloud_planner_uses_requested_tier_blending(

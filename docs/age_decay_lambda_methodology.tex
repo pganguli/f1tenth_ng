@@ -1,0 +1,28 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\begin{document}
+\title{Anchored Age-Decay Methodology}
+\maketitle
+\section{Objective}
+We tune one global planner hyperparameter, $\lambda$, for the anchored age-decay fusion rule
+\[
+\alpha_i(A)=\alpha^{static}_i \frac{\sigma^2_{e,i}+\sigma^2_{c,i}}{\sigma^2_{e,i}+\sigma^2_{c,i}+\lambda A \sigma^2_{proc,i}}.
+\]
+This preserves the tuned static cloud weights at age $A=0$ and only changes how fast stale cloud features decay after arrival.
+
+\section{Train / Eval Split}
+Training maps (13): Budapest, Catalunya, IMS, Melbourne, MoscowRaceway, Nuerburgring, Sakhir, SaoPaulo, Sepang, Silverstone, Sochi, YasMarina, Zandvoort.\\
+Eval maps (10): Austin, BrandsHatch, Hockenheim, MexicoCity, Montreal, Monza, Oschersleben, Shanghai, Spa, Spielberg.
+
+\section{Lambda Sweep}
+Candidate grid: 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0.\\
+Representative strategies: always\_hit, fixed\_interval\_k5, fixed\_bernoulli\_p60, bernoulli\_max\_miss\_p60\_m5.\\
+Selected value: $\lambda^* = 16$.
+
+\section{Strategy Optimization}
+The current expanded optimizer grid contains 118 configurations and was run on all 13 training maps before confirming one winning configuration for each strategy family.
+
+\section{Held-Out Evaluation}
+The held-out study includes the full 27-config static baseline sweep, the full 27-config anchored-decay sweep, and the 8-family best-config anchored-decay eval. Repeated trials are used for all publication-facing uncertainty bars.
+\end{document}

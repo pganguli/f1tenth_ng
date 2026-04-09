@@ -1,0 +1,79 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\begin{document}
+\title{Age-Decay Sanity Study Report}
+\maketitle
+
+\section{Goal}
+This report documents a fast sanity-check of anchored age decay using a strict non-train boundary and max CTE as the primary metric.
+
+\section{Setup}
+Train maps: Austin, Budapest, Melbourne, Sakhir, Zandvoort.\\
+Eval maps: Nuerburgring, Sochi, Spa.\\
+Cloud latency: 5.\\
+Lambda grid: 0, 1, 4, 16, 64.\\
+Selection metric: max\_cte.\\
+Boundary hit: True.\\
+Selected lambda: $\lambda^* = 0.0$.
+
+\section{Commands Run}
+\begin{itemize}[leftmargin=*]
+\item \texttt{lambda\_sweep}: \texttt{PYTHONPATH=packages/f110\_gym/src:packages/f110\_planning/src:packages/f110\_scripts/src .venv/bin/python scripts/benchmarks/sweep\_age\_decay\_lambda.py --maps Austin,Budapest,Melbourne,Sakhir,Zandvoort --trials 2 --workers 5 --selection-metric max\_cte --lambda-values 0,1,4,16,64 --sigma-proc-left 0.044961 --sigma-proc-track 0.067937 --sigma-proc-heading 0.033182 --output-stem lambda\_sweep\_sanity\_5train --selected-lambda-json data/benchmarks/lambda\_sweep\_sanity\_optimal.json}
+\item \texttt{train\_family\_search}: \texttt{PYTHONPATH=packages/f110\_gym/src:packages/f110\_planning/src:packages/f110\_scripts/src .venv/bin/python scripts/benchmarks/optimize\_hyperparameters.py --maps Austin,Budapest,Melbourne,Sakhir,Zandvoort --trials 1 --workers 5 --selection-metric max\_cte --grid-profile sanity --age-decay-lambda 0 --output-stem strategy\_sanity\_5train}
+\item \texttt{heldout\_static\_full\_suite}: \texttt{PYTHONPATH=packages/f110\_gym/src:packages/f110\_planning/src:packages/f110\_scripts/src .venv/bin/python scripts/benchmarks/benchmark\_single\_tier\_paper\_strategies.py --maps Nuerburgring,Sochi,Spa --trials 3 --workers 3 --selection-metric max\_cte --output-stem single\_tier\_sanity\_3eval\_static}
+\item \texttt{heldout\_lambda\_full\_suite}: \texttt{Reused single\_tier\_sanity\_3eval\_static outputs under single\_tier\_sanity\_3eval\_lambda because selected lambda was 0.0, making anchored decay identical to static fusion in this sanity study.}
+\item \texttt{heldout\_best\_configs}: \texttt{PYTHONPATH=packages/f110\_gym/src:packages/f110\_planning/src:packages/f110\_scripts/src .venv/bin/python scripts/benchmarks/benchmark\_eval\_best\_configs.py --configs-json data/benchmarks/strategy\_sanity\_5train\_best\_configs.json --maps Nuerburgring,Sochi,Spa --trials 5 --workers 3 --selection-metric max\_cte --age-decay-lambda 0 --output-stem eval\_best\_configs\_sanity\_3eval\_lambda}
+\item \texttt{figure\_generation}: \texttt{PYTHONPATH=packages/f110\_gym/src:packages/f110\_planning/src:packages/f110\_scripts/src .venv/bin/python scripts/benchmarks/plot\_age\_decay\_sanity\_figures.py --lambda-raw-csv data/benchmarks/lambda\_sweep\_sanity\_5train.csv --selected-lambda-json data/benchmarks/lambda\_sweep\_sanity\_optimal.json --static-raw-csv data/benchmarks/single\_tier\_sanity\_3eval\_static.csv --lambda-raw-heldout-csv data/benchmarks/single\_tier\_sanity\_3eval\_lambda.csv --best-config-raw-csv data/benchmarks/eval\_best\_configs\_sanity\_3eval\_lambda.csv --output-dir data/benchmarks/paper\_figures\_sanity\_3eval}
+\end{itemize}
+
+\section{Best Train-Time Family Configs}
+\begin{itemize}[leftmargin=*]
+\item \texttt{always}: \texttt{always\_hit}, train max CTE 0.3223, CCR 1.000. \item \texttt{bernoulli\_max\_miss}: \texttt{bernoulli\_max\_miss\_p65\_m6}, train max CTE 0.3198, CCR 0.644. \item \texttt{deterministic}: \texttt{deterministic\_t0p11}, train max CTE 0.3201, CCR 0.867. \item \texttt{exponential}: \texttt{exponential\_c0p08\_r5}, train max CTE 0.3158, CCR 0.655. \item \texttt{fixed\_bernoulli}: \texttt{fixed\_bernoulli\_p65}, train max CTE 0.3186, CCR 0.644. \item \texttt{fixed\_interval}: \texttt{fixed\_interval\_k2}, train max CTE 0.3237, CCR 0.500. \item \texttt{logistic}: \texttt{logistic\_c0p08\_s10}, train max CTE 0.3224, CCR 0.851. \item \texttt{piecewise\_ramp}: \texttt{piecewise\_ramp\_0p05\_0p12}, train max CTE 0.3185, CCR 0.899. 
+\end{itemize}
+
+\section{Held-Out Best-Family Results}
+\begin{tabular}{lllll}
+\toprule
+Strategy & Experiment & CCR & Max CTE & Collision-Free \\
+\midrule
+always & always\_hit & 1.000 & 0.3076 & 1.000 \\
+bernoulli\_max\_miss & bernoulli\_max\_miss\_p65\_m6 & 0.651 & 0.3690 & 1.000 \\
+deterministic & deterministic\_t0p11 & 0.869 & 0.3090 & 1.000 \\
+exponential & exponential\_c0p08\_r5 & 0.676 & 0.3276 & 1.000 \\
+fixed\_bernoulli & fixed\_bernoulli\_p65 & 0.649 & 0.3264 & 1.000 \\
+fixed\_interval & fixed\_interval\_k2 & 0.500 & 0.3233 & 1.000 \\
+logistic & logistic\_c0p08\_s10 & 0.864 & 0.3268 & 1.000 \\
+piecewise\_ramp & piecewise\_ramp\_0p05\_0p12 & 0.904 & 0.3095 & 1.000 \\
+\bottomrule
+\end{tabular}
+
+\section{Figures}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../data/benchmarks/paper_figures_sanity_3eval/aggregate_strategy_pareto.png}
+\caption{Aggregate held-out Pareto view.}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../data/benchmarks/paper_figures_sanity_3eval/per_map_strategy_pareto.png}
+\caption{Per-map Pareto panels for the three eval maps.}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../data/benchmarks/paper_figures_sanity_3eval/family_comparison_leaderboard.png}
+\caption{Family leaderboard on the held-out eval maps.}
+\end{figure}
+
+\appendices
+\section{Lambda Sweep}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../data/benchmarks/paper_figures_sanity_3eval/appendix_lambda_sweep.png}
+\caption{Internal lambda-sweep appendix figure.}
+\end{figure}
+
+\end{document}
